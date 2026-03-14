@@ -88,13 +88,20 @@ Key documents:
 ## Development Workflow
 
 ```
-/design:import          → import Figma or mockup into design-os/screens/
+── Setup (run once per project) ─────────────────────────
+/foundation:init        → initialize project (new or existing)
 /foundation:discover    → document project standards + product-mission.md
-/foundation:shape-spec  → spec a feature before building it
+/design:import          → import Figma or mockup into design-os/screens/ (optional)
+/design:system          → document design tokens (optional)
+
+── Per feature (repeat) ─────────────────────────────────
+/foundation:shape-spec  → spec the feature
 /architecture:new-feature → schema migration + RPC + API contract
 /implementation:new-feature → Server Action + Zod schema + component
 /qa:new-tests           → unit + component + E2E test scaffold
 /qa:fix                 → run tests, fix failures, re-run until green
+
+── Shipping ─────────────────────────────────────────────
 /deployment:k8s-config  → generate Kubernetes manifests for this project
 /deployment:release     → pre-release checklist + production deploy gate
 ```
@@ -102,29 +109,30 @@ Key documents:
 Start every new project with:
 
 ```
-/foundation:discover
+/foundation:init
 ```
 
 ---
 
 ## All Commands
 
-| Command                        | Purpose                                                  |
-| ------------------------------ | -------------------------------------------------------- |
-| `/foundation:discover`         | Document project standards, generate product-mission.md  |
-| `/foundation:shape-spec`       | Spec a feature — acceptance criteria, data shape, UI ref |
-| `/foundation:inject-standards` | Load relevant standards for current task                 |
-| `/design:import`               | Import Figma or image mockup into design-os/screens/     |
-| `/design:system`               | Document or update the design system tokens              |
-| `/architecture:new-feature`    | Schema migration, RPC, API contract                      |
-| `/architecture:review`         | Audit schema and RPC against standards                   |
-| `/implementation:new-feature`  | Scaffold Server Action + Zod schema + component          |
-| `/implementation:review`       | Audit implementation code against standards              |
-| `/data-fetching:review`        | Audit caching and server/client patterns                 |
-| `/qa:new-tests`                | Generate unit, component, and E2E test scaffolding       |
-| `/qa:fix`                      | Run tests → fix failures → re-run until green            |
-| `/deployment:k8s-config`       | Generate Kubernetes manifests sized for this project     |
-| `/deployment:release`          | Pre-release checklist and production deploy walkthrough  |
+| Command                        | Purpose                                                            |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `/foundation:init`             | Initialize project — new or existing, generates all baseline files |
+| `/foundation:discover`         | Document project standards, generate product-mission.md            |
+| `/foundation:shape-spec`       | Spec a feature — acceptance criteria, data shape, UI ref           |
+| `/foundation:inject-standards` | Load relevant standards for current task                           |
+| `/design:import`               | Import Figma or image mockup into design-os/screens/               |
+| `/design:system`               | Document or update the design system tokens                        |
+| `/architecture:new-feature`    | Schema migration, RPC, API contract                                |
+| `/architecture:review`         | Audit schema and RPC against standards                             |
+| `/implementation:new-feature`  | Scaffold Server Action + Zod schema + component                    |
+| `/implementation:review`       | Audit implementation code against standards                        |
+| `/data-fetching:review`        | Audit caching and server/client patterns                           |
+| `/qa:new-tests`                | Generate unit, component, and E2E test scaffolding                 |
+| `/qa:fix`                      | Run tests → fix failures → re-run until green                      |
+| `/deployment:k8s-config`       | Generate Kubernetes manifests sized for this project               |
+| `/deployment:release`          | Pre-release checklist and production deploy walkthrough            |
 
 ---
 
