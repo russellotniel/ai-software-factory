@@ -189,3 +189,15 @@ Remind the user:
 - Run `kubectl apply -k k8s/staging/` or apply each file individually
 - After first deploy, run `kubectl top pod -n {namespace}` under load
   and compare to the requested values — adjust if needed
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Kubernetes manifests generated. Run `/deployment:release` to walk through the pre-release checklist and production deploy gate."
+
+```
+Next command: /deployment:release
+```

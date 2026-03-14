@@ -89,3 +89,19 @@ After writing:
   `/design:system` to document the full design system
 - Suggest running `/foundation:shape-spec` for each screen to create
   the corresponding implementation spec
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Design imported. Choose your next step:
+
+- **If this is the first design import:** run `/design:system` to document the full design system tokens
+- **If design system is already documented:** run `/foundation:shape-spec` to spec your first feature using this design"
+
+```
+Next command: /design:system        (if first import — document design tokens)
+         OR: /foundation:shape-spec  (if design system already documented)
+```

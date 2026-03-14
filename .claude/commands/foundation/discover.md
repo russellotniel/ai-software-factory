@@ -120,3 +120,19 @@ After writing, suggest next steps:
 
 - "If you have Figma or mockups, run /design:import next"
 - "Otherwise, run /foundation:shape-spec to spec your first feature"
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Foundation documented. Choose your next step:
+
+- **If you have a Figma file or mockup images:** run `/design:import` to import your design into `design-os/screens/`
+- **If you have no design yet:** run `/foundation:shape-spec` to spec your first feature and start building"
+
+```
+Next command: /design:import   (if you have a design)
+         OR: /foundation:shape-spec  (if no design yet)
+```

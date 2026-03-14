@@ -45,3 +45,15 @@ For each file, check:
 ✅ src/features/projects/queries.ts — Correctly wrapped with 'use cache',
    cacheTag and cacheLife set
 ```
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Review complete. Fix any issues found, then return to whatever you were working on."
+
+```
+Next command: back to your current task
+```

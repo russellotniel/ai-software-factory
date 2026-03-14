@@ -52,3 +52,19 @@ For each file, check:
 ```
 
 End with a summary count. Offer to generate fix migrations for any issues.
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Review complete. Fix any issues found, then return to whatever you were working on.
+
+- **If you were in the middle of a feature:** continue with `/implementation:new-feature`
+- **If you ran this as a standalone audit:** you're done"
+
+```
+Next command: /implementation:new-feature  (if continuing a feature)
+         OR: back to your current task
+```

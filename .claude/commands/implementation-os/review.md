@@ -52,3 +52,19 @@ For each file, check:
 ```
 
 End with a summary and offer to apply fixes.
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Review complete. Fix any issues found, then return to whatever you were working on.
+
+- **If you were in the middle of a feature:** continue with `/qa:new-tests`
+- **If you ran this as a standalone audit:** you're done"
+
+```
+Next command: /qa:new-tests        (if continuing a feature)
+         OR: back to your current task
+```

@@ -35,3 +35,15 @@ If the task involves a specific feature, also check:
 - Before `/implementation:new-feature` — loads implementation + design
 - Before `/qa:new-tests` — loads testing standards
 - Before `/deployment:release` — loads release + ci-cd standards
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Standards loaded. Proceed with your current task."
+
+```
+Next command: continue with current task
+```

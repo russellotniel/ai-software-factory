@@ -87,3 +87,15 @@ On confirmation:
 
 - Write migration to `supabase/migrations/{timestamp}_{name}.sql`
 - Append to `architecture-os/api-contracts.md`
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Migration generated. Run `/implementation:new-feature` to scaffold the Server Action, Zod schema, and component for this feature."
+
+```
+Next command: /implementation:new-feature
+```

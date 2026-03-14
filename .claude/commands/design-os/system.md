@@ -64,3 +64,15 @@ Focus on: Button, Card, Table, Dialog, Form, Badge, Sheet, Tabs.
 Show the complete `design-os/design-system.md` content.
 Ask: "Should I write this?"
 On confirmation, write to `design-os/design-system.md`.
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Design system documented. Run `/foundation:shape-spec` to spec your first (or next) feature."
+
+```
+Next command: /foundation:shape-spec
+```

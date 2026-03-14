@@ -104,3 +104,15 @@ Remind the user:
 
 - Add tests with `/qa:new-tests`
 - If this needs cached data, check `data-fetching-os/caching-strategy.md`
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Implementation scaffolded. Run `/qa:new-tests` to generate unit, component, and E2E tests for this feature."
+
+```
+Next command: /qa:new-tests
+```

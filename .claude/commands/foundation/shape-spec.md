@@ -86,3 +86,19 @@ After saving:
   `/architecture:new-feature` next
 - If implementation is ready to start, suggest Claude Code plan mode:
   "Open plan mode and reference specs/{feature-name}.md as the source of truth"
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Spec saved. Choose your next step:
+
+- **If the spec requires a new table or new columns:** run `/architecture:new-feature` to generate the migration
+- **If no schema changes are needed:** run `/implementation:new-feature` to scaffold the code directly"
+
+```
+Next command: /architecture:new-feature   (if schema changes needed)
+         OR: /implementation:new-feature   (if no schema changes)
+```

@@ -117,3 +117,15 @@ npm test -- src/features/{domain}/
 ```
 
 Fix any failures before finishing.
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Tests scaffolded. Run `/qa:fix` to run the test suite and fix any failures."
+
+```
+Next command: /qa:fix
+```

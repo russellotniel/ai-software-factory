@@ -51,3 +51,19 @@ npm test
 ```
 
 Report: tests passed, tests skipped, coverage summary if available.
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Tests green. Choose your next step:
+
+- **If there are more features to build:** run `/foundation:shape-spec` for the next feature
+- **If all features are done and you're ready to ship:** run `/deployment:k8s-config` to generate Kubernetes manifests"
+
+```
+Next command: /foundation:shape-spec   (if more features to build)
+         OR: /deployment:k8s-config    (if ready to ship)
+```

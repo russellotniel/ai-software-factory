@@ -79,3 +79,18 @@ Once the tag exists, `production.yml` fires automatically:
 - [ ] Watch error monitoring for 10 minutes post-deploy
 - [ ] If something is wrong: assess hotfix vs rollback before acting
       (see `deployment-os/release-process.md` — Rollback section)
+
+---
+
+## ✅ What's Next
+
+Tell the user:
+
+"Release complete. You're shipped.
+
+- **If there are more features to build:** loop back to `/foundation:shape-spec`
+- **If this was a hotfix:** make sure the hotfix PR to `dev` is also merged"
+
+```
+Next command: /foundation:shape-spec   (to start the next feature)
+```
