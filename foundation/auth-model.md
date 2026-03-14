@@ -151,11 +151,15 @@ ALTER TABLE public.tenant_members ADD CONSTRAINT one_tenant_per_user UNIQUE (use
 ## Security Definer Helper Functions
 
 These are the only functions that use SECURITY DEFINER.
+All must be in the `private` schema — never `public`.
+PostgREST exposes `public` as an API, so SECURITY DEFINER functions there
+are callable by anyone via `supabase.rpc()`. The `private` schema is not
+exposed via PostgREST.
 All must include `SET search_path = ''`.
 
 ```sql
 -- Get active tenant for current user
-CREATE OR REPLACE FUNCTION public.get_active_tenant_id()
+CREATE OR REPLACE FUNCTION private.get_active_tenant_id()
 RETURNS UUID
 LANGUAGE SQL
 SECURITY DEFINER
@@ -166,9 +170,10 @@ AS $$
   FROM public.profiles
   WHERE id = auth.uid()
 $$;
+GRANT EXECUTE ON FUNCTION private.get_active_tenant_id() TO authenticated;
 
 -- Get global role for current user
-CREATE OR REPLACE FUNCTION public.get_user_role()
+CREATE OR REPLACE FUNCTION private.get_user_role()
 RETURNS TEXT
 LANGUAGE SQL
 SECURITY DEFINER
@@ -179,9 +184,10 @@ AS $$
   FROM public.profiles
   WHERE id = auth.uid()
 $$;
+GRANT EXECUTE ON FUNCTION private.get_user_role() TO authenticated;
 
 -- Get all tenants for current user
-CREATE OR REPLACE FUNCTION public.get_user_tenants()
+CREATE OR REPLACE FUNCTION private.get_user_tenants()
 RETURNS SETOF UUID
 LANGUAGE SQL
 SECURITY DEFINER
@@ -192,6 +198,7 @@ AS $$
   FROM public.tenant_members
   WHERE user_id = auth.uid()
 $$;
+GRANT EXECUTE ON FUNCTION private.get_user_tenants() TO authenticated;
 ```
 
 ---
@@ -201,9 +208,10 @@ $$;
 ### Tenant isolation (most tables)
 
 ```sql
+-- Wrap in (SELECT ...) so Postgres caches the result within the query plan
 CREATE POLICY "tenant_isolation" ON public.{table}
 FOR ALL USING (
-  tenant_id = public.get_active_tenant_id()
+  tenant_id = (SELECT private.get_active_tenant_id())
   AND deleted_at IS NULL
 );
 ```
@@ -213,7 +221,7 @@ FOR ALL USING (
 ```sql
 CREATE POLICY "admin_only" ON public.{table}
 FOR DELETE USING (
-  public.get_user_role() IN ('admin', 'superadmin')
+  (SELECT private.get_user_role()) IN ('admin', 'superadmin')
 );
 ```
 
@@ -222,7 +230,7 @@ FOR DELETE USING (
 ```sql
 CREATE POLICY "superadmin_all" ON public.{table}
 FOR ALL USING (
-  public.get_user_role() = 'superadmin'
+  (SELECT private.get_user_role()) = 'superadmin'
 );
 ```
 
