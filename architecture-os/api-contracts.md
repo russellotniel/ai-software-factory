@@ -16,12 +16,12 @@ This document defines the contract for all server-side logic in this project: wh
 
 ### The Four Layers
 
-| Layer | When to use | Who calls it |
-|---|---|---|
-| Server Component (direct Supabase call) | Reading data for a server-rendered page or layout | Server Components only |
-| Server Action | Mutations from React components (create, update, delete) | Client and Server Components |
-| Route Handler (`/app/api/`) | Webhooks, OAuth callbacks, external HTTP callers | External services, mobile apps |
-| Supabase Edge Function | Third-party integrations, background tasks, scheduled jobs, AI inference | pg_cron, external triggers, Supabase hooks |
+| Layer                                   | When to use                                                              | Who calls it                               |
+| --------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------ |
+| Server Component (direct Supabase call) | Reading data for a server-rendered page or layout                        | Server Components only                     |
+| Server Action                           | Mutations from React components (create, update, delete)                 | Client and Server Components               |
+| Route Handler (`/app/api/`)             | Webhooks, OAuth callbacks, external HTTP callers                         | External services, mobile apps             |
+| Supabase Edge Function                  | Third-party integrations, background tasks, scheduled jobs, AI inference | pg_cron, external triggers, Supabase hooks |
 
 ### Decision Tree
 
@@ -45,15 +45,18 @@ If none of the above apply, default to Server Action.
 ### What Each Layer Is NOT For
 
 **Server Actions are NOT for:**
+
 - Reading data on the client (use React Query + Route Handler or server-side fetch instead)
 - Receiving webhooks from Stripe, GitHub, or any external service
 - Endpoints shared with a mobile app or other client
 
 **Route Handlers are NOT for:**
+
 - Internal mutations from React components (use Server Actions)
 - Logic that only your own frontend calls — this creates unnecessary HTTP overhead
 
 **Supabase Edge Functions are NOT for:**
+
 - Simple form submissions or UI mutations
 - Logic that is tightly coupled to the Next.js request lifecycle
 
@@ -79,16 +82,16 @@ Group actions by feature. One `actions.ts` per feature domain. Never scatter act
 Every Server Action must follow this pattern:
 
 ```typescript
-'use server';
+"use server";
 
-import { z } from 'zod';
-import { createServerClient } from '@/lib/supabase/server';
-import { requireAuth } from '@/lib/auth/server';
-import type { ActionResult } from '@/types/actions';
+import { z } from "zod";
+import { createServerClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth/server";
+import type { ActionResult } from "@/types/actions";
 
 const CreateProjectSchema = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
+  description: z.string().max(500).optional()
 });
 
 export async function createProject(
@@ -103,33 +106,33 @@ export async function createProject(
     return {
       success: false,
       error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Invalid input.',
-        details: parsed.error.flatten().fieldErrors,
-      },
+        code: "VALIDATION_ERROR",
+        message: "Invalid input.",
+        details: parsed.error.flatten().fieldErrors
+      }
     };
   }
 
   // 3. Execute
   const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('projects')
+    .from("projects")
     .insert({
       tenant_id: tenantId,
       name: parsed.data.name,
       description: parsed.data.description,
-      created_by: user.id,
+      created_by: user.id
     })
-    .select('id')
+    .select("id")
     .single();
 
   if (error) {
     return {
       success: false,
       error: {
-        code: 'DATABASE_ERROR',
-        message: 'Failed to create project.',
-      },
+        code: "DATABASE_ERROR",
+        message: "Failed to create project."
+      }
     };
   }
 
@@ -169,16 +172,19 @@ All Route Handlers live under `app/api/`. Webhook handlers are nested under `app
 ### Function Signature
 
 ```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyStripeWebhook } from '@/lib/stripe/webhooks';
-import type { ApiErrorResponse } from '@/types/api';
+import { NextRequest, NextResponse } from "next/server";
+import { verifyStripeWebhook } from "@/lib/stripe/webhooks";
+import type { ApiErrorResponse } from "@/types/api";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // 1. Verify signature (webhooks) or authenticate (external APIs)
   const { event, error } = await verifyStripeWebhook(request);
   if (error) {
     return NextResponse.json<ApiErrorResponse>(
-      { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid signature.' } },
+      {
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "Invalid signature." }
+      },
       { status: 401 }
     );
   }
@@ -189,7 +195,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
     return NextResponse.json<ApiErrorResponse>(
-      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Webhook processing failed.' } },
+      {
+        success: false,
+        error: { code: "INTERNAL_ERROR", message: "Webhook processing failed." }
+      },
       { status: 500 }
     );
   }
@@ -227,21 +236,24 @@ supabase/
 ### Function Signature
 
 ```typescript
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 Deno.serve(async (req: Request) => {
   // 1. Authenticate (for user-facing functions)
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
     return new Response(
-      JSON.stringify({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing auth header.' } }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "Missing auth header." }
+      }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
     );
   }
 
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } }
   );
 
@@ -249,14 +261,16 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json();
     // ... logic
-    return new Response(
-      JSON.stringify({ success: true, data: {} }),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ success: true, data: {} }), {
+      headers: { "Content-Type": "application/json" }
+    });
   } catch (err) {
     return new Response(
-      JSON.stringify({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Processing failed.' } }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        success: false,
+        error: { code: "INTERNAL_ERROR", message: "Processing failed." }
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 });
@@ -282,14 +296,14 @@ export type ActionError = {
 };
 
 export type ActionErrorCode =
-  | 'UNAUTHORIZED'        // User is not authenticated
-  | 'FORBIDDEN'           // User lacks permission
-  | 'NOT_FOUND'           // Resource does not exist
-  | 'VALIDATION_ERROR'    // Zod schema failed
-  | 'CONFLICT'            // Duplicate / uniqueness violation
-  | 'DATABASE_ERROR'      // Supabase/Postgres returned an error
-  | 'EXTERNAL_ERROR'      // Third-party API failed
-  | 'INTERNAL_ERROR';     // Unexpected server error
+  | "UNAUTHORIZED" // User is not authenticated
+  | "FORBIDDEN" // User lacks permission
+  | "NOT_FOUND" // Resource does not exist
+  | "VALIDATION_ERROR" // Zod schema failed
+  | "CONFLICT" // Duplicate / uniqueness violation
+  | "DATABASE_ERROR" // Supabase/Postgres returned an error
+  | "EXTERNAL_ERROR" // Third-party API failed
+  | "INTERNAL_ERROR"; // Unexpected server error
 ```
 
 ### `types/api.ts` — for Route Handlers and Edge Functions
@@ -314,16 +328,16 @@ export type ApiResponse<T = null> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 ### Error Code Mapping
 
-| Situation | Code | HTTP Status (Route Handlers) | Postgres ERRCODE (RPC) |
-|---|---|---|---|
-| Not authenticated | `UNAUTHORIZED` | 401 | 42501 |
-| Lacks permission | `FORBIDDEN` | 403 | 42501 |
-| Record not found | `NOT_FOUND` | 404 | P0002 |
-| Zod validation failed | `VALIDATION_ERROR` | 400 | 22023 |
-| Uniqueness conflict | `CONFLICT` | 409 | 23505 |
-| Supabase/DB error | `DATABASE_ERROR` | 500 | — |
-| Third-party API error | `EXTERNAL_ERROR` | 502 | — |
-| Unexpected error | `INTERNAL_ERROR` | 500 | — |
+| Situation             | Code               | HTTP Status (Route Handlers) | Postgres ERRCODE (RPC) |
+| --------------------- | ------------------ | ---------------------------- | ---------------------- |
+| Not authenticated     | `UNAUTHORIZED`     | 401                          | 42501                  |
+| Lacks permission      | `FORBIDDEN`        | 403                          | 42501                  |
+| Record not found      | `NOT_FOUND`        | 404                          | P0002                  |
+| Zod validation failed | `VALIDATION_ERROR` | 400                          | 22023                  |
+| Uniqueness conflict   | `CONFLICT`         | 409                          | 23505                  |
+| Supabase/DB error     | `DATABASE_ERROR`   | 500                          | —                      |
+| Third-party API error | `EXTERNAL_ERROR`   | 502                          | —                      |
+| Unexpected error      | `INTERNAL_ERROR`   | 500                          | —                      |
 
 ---
 
@@ -341,12 +355,12 @@ export type ApiResponse<T = null> = ApiSuccessResponse<T> | ApiErrorResponse;
 ```typescript
 // actions.ts — schema is exported so the form can reuse it
 export const CreateProjectSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
-  description: z.string().max(500).optional(),
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
+  description: z.string().max(500).optional()
 });
 
 // form.tsx — reuse the same schema
-import { CreateProjectSchema } from './actions';
+import { CreateProjectSchema } from "./actions";
 const form = useForm({ resolver: zodResolver(CreateProjectSchema) });
 ```
 
@@ -358,8 +372,8 @@ Every project must implement `requireAuth()` in `lib/auth/server.ts`. It is the 
 
 ```typescript
 // lib/auth/server.ts
-import { createServerClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import { createServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export type AuthContext = {
   user: { id: string; email: string };
@@ -369,26 +383,29 @@ export type AuthContext = {
 
 export async function requireAuth(): Promise<AuthContext> {
   const supabase = await createServerClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
 
   if (error || !user) {
-    redirect('/login');
+    redirect("/login");
   }
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('active_tenant_id, global_role')
-    .eq('id', user.id)
+    .from("profiles")
+    .select("active_tenant_id, global_role")
+    .eq("id", user.id)
     .single();
 
   if (!profile?.active_tenant_id) {
-    redirect('/onboarding');
+    redirect("/onboarding");
   }
 
   return {
     user: { id: user.id, email: user.email! },
     tenantId: profile.active_tenant_id,
-    role: profile.global_role,
+    role: profile.global_role
   };
 }
 ```
@@ -468,7 +485,7 @@ export function DeleteButton({ projectId }: { projectId: string }) {
 Wrap the entire action body in a try-catch. Auth and validation happen before the try block so their failures return structured errors directly. The try block covers all Supabase calls and business logic.
 
 ```typescript
-'use server';
+"use server";
 
 export async function createProject(
   input: z.infer<typeof CreateProjectSchema>
@@ -481,7 +498,11 @@ export async function createProject(
   if (!parsed.success) {
     return {
       success: false,
-      error: { code: 'VALIDATION_ERROR', message: 'Invalid input.', details: parsed.error.flatten().fieldErrors },
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid input.",
+        details: parsed.error.flatten().fieldErrors
+      }
     };
   }
 
@@ -489,24 +510,46 @@ export async function createProject(
   try {
     const supabase = await createServerClient();
     const { data, error } = await supabase
-      .from('projects')
-      .insert({ tenant_id: tenantId, name: parsed.data.name, created_by: user.id })
-      .select('id')
+      .from("projects")
+      .insert({
+        tenant_id: tenantId,
+        name: parsed.data.name,
+        created_by: user.id
+      })
+      .select("id")
       .single();
 
     if (error) {
       // Known Supabase errors — map to specific codes
-      if (error.code === '23505') {
-        return { success: false, error: { code: 'CONFLICT', message: 'A project with this name already exists.' } };
+      if (error.code === "23505") {
+        return {
+          success: false,
+          error: {
+            code: "CONFLICT",
+            message: "A project with this name already exists."
+          }
+        };
       }
-      logger.error('createProject: supabase insert failed', { error: error.message, tenantId });
-      return { success: false, error: { code: 'DATABASE_ERROR', message: 'Failed to create project.' } };
+      logger.error("createProject: supabase insert failed", {
+        error: error.message,
+        tenantId
+      });
+      return {
+        success: false,
+        error: { code: "DATABASE_ERROR", message: "Failed to create project." }
+      };
     }
 
     return { success: true, data: { id: data.id } };
   } catch (err) {
-    logger.error('createProject: unexpected error', { err, tenantId });
-    return { success: false, error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' } };
+    logger.error("createProject: unexpected error", { err, tenantId });
+    return {
+      success: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred."
+      }
+    };
   }
 }
 ```
@@ -515,13 +558,13 @@ export async function createProject(
 
 When Supabase returns a `PostgrestError`, map known `error.code` values before falling through to `DATABASE_ERROR`:
 
-| Postgres ERRCODE | Meaning | ActionErrorCode |
-|---|---|---|
-| `23505` | Unique constraint violation | `CONFLICT` |
-| `23503` | Foreign key violation | `DATABASE_ERROR` |
-| `42501` | RLS / permission denied | `FORBIDDEN` |
-| `P0002` | No rows found (RPC) | `NOT_FOUND` |
-| `22023` | Invalid parameter (RPC) | `VALIDATION_ERROR` |
+| Postgres ERRCODE | Meaning                     | ActionErrorCode    |
+| ---------------- | --------------------------- | ------------------ |
+| `23505`          | Unique constraint violation | `CONFLICT`         |
+| `23503`          | Foreign key violation       | `DATABASE_ERROR`   |
+| `42501`          | RLS / permission denied     | `FORBIDDEN`        |
+| `P0002`          | No rows found (RPC)         | `NOT_FOUND`        |
+| `22023`          | Invalid parameter (RPC)     | `VALIDATION_ERROR` |
 
 ### Route Handler Pattern
 
@@ -532,7 +575,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { event, error } = await verifySignature(request);
     if (error) {
       return NextResponse.json<ApiErrorResponse>(
-        { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid signature.' } },
+        {
+          success: false,
+          error: { code: "UNAUTHORIZED", message: "Invalid signature." }
+        },
         { status: 401 }
       );
     }
@@ -540,11 +586,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 2. Process
     await handleEvent(event);
     return NextResponse.json({ success: true }, { status: 200 });
-
   } catch (err) {
-    logger.error('POST /api/webhooks/stripe: unexpected error', { err });
+    logger.error("POST /api/webhooks/stripe: unexpected error", { err });
     return NextResponse.json<ApiErrorResponse>(
-      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Request failed.' } },
+      {
+        success: false,
+        error: { code: "INTERNAL_ERROR", message: "Request failed." }
+      },
       { status: 500 }
     );
   }
@@ -576,7 +624,7 @@ All projects use a thin logger abstraction at `lib/logger.ts`. This wraps `conso
 ```typescript
 // lib/logger.ts
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 type LogContext = Record<string, unknown>;
 
@@ -585,25 +633,25 @@ function formatEntry(level: LogLevel, message: string, context?: LogContext) {
     level,
     message,
     timestamp: new Date().toISOString(),
-    ...context,
+    ...context
   });
 }
 
 export const logger = {
   debug: (message: string, context?: LogContext) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug(formatEntry('debug', message, context));
+    if (process.env.NODE_ENV !== "production") {
+      console.debug(formatEntry("debug", message, context));
     }
   },
   info: (message: string, context?: LogContext) => {
-    console.log(formatEntry('info', message, context));
+    console.log(formatEntry("info", message, context));
   },
   warn: (message: string, context?: LogContext) => {
-    console.warn(formatEntry('warn', message, context));
+    console.warn(formatEntry("warn", message, context));
   },
   error: (message: string, context?: LogContext) => {
-    console.error(formatEntry('error', message, context));
-  },
+    console.error(formatEntry("error", message, context));
+  }
 };
 ```
 
@@ -611,12 +659,12 @@ export const logger = {
 
 ### Log Levels
 
-| Level | When to use |
-|---|---|
+| Level   | When to use                                                                                          |
+| ------- | ---------------------------------------------------------------------------------------------------- |
 | `debug` | Development-only. Verbose state, query parameters, intermediate values. Never appears in production. |
-| `info` | Significant business events. User completed onboarding. Webhook received and processed. |
-| `warn` | Unexpected but recoverable. Retrying a failed third-party call. Missing optional config. |
-| `error` | Something failed and the user was affected or an operation did not complete. |
+| `info`  | Significant business events. User completed onboarding. Webhook received and processed.              |
+| `warn`  | Unexpected but recoverable. Retrying a failed third-party call. Missing optional config.             |
+| `error` | Something failed and the user was affected or an operation did not complete.                         |
 
 ### Log Entry Shape
 
@@ -639,20 +687,21 @@ Include as much context as needed to diagnose the failure. At minimum: the actio
 
 ### What Must Always Be Logged
 
-| Event | Level | Required context |
-|---|---|---|
-| Unexpected catch block hit | `error` | action/handler name, tenantId, userId, raw error |
-| Supabase error returned | `error` | action name, tenantId, `error.code`, `error.message` |
-| External API failure (Stripe, OpenAI, etc.) | `error` | function name, tenantId, status code, response body |
-| Webhook received | `info` | handler name, event type, source |
-| Background job started / completed | `info` | function name, tenantId, record counts |
-| Auth failure (missing token, invalid JWT) | `warn` | handler name, reason |
+| Event                                       | Level   | Required context                                     |
+| ------------------------------------------- | ------- | ---------------------------------------------------- |
+| Unexpected catch block hit                  | `error` | action/handler name, tenantId, userId, raw error     |
+| Supabase error returned                     | `error` | action name, tenantId, `error.code`, `error.message` |
+| External API failure (Stripe, OpenAI, etc.) | `error` | function name, tenantId, status code, response body  |
+| Webhook received                            | `info`  | handler name, event type, source                     |
+| Background job started / completed          | `info`  | function name, tenantId, record counts               |
+| Auth failure (missing token, invalid JWT)   | `warn`  | handler name, reason                                 |
 
 ### What Must Never Be Logged
 
 This is non-negotiable. Projects handling health or genomic data (Gene-X) are subject to additional regulatory scrutiny if PII appears in logs.
 
 **Never log:**
+
 - Passwords, tokens, API keys, or secrets of any kind
 - Full JWT tokens or session cookies
 - User email addresses or phone numbers
@@ -663,6 +712,7 @@ This is non-negotiable. Projects handling health or genomic data (Gene-X) are su
 - The full request body (log field names only, never values, when in doubt)
 
 **Safe to log:**
+
 - UUIDs (user IDs, tenant IDs, record IDs)
 - Error codes and error messages from your own system
 - HTTP status codes
@@ -673,24 +723,24 @@ This is non-negotiable. Projects handling health or genomic data (Gene-X) are su
 
 ```typescript
 // ✅ Correct — logs context, no PII
-logger.error('updateProfile: supabase update failed', {
-  action: 'updateProfile',
-  userId: user.id,       // UUID only — safe
+logger.error("updateProfile: supabase update failed", {
+  action: "updateProfile",
+  userId: user.id, // UUID only — safe
   tenantId,
   errorCode: error.code,
-  error: error.message,
+  error: error.message
 });
 
 // ❌ Wrong — logs PII
-logger.error('updateProfile failed', {
-  email: user.email,     // Never log email
-  fullName: input.name,  // Never log user names
-  error: error.message,
+logger.error("updateProfile failed", {
+  email: user.email, // Never log email
+  fullName: input.name, // Never log user names
+  error: error.message
 });
 
 // ❌ Wrong — logs secrets
-logger.info('calling OpenAI', {
-  apiKey: process.env.OPENAI_API_KEY,  // Never log secrets
+logger.info("calling OpenAI", {
+  apiKey: process.env.OPENAI_API_KEY // Never log secrets
 });
 ```
 
@@ -698,20 +748,20 @@ logger.info('calling OpenAI', {
 
 ## Decisions Log
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| Primary mutation layer | Server Actions | Type-safe, CSRF protected, no boilerplate |
-| External HTTP endpoints | Route Handlers only | Server Actions must not be called by external services |
-| Background / scheduled / AI | Supabase Edge Functions | Decoupled from Next.js lifecycle, runs close to DB |
-| Validation library | Zod | Type inference, reusable across client and server |
-| Error handling | Return `ActionResult<T>`, never throw | Thrown errors surface poorly on the client |
-| Error shape | `{ success, error: { code, message, details? } }` | Consistent across all layers — actions, routes, edge functions |
-| Auth helper | `requireAuth()` in `lib/auth/server.ts` | Single entry point, fail fast on every action |
-| Schema location | Defined and exported from `actions.ts` | Shared between server action and client form validation |
-| Try-catch placement | Auth + validation outside try, all else inside | Auth redirects are intentional throws; Zod errors are structured — only Supabase/business logic needs catching |
-| Postgres error mapping | Explicit mapping before falling through to DATABASE_ERROR | Conflicts and permission errors have meaningful codes the client can act on |
-| Logger abstraction | `lib/logger.ts` wrapping console | Swappable to Pino/log drain with no call site changes |
-| Log format | Structured JSON | Machine-parseable in production; human-readable in dev |
-| debug level | Suppressed in production | Avoid verbose noise and accidental PII in prod logs |
-| PII in logs | Strictly prohibited | Health and genomic data projects have regulatory exposure; UUIDs only for user/tenant identity |
-| Log infrastructure | Deferred to Deployment OS | Code-level standard is here; routing and retention live in deployment-os/environments.md |
+| Decision                    | Choice                                                    | Rationale                                                                                                      |
+| --------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Primary mutation layer      | Server Actions                                            | Type-safe, CSRF protected, no boilerplate                                                                      |
+| External HTTP endpoints     | Route Handlers only                                       | Server Actions must not be called by external services                                                         |
+| Background / scheduled / AI | Supabase Edge Functions                                   | Decoupled from Next.js lifecycle, runs close to DB                                                             |
+| Validation library          | Zod                                                       | Type inference, reusable across client and server                                                              |
+| Error handling              | Return `ActionResult<T>`, never throw                     | Thrown errors surface poorly on the client                                                                     |
+| Error shape                 | `{ success, error: { code, message, details? } }`         | Consistent across all layers — actions, routes, edge functions                                                 |
+| Auth helper                 | `requireAuth()` in `lib/auth/server.ts`                   | Single entry point, fail fast on every action                                                                  |
+| Schema location             | Defined and exported from `actions.ts`                    | Shared between server action and client form validation                                                        |
+| Try-catch placement         | Auth + validation outside try, all else inside            | Auth redirects are intentional throws; Zod errors are structured — only Supabase/business logic needs catching |
+| Postgres error mapping      | Explicit mapping before falling through to DATABASE_ERROR | Conflicts and permission errors have meaningful codes the client can act on                                    |
+| Logger abstraction          | `lib/logger.ts` wrapping console                          | Swappable to Pino/log drain with no call site changes                                                          |
+| Log format                  | Structured JSON                                           | Machine-parseable in production; human-readable in dev                                                         |
+| debug level                 | Suppressed in production                                  | Avoid verbose noise and accidental PII in prod logs                                                            |
+| PII in logs                 | Strictly prohibited                                       | Health and genomic data projects have regulatory exposure; UUIDs only for user/tenant identity                 |
+| Log infrastructure          | Deferred to Deployment OS                                 | Code-level standard is here; routing and retention live in deployment-os/environments.md                       |

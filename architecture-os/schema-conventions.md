@@ -73,17 +73,18 @@ CREATE TABLE public.example_table (
 
 ### Column rules
 
-| Column | Required | Notes |
-|--------|----------|-------|
-| `id` | ✅ Always | UUID, never serial/integer |
-| `tenant_id` | ✅ Most tables | Omit only for global tables: `tenants`, `subscription_plans` |
-| `created_at` | ✅ Always | Auto-set, never manually assigned |
-| `updated_at` | ✅ Always | Auto-maintained by trigger (see Section 7) |
-| `created_by` | ✅ Always | Nullable — system operations may not have a user |
-| `updated_by` | ✅ Always | Nullable — same reason |
-| `deleted_at` | ⚠️ Business-critical tables | See Section 5 for rules |
+| Column       | Required                    | Notes                                                        |
+| ------------ | --------------------------- | ------------------------------------------------------------ |
+| `id`         | ✅ Always                   | UUID, never serial/integer                                   |
+| `tenant_id`  | ✅ Most tables              | Omit only for global tables: `tenants`, `subscription_plans` |
+| `created_at` | ✅ Always                   | Auto-set, never manually assigned                            |
+| `updated_at` | ✅ Always                   | Auto-maintained by trigger (see Section 7)                   |
+| `created_by` | ✅ Always                   | Nullable — system operations may not have a user             |
+| `updated_by` | ✅ Always                   | Nullable — same reason                                       |
+| `deleted_at` | ⚠️ Business-critical tables | See Section 5 for rules                                      |
 
 ### Why UUID over serial/integer for `id`?
+
 - Safe to generate client-side before insert
 - No sequential guessing in URLs
 - Works across distributed systems and migrations
@@ -103,10 +104,11 @@ extensions/  → Third-party extensions (pgcrypto, etc.)
 ```
 
 ### Rules
+
 - **Never expose `audit` or `private` schemas via PostgREST**
 - **All application tables live in `public`**
 - **All audit tables live in `audit`** — keeps `public` clean and audit data access-controlled
-- **Security definer functions live in `public`** but operate across schemas as needed
+- **SECURITY DEFINER helper functions live in `private`** — `public` is API-exposed, so SECURITY DEFINER functions there are callable by anyone via `supabase.rpc()`. Exception: trigger functions (`set_updated_at`, `audit.log_changes`) must be in `public` or `audit` for PostgreSQL trigger attachment
 
 ---
 
@@ -115,12 +117,14 @@ extensions/  → Third-party extensions (pgcrypto, etc.)
 Not all tables need soft deletes. The rule is:
 
 ### Use soft delete (`deleted_at`) for:
+
 - User-generated content — `projects`, `tasks`, `documents`, `comments`
 - Business entities — `tenants`, `users` (profiles), `invoices`, `orders`
 - Anything with compliance / audit implications
 - Anything a user might want to "restore"
 
 ### Use hard delete for:
+
 - Join / bridge tables — `tenant_members`, `project_tags`
 - Config / lookup tables — `subscription_plans`, `categories`
 - Session or ephemeral data — `notifications`, `tokens`
@@ -143,6 +147,7 @@ CREATE VIEW public.active_projects AS
 ```
 
 ### Performing a soft delete
+
 ```sql
 UPDATE public.projects
 SET
@@ -152,12 +157,13 @@ WHERE id = '[record_id]';
 ```
 
 ### RLS and soft deletes
+
 RLS policies on soft-deletable tables must always include the `deleted_at IS NULL` check:
 
 ```sql
 CREATE POLICY "tenant_isolation" ON public.projects
 FOR SELECT USING (
-  tenant_id = public.get_active_tenant_id()
+  tenant_id = (SELECT private.get_active_tenant_id())
   AND deleted_at IS NULL
 );
 ```
@@ -212,6 +218,7 @@ idx_projects_tenant_created   -- composite
 ```
 
 ### Rules
+
 - **Never skip indexing `tenant_id`** — RLS policies filter on this for every single query
 - **Index all FK columns** — PostgreSQL does not auto-index foreign keys
 - **Use partial indexes** for `deleted_at IS NULL` — smaller, faster than full column index
@@ -251,12 +258,12 @@ This is mandatory on every table that has an `updated_at` column — which is ev
 
 ### ON DELETE rules
 
-| Relationship | ON DELETE | Example |
-|---|---|---|
-| Child owned by parent | `CASCADE` | `project_tasks → projects` |
-| Reference to a user | `SET NULL` | `created_by → auth.users` |
-| Reference to a tenant | `CASCADE` | `projects → tenants` |
-| Lookup / config reference | `RESTRICT` | `projects → categories` |
+| Relationship              | ON DELETE  | Example                    |
+| ------------------------- | ---------- | -------------------------- |
+| Child owned by parent     | `CASCADE`  | `project_tasks → projects` |
+| Reference to a user       | `SET NULL` | `created_by → auth.users`  |
+| Reference to a tenant     | `CASCADE`  | `projects → tenants`       |
+| Lookup / config reference | `RESTRICT` | `projects → categories`    |
 
 ```sql
 -- ✅ Always explicit
@@ -289,6 +296,7 @@ tenant_id UUID REFERENCES public.tenants(id),
 ```
 
 ### Rules
+
 - **One concern per migration** — never combine unrelated changes
 - **Never modify an existing migration** — always create a new one
 - **Always include a rollback comment** — document how to undo the change
@@ -321,18 +329,18 @@ ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 -- 3. RLS policies
 CREATE POLICY "tenant_isolation_select" ON public.projects
   FOR SELECT USING (
-    tenant_id = public.get_active_tenant_id()
+    tenant_id = (SELECT private.get_active_tenant_id())
     AND deleted_at IS NULL
   );
 
 CREATE POLICY "tenant_isolation_insert" ON public.projects
   FOR INSERT WITH CHECK (
-    tenant_id = public.get_active_tenant_id()
+    tenant_id = (SELECT private.get_active_tenant_id())
   );
 
 CREATE POLICY "tenant_isolation_update" ON public.projects
   FOR UPDATE USING (
-    tenant_id = public.get_active_tenant_id()
+    tenant_id = (SELECT private.get_active_tenant_id())
     AND deleted_at IS NULL
   );
 
@@ -363,12 +371,12 @@ This migration structure is the **template for every new table**. No exceptions.
 
 Some tables are global by nature and do not have a `tenant_id`.
 
-| Table | Reason |
-|---|---|
-| `public.tenants` | Is the tenant — can't reference itself |
-| `public.profiles` | Bridges auth.users — user exists before tenant assignment |
-| `public.subscription_plans` | Platform-wide config |
-| `audit.audit_logs` | Cross-tenant by design |
+| Table                       | Reason                                                    |
+| --------------------------- | --------------------------------------------------------- |
+| `public.tenants`            | Is the tenant — can't reference itself                    |
+| `public.profiles`           | Bridges auth.users — user exists before tenant assignment |
+| `public.subscription_plans` | Platform-wide config                                      |
+| `audit.audit_logs`          | Cross-tenant by design                                    |
 
 These tables still follow all other conventions — standard columns, indexes, RLS, migrations — but their RLS policies are role-based rather than tenant-based.
 

@@ -6,12 +6,12 @@
 
 Four GitHub Actions workflows cover the full pipeline.
 
-| Workflow | Trigger | Purpose |
-|---|---|---|
-| `pr-title.yml` | PR opened / edited | Validate PR title follows Conventional Commits |
-| `ci.yml` | Push to feature/fix/hotfix/dev, PR to dev or main | Lint, type-check, unit + component tests |
-| `staging.yml` | PR to `main` → deploy + E2E; push to `main` → release | Staging gate + semantic-release |
-| `production.yml` | Tag `v*` | Build production image, deploy to production |
+| Workflow         | Trigger                                               | Purpose                                        |
+| ---------------- | ----------------------------------------------------- | ---------------------------------------------- |
+| `pr-title.yml`   | PR opened / edited                                    | Validate PR title follows Conventional Commits |
+| `ci.yml`         | Push to feature/fix/hotfix/dev, PR to dev or main     | Lint, type-check, unit + component tests       |
+| `staging.yml`    | PR to `main` → deploy + E2E; push to `main` → release | Staging gate + semantic-release                |
+| `production.yml` | Tag `v*`                                              | Build production image, deploy to production   |
 
 ### The staging gate
 
@@ -87,24 +87,24 @@ on:
   push:
     branches:
       - dev
-      - 'feature/**'
-      - 'fix/**'
-      - 'hotfix/**'
-      - 'chore/**'
+      - "feature/**"
+      - "fix/**"
+      - "hotfix/**"
+      - "chore/**"
     paths-ignore:
-      - '**/*.md'
-      - '.github/CODEOWNERS'
-      - '.editorconfig'
-      - '.gitignore'
-      - 'docs/**'
+      - "**/*.md"
+      - ".github/CODEOWNERS"
+      - ".editorconfig"
+      - ".gitignore"
+      - "docs/**"
   pull_request:
     branches: [dev, main]
     paths-ignore:
-      - '**/*.md'
-      - '.github/CODEOWNERS'
-      - '.editorconfig'
-      - '.gitignore'
-      - 'docs/**'
+      - "**/*.md"
+      - ".github/CODEOWNERS"
+      - ".editorconfig"
+      - ".gitignore"
+      - "docs/**"
 
 # Cancel in-progress runs for the same branch when a new push arrives
 concurrency:
@@ -120,8 +120,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -141,8 +141,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -187,13 +187,13 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
     paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
+      - "**/*.md"
+      - "docs/**"
   push:
     branches: [main]
     paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
+      - "**/*.md"
+      - "docs/**"
 
 env:
   REGISTRY: ghcr.io
@@ -273,8 +273,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -320,8 +320,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -344,7 +344,7 @@ name: Production
 
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
 
 env:
   REGISTRY: ghcr.io
@@ -391,7 +391,7 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: build-production
-    environment: production     # Requires manual approval in GitHub
+    environment: production # Requires manual approval in GitHub
     steps:
       - uses: actions/checkout@v4
 
@@ -425,23 +425,23 @@ Use **Environments** (`staging`, `production`) for environment-specific secrets 
 
 ### Environment: `staging`
 
-| Secret | Description |
-|---|---|
-| `STAGING_DATABASE_URL` | Direct Postgres URL for migration |
-| `STAGING_APP_URL` | Public URL of staging app |
-| `TEST_USER_EMAIL` | E2E test account email |
-| `TEST_USER_PASSWORD` | E2E test account password |
-| `TENANT_A_EMAIL` | Tenant isolation test: Tenant A email |
-| `TENANT_A_PASSWORD` | Tenant isolation test: Tenant A password |
-| `TENANT_B_EMAIL` | Tenant isolation test: Tenant B email |
-| `TENANT_B_PASSWORD` | Tenant isolation test: Tenant B password |
+| Secret                 | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `STAGING_DATABASE_URL` | Direct Postgres URL for migration        |
+| `STAGING_APP_URL`      | Public URL of staging app                |
+| `TEST_USER_EMAIL`      | E2E test account email                   |
+| `TEST_USER_PASSWORD`   | E2E test account password                |
+| `TENANT_A_EMAIL`       | Tenant isolation test: Tenant A email    |
+| `TENANT_A_PASSWORD`    | Tenant isolation test: Tenant A password |
+| `TENANT_B_EMAIL`       | Tenant isolation test: Tenant B email    |
+| `TENANT_B_PASSWORD`    | Tenant isolation test: Tenant B password |
 
 ### Environment: `production`
 
-| Secret | Description |
-|---|---|
+| Secret              | Description                       |
+| ------------------- | --------------------------------- |
 | `PROD_DATABASE_URL` | Direct Postgres URL for migration |
-| `PROD_APP_URL` | Public URL of production app |
+| `PROD_APP_URL`      | Public URL of production app      |
 
 ### Note on `NEXT_PUBLIC_*` secrets
 
@@ -457,9 +457,9 @@ The production smoke test hits `/api/health`. Add this to every project:
 // app/api/health/route.ts
 export async function GET() {
   return Response.json({
-    status: 'ok',
+    status: "ok",
     env: process.env.APP_ENV,
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   });
 }
 ```

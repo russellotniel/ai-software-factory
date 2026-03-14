@@ -10,6 +10,7 @@
 AI Software Factory is a structured framework of living documents and Claude Code commands that guides you through every phase of software development — from product vision to deployment.
 
 It fills the gaps left by existing tools:
+
 - **Design OS** (by Brian Casel) — covers product vision and UI design
 - **Agent OS** (by Brian Casel) — covers implementation standards and feature specs
 - **AI Software Factory** — covers everything in between and around them
@@ -48,6 +49,7 @@ deployment-os/           → CI/CD, environments, release process
 ## Stack
 
 This framework is designed for:
+
 - **Frontend:** Next.js (App Router)
 - **Backend/Database:** Supabase (PostgreSQL)
 - **Auth:** Supabase Auth or Keycloak (AD/LDAP)
@@ -114,20 +116,21 @@ claude
 
 Follow this order. Each phase builds on the previous.
 
-| Phase | Status | Description |
-|---|---|---|
-| Foundation | ✅ | Core principles and standards |
-| Architecture OS | 🔄 | System design, schema, RPC, API |
-| Implementation OS | ⬜ | Coding standards, feature specs |
-| Data Fetching OS | ⬜ | Caching, optimization |
-| QA OS | ⬜ | Testing strategy |
-| Deployment OS | ⬜ | CI/CD, environments |
+| Phase             | Status | Description                     |
+| ----------------- | ------ | ------------------------------- |
+| Foundation        | ✅     | Core principles and standards   |
+| Architecture OS   | 🔄     | System design, schema, RPC, API |
+| Implementation OS | ⬜     | Coding standards, feature specs |
+| Data Fetching OS  | ⬜     | Caching, optimization           |
+| QA OS             | ⬜     | Testing strategy                |
+| Deployment OS     | ⬜     | CI/CD, environments             |
 
 ---
 
 ## Credits
 
 Built on top of and inspired by:
+
 - [Design OS](https://github.com/buildermethods/design-os) by Brian Casel
 - [Agent OS](https://github.com/buildermethods/agent-os) by Brian Casel
 

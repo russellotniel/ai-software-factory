@@ -48,14 +48,14 @@ User experience and performance are not competing concerns — both are required
 
 Testing is not optional. Every project ships with a full test suite.
 
-| Test Type | Scope | Required |
-|---|---|---|
-| Unit tests | Individual functions, utilities | ✅ Always |
-| Integration tests | API routes, server actions, RPCs | ✅ Always |
-| E2E tests | Critical user flows | ✅ Always |
-| Edge case tests | Boundary conditions, error states | ✅ Always |
-| Load tests | Performance under expected traffic | ✅ Always |
-| RLS tests | Tenant isolation, role-based access | ✅ Always |
+| Test Type         | Scope                               | Required  |
+| ----------------- | ----------------------------------- | --------- |
+| Unit tests        | Individual functions, utilities     | ✅ Always |
+| Integration tests | API routes, server actions, RPCs    | ✅ Always |
+| E2E tests         | Critical user flows                 | ✅ Always |
+| Edge case tests   | Boundary conditions, error states   | ✅ Always |
+| Load tests        | Performance under expected traffic  | ✅ Always |
+| RLS tests         | Tenant isolation, role-based access | ✅ Always |
 
 ---
 

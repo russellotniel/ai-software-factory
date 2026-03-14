@@ -20,6 +20,7 @@ Is this operation touching a single table with simple filters?
 ```
 
 ### Use a DIRECT QUERY when:
+
 - Single table SELECT, INSERT, UPDATE, DELETE
 - Simple filters — `WHERE id = ?`, `WHERE tenant_id = ?`, `WHERE status = ?`
 - Standard CRUD that RLS already protects
@@ -27,6 +28,7 @@ Is this operation touching a single table with simple filters?
 - No business logic beyond basic data retrieval or mutation
 
 ### Use an RPC when:
+
 - Joining 2 or more tables
 - Aggregations — `COUNT`, `SUM`, `AVG`, `GROUP BY`, window functions
 - Business logic that spans multiple operations atomically
@@ -37,6 +39,7 @@ Is this operation touching a single table with simple filters?
 - Anything that would otherwise require multiple sequential round trips
 
 ### The rule in plain language:
+
 > If you would need to chain multiple `.from()` calls or do post-processing
 > in JavaScript to get the data shape you need — it belongs in an RPC.
 
@@ -47,6 +50,7 @@ Is this operation touching a single table with simple filters?
 ### Default: SECURITY INVOKER
 
 All RPCs use `SECURITY INVOKER` by default. This means:
+
 - The function runs with the **caller's permissions**
 - RLS policies are still enforced
 - The caller cannot do anything through the function they couldn't do directly
@@ -74,11 +78,16 @@ $$;
 Only used for helper/utility functions that must operate outside RLS context.
 **Never use SECURITY DEFINER on business logic RPCs.**
 
-When used, ALWAYS pair with `SET search_path = ''` to prevent injection attacks:
+When used, ALWAYS pair with `SET search_path = ''` to prevent injection attacks.
+
+**Critical:** SECURITY DEFINER functions must **never** be placed in the `public` schema. PostgREST exposes `public` as an API — any function there is callable by anyone via `supabase.rpc()`. SECURITY DEFINER helper functions belong in the `private` schema, which is not exposed via PostgREST.
 
 ```sql
--- ✅ SECURITY DEFINER — helper functions only
-CREATE OR REPLACE FUNCTION public.get_active_tenant_id()
+-- ❌ Wrong — public schema is API-exposed; anyone can call via supabase.rpc()
+CREATE OR REPLACE FUNCTION public.get_active_tenant_id() ...
+
+-- ✅ Correct — private schema is NOT exposed via PostgREST
+CREATE OR REPLACE FUNCTION private.get_active_tenant_id()
 RETURNS UUID
 LANGUAGE SQL
 SECURITY DEFINER
@@ -89,17 +98,31 @@ AS $$
   FROM public.profiles
   WHERE id = auth.uid()
 $$;
+
+-- Grant execute to authenticated role only
+GRANT EXECUTE ON FUNCTION private.get_active_tenant_id() TO authenticated;
+```
+
+RLS policies that call these functions reference the `private` schema explicitly, and wrap in `(SELECT ...)` for Postgres query plan caching:
+
+```sql
+-- ✅ Correct — wraps in SELECT for caching, references private schema
+CREATE POLICY "tenant_isolation" ON public.projects
+  FOR SELECT USING (
+    tenant_id = (SELECT private.get_active_tenant_id())
+  );
 ```
 
 ### SECURITY DEFINER is allowed ONLY for:
-| Function | Reason |
-|---|---|
-| `get_active_tenant_id()` | Reads profiles without exposing full table |
-| `get_user_role()` | Same pattern |
-| `set_updated_at()` | Trigger function |
-| `audit.log_changes()` | Audit trigger — needs cross-schema access |
 
-Everything else: `SECURITY INVOKER`.
+| Function                 | Schema    | Reason                                                                    |
+| ------------------------ | --------- | ------------------------------------------------------------------------- |
+| `get_active_tenant_id()` | `private` | Reads profiles without RLS overhead; not API-callable                     |
+| `get_user_role()`        | `private` | Same pattern                                                              |
+| `set_updated_at()`       | `public`  | Trigger function — PostgreSQL requires trigger functions to be accessible |
+| `audit.log_changes()`    | `audit`   | Audit trigger — needs cross-schema write access                           |
+
+Everything else: `SECURITY INVOKER` in `public`.
 
 ---
 
@@ -115,17 +138,17 @@ qualifier  → optional context (summary, by_status, with_members, etc.)
 
 ### Approved verbs by operation type
 
-| Verb | Use for |
-|---|---|
-| `get_` | Read — returns data |
-| `list_` | Read — returns a collection |
-| `search_` | Read — filtered/searched collection |
-| `create_` | Write — insert with validation/logic |
-| `update_` | Write — update with validation/logic |
-| `delete_` | Write — soft or hard delete with logic |
-| `calculate_` | Compute — aggregations, metrics |
-| `process_` | Complex multi-step operation |
-| `validate_` | Check only — no writes |
+| Verb         | Use for                                |
+| ------------ | -------------------------------------- |
+| `get_`       | Read — returns data                    |
+| `list_`      | Read — returns a collection            |
+| `search_`    | Read — filtered/searched collection    |
+| `create_`    | Write — insert with validation/logic   |
+| `update_`    | Write — update with validation/logic   |
+| `delete_`    | Write — soft or hard delete with logic |
+| `calculate_` | Compute — aggregations, metrics        |
+| `process_`   | Complex multi-step operation           |
+| `validate_`  | Check only — no writes                 |
 
 ### Examples
 
@@ -315,27 +338,27 @@ RAISE EXCEPTION 'Conflict: %', 'slug already exists'
 
 ### Standard ERRCODE reference
 
-| Situation | ERRCODE | Description |
-|---|---|---|
-| Access denied / not a member | `42501` | insufficient_privilege |
-| Record not found | `P0002` | no_data_found |
-| Invalid input | `22023` | invalid_parameter_value |
-| Duplicate / conflict | `23505` | unique_violation |
-| Business rule violation | `P0001` | raise_exception (custom) |
+| Situation                    | ERRCODE | Description              |
+| ---------------------------- | ------- | ------------------------ |
+| Access denied / not a member | `42501` | insufficient_privilege   |
+| Record not found             | `P0002` | no_data_found            |
+| Invalid input                | `22023` | invalid_parameter_value  |
+| Duplicate / conflict         | `23505` | unique_violation         |
+| Business rule violation      | `P0001` | raise_exception (custom) |
 
 ### Catching in Next.js
 
 ```typescript
-const { data, error } = await supabase.rpc('get_project_summary', {
+const { data, error } = await supabase.rpc("get_project_summary", {
   p_tenant_id: tenantId,
   p_project_id: projectId
-})
+});
 
 if (error) {
   // error.code maps to ERRCODE
   // error.message contains the RAISE EXCEPTION message
-  if (error.code === '42501') {
-    return { error: 'You do not have access to this resource' }
+  if (error.code === "42501") {
+    return { error: "You do not have access to this resource" };
   }
   // handle other codes
 }
@@ -408,6 +431,7 @@ migrations/
 ```
 
 Migration file naming for functions:
+
 ```
 {timestamp}_fn_{function_name}.sql
 ```
@@ -416,19 +440,19 @@ Migration file naming for functions:
 
 ## 9. Quick Reference Decision Table
 
-| Scenario | Approach |
-|---|---|
-| Get a single project by ID | Direct query |
-| List all projects for a tenant | Direct query |
-| Get project with member count + task stats | RPC |
-| Insert a new project | Direct query (simple) or RPC (if validation needed) |
-| Insert project + create default tasks in one transaction | RPC |
-| Search projects by name across multiple fields | RPC |
-| Dashboard summary with multiple aggregations | RPC |
-| Bulk update project statuses | RPC |
-| Delete a project (soft) | Direct query |
-| Delete project + cascade archive its tasks | RPC |
-| Calculate tenant usage metrics | RPC |
+| Scenario                                                 | Approach                                            |
+| -------------------------------------------------------- | --------------------------------------------------- |
+| Get a single project by ID                               | Direct query                                        |
+| List all projects for a tenant                           | Direct query                                        |
+| Get project with member count + task stats               | RPC                                                 |
+| Insert a new project                                     | Direct query (simple) or RPC (if validation needed) |
+| Insert project + create default tasks in one transaction | RPC                                                 |
+| Search projects by name across multiple fields           | RPC                                                 |
+| Dashboard summary with multiple aggregations             | RPC                                                 |
+| Bulk update project statuses                             | RPC                                                 |
+| Delete a project (soft)                                  | Direct query                                        |
+| Delete project + cascade archive its tasks               | RPC                                                 |
+| Calculate tenant usage metrics                           | RPC                                                 |
 
 ---
 

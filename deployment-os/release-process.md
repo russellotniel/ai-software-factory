@@ -47,13 +47,13 @@ The prefix must match the intended commit type. This makes PR title pre-filling 
 
 Not all merges are equal. The strategy must match the purpose of each transition.
 
-| Transition | Strategy | Reason |
-|---|---|---|
-| `feature/*` → `dev` | **Squash and merge** | Collapses WIP commits (`wip`, `fix typo`, `try this`) into one meaningful commit |
-| `fix/*` → `dev` | **Squash and merge** | One fix = one commit |
-| `dev` → `main` | **Merge commit (--no-ff)** | semantic-release reads individual commit messages on `main` to determine version bump — squash would collapse them into one and break versioning |
-| `hotfix/*` → `main` | **Squash and merge** | Single clean commit; semantic-release reads it as a patch |
-| `hotfix/*` → `dev` | **Merge commit** | Sync without rewriting `dev` history |
+| Transition          | Strategy                   | Reason                                                                                                                                           |
+| ------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `feature/*` → `dev` | **Squash and merge**       | Collapses WIP commits (`wip`, `fix typo`, `try this`) into one meaningful commit                                                                 |
+| `fix/*` → `dev`     | **Squash and merge**       | One fix = one commit                                                                                                                             |
+| `dev` → `main`      | **Merge commit (--no-ff)** | semantic-release reads individual commit messages on `main` to determine version bump — squash would collapse them into one and break versioning |
+| `hotfix/*` → `main` | **Squash and merge**       | Single clean commit; semantic-release reads it as a patch                                                                                        |
+| `hotfix/*` → `dev`  | **Merge commit**           | Sync without rewriting `dev` history                                                                                                             |
 
 **Why not rebase for `dev` → `main`?**
 Rebase rewrites SHA hashes. `dev` is a shared long-lived branch — rebasing it would diverge every developer's local copy and break the branch.
@@ -93,19 +93,19 @@ perf(cache): reduce cache tag granularity
 
 ### Types and version impact
 
-| Type | Version bump | When to use |
-|---|---|---|
-| `feat` | Minor (1.**X**.0) | New user-facing functionality |
-| `fix` | Patch (1.0.**X**) | Bug fix |
-| `feat!` or `BREAKING CHANGE:` in footer | Major (**X**.0.0) | Breaks backwards compatibility |
-| `perf` | Patch | Performance improvement |
-| `refactor` | No release | Code restructure, no behaviour change |
-| `test` | No release | Adding or updating tests |
-| `chore` | No release | Maintenance, dependency updates |
-| `docs` | No release | Documentation only |
-| `ci` | No release | CI/CD configuration |
-| `style` | No release | Formatting, whitespace |
-| `build` | No release | Build system changes |
+| Type                                    | Version bump      | When to use                           |
+| --------------------------------------- | ----------------- | ------------------------------------- |
+| `feat`                                  | Minor (1.**X**.0) | New user-facing functionality         |
+| `fix`                                   | Patch (1.0.**X**) | Bug fix                               |
+| `feat!` or `BREAKING CHANGE:` in footer | Major (**X**.0.0) | Breaks backwards compatibility        |
+| `perf`                                  | Patch             | Performance improvement               |
+| `refactor`                              | No release        | Code restructure, no behaviour change |
+| `test`                                  | No release        | Adding or updating tests              |
+| `chore`                                 | No release        | Maintenance, dependency updates       |
+| `docs`                                  | No release        | Documentation only                    |
+| `ci`                                    | No release        | CI/CD configuration                   |
+| `style`                                 | No release        | Formatting, whitespace                |
+| `build`                                 | No release        | Build system changes                  |
 
 ### Scope convention
 
@@ -144,10 +144,13 @@ If a push to `main` contains only `chore:`, `docs:`, `test:` or other non-releas
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     ["@semantic-release/npm", { "npmPublish": false }],
-    ["@semantic-release/git", {
-      "assets": ["CHANGELOG.md", "package.json"],
-      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
-    }],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "package.json"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
     "@semantic-release/github"
   ]
 }
@@ -221,7 +224,7 @@ Enable standalone output in `next.config.ts`:
 ```typescript
 const nextConfig: NextConfig = {
   cacheComponents: true,
-  output: 'standalone',
+  output: "standalone"
 };
 ```
 

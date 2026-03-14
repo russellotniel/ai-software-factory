@@ -6,11 +6,11 @@
 
 Every project runs exactly three environments. No exceptions.
 
-| Environment | Purpose | Supabase project | Deployment trigger |
-|---|---|---|---|
-| `local` | Individual developer machines | Separate per developer or shared dev project | Manual (`npm run dev`) |
-| `staging` | Integration testing, QA, client review | Dedicated staging project | PR to `main` (validated) |
-| `production` | Live application | Dedicated production project | Release tag (`v*`) |
+| Environment  | Purpose                                | Supabase project                             | Deployment trigger       |
+| ------------ | -------------------------------------- | -------------------------------------------- | ------------------------ |
+| `local`      | Individual developer machines          | Separate per developer or shared dev project | Manual (`npm run dev`)   |
+| `staging`    | Integration testing, QA, client review | Dedicated staging project                    | PR to `main` (validated) |
+| `production` | Live application                       | Dedicated production project                 | Release tag (`v*`)       |
 
 **Never share a Supabase project between environments.** Staging and production must be completely isolated — separate databases, separate auth configurations, separate service keys.
 
@@ -40,9 +40,13 @@ This library reads `NEXT_PUBLIC_*` variables from the server's environment at **
 
 ```tsx
 // app/layout.tsx
-import { PublicEnvScript } from 'next-runtime-env';
+import { PublicEnvScript } from "next-runtime-env";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <head>
@@ -61,8 +65,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 // After (runtime, read from window.__ENV on client, process.env on server)
-import { env } from 'next-runtime-env';
-const supabaseUrl = env('NEXT_PUBLIC_SUPABASE_URL');
+import { env } from "next-runtime-env";
+const supabaseUrl = env("NEXT_PUBLIC_SUPABASE_URL");
 ```
 
 **3. In Server Components, `process.env` still works as normal** — no change needed there. `env()` is primarily needed in Client Components.
@@ -141,12 +145,12 @@ Each namespace has its own: PostgreSQL instance, Supabase Auth, PostgREST, Kong 
 ### `next.config.ts`
 
 ```typescript
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
-  output: 'standalone',    // Required for minimal Docker image
-  productionBrowserSourceMaps: false,
+  output: "standalone", // Required for minimal Docker image
+  productionBrowserSourceMaps: false
 };
 
 export default nextConfig;
@@ -190,8 +194,8 @@ For features deployed but not yet enabled in production, use environment-based f
 ```typescript
 // lib/flags.ts
 export const flags = {
-  newBillingFlow: process.env.APP_ENV !== 'production',
-  aiRecommendations: process.env.ENABLE_AI === 'true',
+  newBillingFlow: process.env.APP_ENV !== "production",
+  aiRecommendations: process.env.ENABLE_AI === "true"
 } as const;
 ```
 

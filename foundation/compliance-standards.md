@@ -12,18 +12,18 @@
 
 Every project must address all OWASP Top 10 risks at minimum:
 
-| Risk | Implementation |
-|---|---|
-| Broken Access Control | RLS on every table, tenant isolation enforced at DB level |
-| Cryptographic Failures | HTTPS always, secrets in env vars, Supabase Vault for sensitive data |
-| Injection | Parameterized queries, RPCs, never raw SQL from client |
-| Insecure Design | Architecture OS review before implementation |
-| Security Misconfiguration | No `service_role` in client, RLS always on, anon key scoped |
-| Vulnerable Components | Dependency audits in CI pipeline |
-| Authentication Failures | Supabase Auth or Keycloak, no custom auth |
-| Integrity Failures | Signed JWTs, migration version control |
-| Logging Failures | Audit trail on all business tables (see audit-trail.md) |
-| SSRF | Server-side fetch validation, allowlists for external requests |
+| Risk                      | Implementation                                                       |
+| ------------------------- | -------------------------------------------------------------------- |
+| Broken Access Control     | RLS on every table, tenant isolation enforced at DB level            |
+| Cryptographic Failures    | HTTPS always, secrets in env vars, Supabase Vault for sensitive data |
+| Injection                 | Parameterized queries, RPCs, never raw SQL from client               |
+| Insecure Design           | Architecture OS review before implementation                         |
+| Security Misconfiguration | No `service_role` in client, RLS always on, anon key scoped          |
+| Vulnerable Components     | Dependency audits in CI pipeline                                     |
+| Authentication Failures   | Supabase Auth or Keycloak, no custom auth                            |
+| Integrity Failures        | Signed JWTs, migration version control                               |
+| Logging Failures          | Audit trail on all business tables (see audit-trail.md)              |
+| SSRF                      | Server-side fetch validation, allowlists for external requests       |
 
 ---
 
@@ -41,6 +41,7 @@ Apply when the project operates in healthcare, pharmaceutical, or other regulate
 ### Audit Trail — Enhanced
 
 Standard audit trail (see `architecture-os/audit-trail.md`) plus:
+
 - SELECT tracking via pg_audit for sensitive tables
 - DDL change tracking via pg_audit
 - Audit logs retained for minimum 7 years

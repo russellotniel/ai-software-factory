@@ -15,6 +15,7 @@ Every command enforces those standards.
 ## Core Standards (Always Apply)
 
 ### Stack
+
 - Frontend: Next.js 16 (App Router) + TypeScript
 - Backend: Supabase (PostgreSQL, self-hosted on Kubernetes)
 - Auth: Supabase Auth (public apps) or Keycloak (AD/LDAP apps)
@@ -23,6 +24,7 @@ Every command enforces those standards.
 - Runtime env: next-runtime-env (build-once, deploy-anywhere)
 
 ### Database
+
 - All tables in `public` schema (audit tables in `audit` schema)
 - RLS enabled on every table — no exceptions, in the same migration
 - Every table: id (UUID), tenant_id, created_at, updated_at, created_by, updated_by
@@ -30,27 +32,32 @@ Every command enforces those standards.
 - SECURITY INVOKER on all RPCs; SECURITY DEFINER only in `private` schema
 
 ### Security
+
 - No service_role keys in client code
 - OWASP Top 10 compliance on every project
 - Never commit secrets — Kubernetes Secrets + GitHub Actions Environments
 
 ### Multi-Tenancy
+
 - Organisation-based; tenant_id on every business table
 - active_tenant_id on profiles — no session variables
 - RLS policies use `(SELECT private.get_active_tenant_id())`
 
 ### Implementation
+
 - `requireAuth()` is always the first call in every Server Action
 - Input validated with `safeParse()` before any database call
 - Always return `ActionResult<T>` — never throw from Server Actions
 - `'use client'` pushed to leaf components only
 
 ### Caching
+
 - `'use cache'` + `cacheLife` + `cacheTag` for server-side caching
 - `unstable_cache` is deprecated — never use it
 - Never cache user-specific or RLS-governed data
 
 ### Branching
+
 - `feature/*`, `fix/*` → PR → `dev` (squash and merge)
 - `dev` → PR → `main` (merge commit — semantic-release needs individual messages)
 - `hotfix/*` → PR → `main` (squash) + sync PR to `dev`
@@ -65,6 +72,7 @@ Or run `/foundation:inject-standards` to auto-load relevant standards
 for what you're working on.
 
 Key documents:
+
 - `foundation/product-mission.md` — what this project is, who it's for
 - `foundation/tech-standards.md` — technology decisions
 - `foundation/auth-model.md` — auth path for this project
@@ -92,6 +100,7 @@ Key documents:
 ```
 
 Start every new project with:
+
 ```
 /foundation:discover
 ```
@@ -100,22 +109,22 @@ Start every new project with:
 
 ## All Commands
 
-| Command | Purpose |
-|---|---|
-| `/foundation:discover` | Document project standards, generate product-mission.md |
-| `/foundation:shape-spec` | Spec a feature — acceptance criteria, data shape, UI ref |
-| `/foundation:inject-standards` | Load relevant standards for current task |
-| `/design:import` | Import Figma or image mockup into design-os/screens/ |
-| `/design:system` | Document or update the design system tokens |
-| `/architecture:new-feature` | Schema migration, RPC, API contract |
-| `/architecture:review` | Audit schema and RPC against standards |
-| `/implementation:new-feature` | Scaffold Server Action + Zod schema + component |
-| `/implementation:review` | Audit implementation code against standards |
-| `/data-fetching:review` | Audit caching and server/client patterns |
-| `/qa:new-tests` | Generate unit, component, and E2E test scaffolding |
-| `/qa:fix` | Run tests → fix failures → re-run until green |
-| `/deployment:k8s-config` | Generate Kubernetes manifests sized for this project |
-| `/deployment:release` | Pre-release checklist and production deploy walkthrough |
+| Command                        | Purpose                                                  |
+| ------------------------------ | -------------------------------------------------------- |
+| `/foundation:discover`         | Document project standards, generate product-mission.md  |
+| `/foundation:shape-spec`       | Spec a feature — acceptance criteria, data shape, UI ref |
+| `/foundation:inject-standards` | Load relevant standards for current task                 |
+| `/design:import`               | Import Figma or image mockup into design-os/screens/     |
+| `/design:system`               | Document or update the design system tokens              |
+| `/architecture:new-feature`    | Schema migration, RPC, API contract                      |
+| `/architecture:review`         | Audit schema and RPC against standards                   |
+| `/implementation:new-feature`  | Scaffold Server Action + Zod schema + component          |
+| `/implementation:review`       | Audit implementation code against standards              |
+| `/data-fetching:review`        | Audit caching and server/client patterns                 |
+| `/qa:new-tests`                | Generate unit, component, and E2E test scaffolding       |
+| `/qa:fix`                      | Run tests → fix failures → re-run until green            |
+| `/deployment:k8s-config`       | Generate Kubernetes manifests sized for this project     |
+| `/deployment:release`          | Pre-release checklist and production deploy walkthrough  |
 
 ---
 

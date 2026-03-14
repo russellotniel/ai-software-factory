@@ -10,15 +10,15 @@
 
 We use the **table + trigger approach** over pg_audit as the primary audit mechanism.
 
-| | Table + Trigger | pg_audit |
-|---|---|---|
-| Storage | Database table | Postgres log files |
-| Queryable | ✅ Yes | ❌ No |
-| UI-surfaceable | ✅ Yes | ❌ No |
-| Per-table control | ✅ Yes | ✅ Yes (complex) |
-| Captures SELECT | ❌ No | ✅ Yes |
-| Captures DDL | ❌ No | ✅ Yes |
-| Setup complexity | Low | High |
+|                   | Table + Trigger | pg_audit           |
+| ----------------- | --------------- | ------------------ |
+| Storage           | Database table  | Postgres log files |
+| Queryable         | ✅ Yes          | ❌ No              |
+| UI-surfaceable    | ✅ Yes          | ❌ No              |
+| Per-table control | ✅ Yes          | ✅ Yes (complex)   |
+| Captures SELECT   | ❌ No           | ✅ Yes             |
+| Captures DDL      | ❌ No           | ✅ Yes             |
+| Setup complexity  | Low             | High               |
 
 **For regulated projects:** supplement with pg_audit to capture SELECT and DDL activity.
 **For all projects:** table + trigger is the primary queryable audit trail.
@@ -128,6 +128,7 @@ See `architecture-os/schema-conventions.md` — migration template.
 ## Which Tables Get Audit Triggers
 
 ### Always (business-critical)
+
 - `public.profiles`
 - `public.tenants`
 - `public.tenant_members`
@@ -135,10 +136,12 @@ See `architecture-os/schema-conventions.md` — migration template.
 - Any financial or transactional table
 
 ### Optional (lower risk)
+
 - Config / lookup tables — decide per project
 - Session or ephemeral tables — usually not needed
 
 ### Never
+
 - `audit.audit_logs` itself
 - Auth schema tables (managed by Supabase)
 
@@ -208,10 +211,10 @@ pg_audit logs go to Postgres log files — export and retain per compliance requ
 
 ## Retention Policy
 
-| Project Type | Retention |
-|---|---|
-| Standard | Minimum 1 year |
-| Regulated (healthcare, pharma) | Minimum 7 years |
-| Financial | Per regulatory requirement |
+| Project Type                   | Retention                  |
+| ------------------------------ | -------------------------- |
+| Standard                       | Minimum 1 year             |
+| Regulated (healthcare, pharma) | Minimum 7 years            |
+| Financial                      | Per regulatory requirement |
 
 Implement retention via a scheduled function or pg_cron job that archives old records.

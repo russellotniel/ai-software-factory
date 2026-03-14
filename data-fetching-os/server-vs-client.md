@@ -182,12 +182,12 @@ All writes go through Server Actions. Client Components trigger the action and u
 
 ```typescript
 // features/projects/actions.ts
-'use server';
-import { requireAuth } from '@/lib/auth/server';
-import { createServerClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
-import type { ActionResult } from '@/lib/types';
-import { CreateProjectSchema } from './schemas';
+"use server";
+import { requireAuth } from "@/lib/auth/server";
+import { createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import type { ActionResult } from "@/lib/types";
+import { CreateProjectSchema } from "./schemas";
 
 export async function createProject(
   _prev: unknown,
@@ -197,19 +197,23 @@ export async function createProject(
   const parsed = CreateProjectSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
-    return { success: false, error: 'VALIDATION_ERROR', fieldErrors: parsed.error.flatten().fieldErrors };
+    return {
+      success: false,
+      error: "VALIDATION_ERROR",
+      fieldErrors: parsed.error.flatten().fieldErrors
+    };
   }
 
   const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from('projects')
+    .from("projects")
     .insert({ ...parsed.data, tenant_id: tenantId })
-    .select('id')
+    .select("id")
     .single();
 
-  if (error) return { success: false, error: 'DB_ERROR' };
+  if (error) return { success: false, error: "DB_ERROR" };
 
-  revalidatePath('/dashboard/projects');
+  revalidatePath("/dashboard/projects");
   return { success: true, data: { id: data.id } };
 }
 ```
@@ -250,18 +254,18 @@ export function CreateProjectForm({ tenantId }: { tenantId: string }) {
 
 The right client depends on where the code runs.
 
-| Context | Client | Import |
-|---|---|---|
-| Server Components, Server Actions, Route Handlers | `createServerClient()` | `@/lib/supabase/server` |
-| Client Components (browser only) | `createBrowserClient()` | `@/lib/supabase/client` |
+| Context                                           | Client                  | Import                  |
+| ------------------------------------------------- | ----------------------- | ----------------------- |
+| Server Components, Server Actions, Route Handlers | `createServerClient()`  | `@/lib/supabase/server` |
+| Client Components (browser only)                  | `createBrowserClient()` | `@/lib/supabase/client` |
 
 **Never use the browser client in Server Components or Server Actions.** It carries the anon key and does not have access to the server-side session cookie.
 
 ```typescript
 // lib/supabase/server.ts — async, reads cookies for the session
-import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import type { Database } from '@/types/supabase';
+import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { Database } from "@/types/supabase";
 
 export async function createServerClient() {
   const cookieStore = await cookies();
@@ -275,8 +279,8 @@ export async function createServerClient() {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
-        },
-      },
+        }
+      }
     }
   );
 }
@@ -284,8 +288,8 @@ export async function createServerClient() {
 
 ```typescript
 // lib/supabase/client.ts — singleton, lives in browser
-import { createBrowserClient } from '@supabase/ssr';
-import type { Database } from '@/types/supabase';
+import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "@/types/supabase";
 
 export function createBrowserClientInstance() {
   return createBrowserClient<Database>(
@@ -300,6 +304,7 @@ export function createBrowserClientInstance() {
 ## What Belongs on the Server vs Client
 
 ### Always on the server
+
 - `requireAuth()` / session validation
 - Any query involving `SERVICE_ROLE_KEY`
 - Queries where RLS is the security boundary (never call from client if the intent is security)
@@ -307,12 +312,14 @@ export function createBrowserClientInstance() {
 - Aggregations or joins that are expensive and don't change per interaction
 
 ### Always on the client
+
 - Anything that responds to user interaction in real-time (search, filter, infinite scroll)
 - Optimistic updates
 - Subscriptions (Supabase Realtime)
 - Polling
 
 ### Either (decide per feature)
+
 - Initial page data — prefer server; use `HydrationBoundary` if the client also needs to refetch
 - List pages with filters — fetch unfiltered server-side, filter client-side via TanStack Query with `enabled`
 
@@ -320,15 +327,15 @@ export function createBrowserClientInstance() {
 
 ## Anti-Patterns
 
-| Anti-pattern | Problem | Correct approach |
-|---|---|---|
-| `useEffect` + `fetch` in a Client Component | No caching, no deduplication, no DevTools | `useQuery` with TanStack Query |
-| Supabase query in a Client Component without TanStack Query | No cache, double-fetches on re-render | Wrap in `useQuery` |
-| Calling a Server Action from `useEffect` | Actions run on mount, bypassing form state management | Use `useActionState` for form-bound actions; `useMutation` for programmatic triggers |
-| Importing server-only code into a Client Component | Runtime error — `cookies()`, `headers()` don't exist in the browser | Mark server utilities with `import 'server-only'` |
-| `createServerClient()` in a Client Component | Can't call `cookies()` in the browser | Use `createBrowserClientInstance()` |
-| Fetching inside a `useEffect` for initial data | Loading spinner on every mount | Prefetch in Server Component with `HydrationBoundary` |
-| Returning large data sets from Server Actions | Actions are not designed for data fetching | Use Server Components or `useQuery` for reads |
+| Anti-pattern                                                | Problem                                                             | Correct approach                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `useEffect` + `fetch` in a Client Component                 | No caching, no deduplication, no DevTools                           | `useQuery` with TanStack Query                                                       |
+| Supabase query in a Client Component without TanStack Query | No cache, double-fetches on re-render                               | Wrap in `useQuery`                                                                   |
+| Calling a Server Action from `useEffect`                    | Actions run on mount, bypassing form state management               | Use `useActionState` for form-bound actions; `useMutation` for programmatic triggers |
+| Importing server-only code into a Client Component          | Runtime error — `cookies()`, `headers()` don't exist in the browser | Mark server utilities with `import 'server-only'`                                    |
+| `createServerClient()` in a Client Component                | Can't call `cookies()` in the browser                               | Use `createBrowserClientInstance()`                                                  |
+| Fetching inside a `useEffect` for initial data              | Loading spinner on every mount                                      | Prefetch in Server Component with `HydrationBoundary`                                |
+| Returning large data sets from Server Actions               | Actions are not designed for data fetching                          | Use Server Components or `useQuery` for reads                                        |
 
 ---
 
@@ -337,10 +344,10 @@ export function createBrowserClientInstance() {
 Supabase Realtime is client-only. Subscriptions open a WebSocket from the browser. The pattern is: server-fetch the initial data, subscribe client-side for updates.
 
 ```typescript
-'use client';
-import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { createBrowserClientInstance } from '@/lib/supabase/client';
+"use client";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { createBrowserClientInstance } from "@/lib/supabase/client";
 
 export function useProjectsRealtime(tenantId: string) {
   const queryClient = useQueryClient();
@@ -351,16 +358,16 @@ export function useProjectsRealtime(tenantId: string) {
     const channel = supabase
       .channel(`projects:${tenantId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'projects',
-          filter: `tenant_id=eq.${tenantId}`,
+          event: "*",
+          schema: "public",
+          table: "projects",
+          filter: `tenant_id=eq.${tenantId}`
         },
         () => {
           // Invalidate TanStack Query cache — triggers a refetch
-          queryClient.invalidateQueries({ queryKey: ['projects', tenantId] });
+          queryClient.invalidateQueries({ queryKey: ["projects", tenantId] });
         }
       )
       .subscribe();

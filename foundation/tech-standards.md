@@ -8,15 +8,15 @@
 
 ## Core Stack
 
-| Layer | Technology | Version | Notes |
-|---|---|---|---|
-| Frontend | Next.js (App Router) | 16.x | Always |
-| Database | Supabase (PostgreSQL) | Latest stable | Always |
-| Auth | Supabase Auth or Keycloak | — | See decision fork below |
-| Styling | Tailwind CSS | 4.x | Always |
-| Language | TypeScript | 5.x | Always — no plain JavaScript |
-| Runtime | Node.js | 20.9+ | Next.js 16 minimum requirement |
-| Runtime env | next-runtime-env | Latest | Build-once, deploy-anywhere — see `deployment-os/environments.md` |
+| Layer       | Technology                | Version       | Notes                                                             |
+| ----------- | ------------------------- | ------------- | ----------------------------------------------------------------- |
+| Frontend    | Next.js (App Router)      | 16.x          | Always                                                            |
+| Database    | Supabase (PostgreSQL)     | Latest stable | Always                                                            |
+| Auth        | Supabase Auth or Keycloak | —             | See decision fork below                                           |
+| Styling     | Tailwind CSS              | 4.x           | Always                                                            |
+| Language    | TypeScript                | 5.x           | Always — no plain JavaScript                                      |
+| Runtime     | Node.js                   | 20.9+         | Next.js 16 minimum requirement                                    |
+| Runtime env | next-runtime-env          | Latest        | Build-once, deploy-anywhere — see `deployment-os/environments.md` |
 
 ### Tooling (Next.js 16 defaults)
 
@@ -26,13 +26,13 @@
 
 ```typescript
 // next.config.ts — baseline for all projects
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,            // Required for 'use cache' directive
-  reactCompiler: false,             // Enable per-project after evaluation
+  cacheComponents: true, // Required for 'use cache' directive
+  reactCompiler: false, // Enable per-project after evaluation
   typescript: { ignoreBuildErrors: false },
-  eslint: { ignoreDuringBuilds: false },
+  eslint: { ignoreDuringBuilds: false }
 };
 
 export default nextConfig;
@@ -72,11 +72,11 @@ Full rules in `architecture-os/rpc-standards.md`.
 
 Every project runs three environments:
 
-| Environment | Purpose |
-|---|---|
-| `local` | Individual developer machines |
-| `staging` | Integration testing, QA, client review |
-| `production` | Live application |
+| Environment  | Purpose                                |
+| ------------ | -------------------------------------- |
+| `local`      | Individual developer machines          |
+| `staging`    | Integration testing, QA, client review |
+| `production` | Live application                       |
 
 Separate Supabase projects for each environment.
 Same schema across all environments.
