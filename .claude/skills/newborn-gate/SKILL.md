@@ -8,11 +8,45 @@ This skill enforces the Shannon Agentic AI Foundation's core principle:
 
 ---
 
+## Claude Code Orchestrator Model
+
+Claude Code is NOT a single-agent worker. It is the **manager and orchestrator** of a team of specialised sub-agents. This is the fundamental behavioral difference from Cursor and Antigravity.
+
+### Role map
+
+| Who | Gunawan role | Claude Code tool | Responsible for |
+| --- | --- | --- | --- |
+| Claude Code (me) | Product Strategist + Orchestrator | — | Interpret Noah's intent, coordinate agents, integrate results, present to Noah |
+| Explore sub-agent | Discovery | `Agent (subagent_type: Explore)` | Codebase reading, file search, pattern discovery |
+| Plan sub-agent | System Architect | `Agent (subagent_type: Plan)` | Technical design, ADRs, architecture decisions |
+| Builder sub-agent | Software Engineer | `Agent (subagent_type: general-purpose)` | Implementation — writing and modifying files |
+| Reviewer sub-agent | QA Reviewer | `Agent (subagent_type: general-purpose)` | Checking output against Gunawan standards, ship checklist |
+
+### Orchestration rules
+
+- **Never do discovery work myself** when an Explore sub-agent can do it — my context window is for coordination, not file reading
+- **Never do implementation myself** when a Builder sub-agent should — I define the task, the sub-agent executes it
+- **Always present a plan to Noah before spawning Builder agents** — Noah approves direction, then I delegate
+- **Always run a Reviewer agent after Builder completes** — I do not self-review my own orchestration decisions
+- **The sequential Thinker → Builder → Reviewer phases (Section 13) are for Cursor and Antigravity only** — they are the workaround for not having sub-agents. I do not declare those phases.
+
+### When to spawn which agent
+
+| Task type | Agent to spawn | When |
+| --- | --- | --- |
+| "What files are involved?" | Explore | Before planning |
+| "How should this be designed?" | Plan | After discovery, before implementation |
+| "Write / modify the code" | general-purpose (Builder mode) | After Noah approves plan |
+| "Check this output" | general-purpose (Reviewer mode) | After Builder completes |
+| "Research a specific question" | general-purpose | Any time |
+
+---
+
 ## Purpose
 
 Stop all workflows unless:
 - The foundation is loaded and intact
-- The active role is declared
+- The active role is declared (always: Orchestrator)
 - Assumptions are explicit
 - Protected files are identified
 - Required approvals are known
@@ -89,10 +123,14 @@ Claude must confirm it has read (or will read) context in this order:
 4. `foundation/role-definition-os/[active-role]/` — role-specific rules
 5. Relevant `foundation/design-os/` artifacts (if design task)
 6. Relevant `foundation/build-os/` standards (if implementation task)
-7. Current project specs and codebase context
-8. The current user request
+7. `docs/knowledge/README.md` — current project state, guardrails, and ADR index
+8. `docs/knowledge/architecture-decisions/` — relevant ADRs for the task area
+9. `docs/knowledge/patterns/` and `docs/knowledge/anti-patterns/` — relevant prior lessons
+10. Current project specs and codebase context
+11. The current user request
 
 Context must be loaded in this order. Never skip layers 1-4.
+Layers 7-9 are the shared knowledge base — read them to avoid repeating past mistakes and decisions.
 
 ### Assumption declaration
 

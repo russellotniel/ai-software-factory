@@ -8,52 +8,34 @@
 
 ## Core Stack
 
-| Layer       | Technology                | Version       | Notes                                                             |
-| ----------- | ------------------------- | ------------- | ----------------------------------------------------------------- |
-| Frontend    | Next.js (App Router)      | 16.x          | Always                                                            |
-| Database    | Supabase (PostgreSQL)     | Latest stable | Always                                                            |
-| Auth        | Supabase Auth or Keycloak | —             | See decision fork below                                           |
-| Styling     | Tailwind CSS              | 4.x           | Always                                                            |
-| Language    | TypeScript                | 5.x           | Always — no plain JavaScript                                      |
-| Runtime     | Node.js                   | 20.9+         | Next.js 16 minimum requirement                                    |
-| Runtime env | next-runtime-env          | Latest        | Build-once, deploy-anywhere — see `deployment-os/environments.md` |
+| Layer    | Technology                  | Version       | Notes                                                                       |
+| -------- | --------------------------- | ------------- | --------------------------------------------------------------------------- |
+| Frontend | Expo (React Native)         | SDK 52+       | Always                                                                      |
+| Database | Supabase (PostgreSQL)       | Latest stable | Always                                                                      |
+| Auth     | Supabase Auth               | —             | Email, OAuth (Google, Apple), OTP, magic link                               |
+| Styling  | NativeWind + RN StyleSheet  | Latest        | NativeWind for Tailwind-compatible utilities; StyleSheet for custom         |
+| Language | TypeScript                  | 5.x           | Always — no plain JavaScript                                                |
+| Runtime  | Node.js                     | 20.9+         | For EAS CLI tooling                                                         |
+| Env vars | `EXPO_PUBLIC_*`             | —             | Client-exposed; validated at startup via Zod (`src/constants/env.ts`)       |
 
-### Tooling (Next.js 16 defaults)
+### Tooling (Expo defaults)
 
-- **Bundler:** Turbopack — stable in Next.js 16, default for both `next dev` and `next build`. Do not add `--turbopack` flags; it is the default. Use `--webpack` only if a plugin has not yet been migrated.
-- **React Compiler:** Stable in Next.js 16, opt-in via `reactCompiler: true` in `next.config.ts`. When enabled, automatically memoises components and removes the need for `useMemo`, `useCallback`, and `React.memo` in most cases. Enable on new projects; evaluate on existing ones.
-- **Cache Components:** Enabled via `cacheComponents: true` in `next.config.ts`. Required to use the `'use cache'` directive, `cacheLife`, and `cacheTag`. Enable on all projects.
-
-```typescript
-// next.config.ts — baseline for all projects
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  cacheComponents: true, // Required for 'use cache' directive
-  reactCompiler: false, // Enable per-project after evaluation
-  typescript: { ignoreBuildErrors: false },
-  eslint: { ignoreDuringBuilds: false }
-};
-
-export default nextConfig;
-```
+- **Bundler:** Metro — default for all Expo projects. Do not replace with other bundlers.
+- **Router:** Expo Router (file-based, similar to Next.js App Router). Routes live in `src/app/`.
+- **Build:** EAS Build — cloud build service for iOS and Android. Local builds only for dev.
+- **Submit:** EAS Submit — automates App Store and Play Store submission.
+- **OTA Updates:** EAS Update — over-the-air JS bundle updates without app store re-submission.
+- **Env vars:** `EXPO_PUBLIC_*` vars are bundled into the client. Non-prefixed vars are server-only (Expo API routes). Validate all required vars at startup via Zod.
 
 ---
 
 ## Auth Decision Fork
 
-```
-Does this project connect to AD / LDAP?
-├── YES → Keycloak + Supabase
-│         Keycloak = authentication only (who are you?)
-│         Supabase = authorization (what can you do?)
-│
-└── NO  → Supabase Auth only
-          Handles email, OAuth, OTP, magic link
-```
+This is a mobile app — **Supabase Auth only.**
 
-**Keycloak is strictly for user federation — never for role management.**
-Roles, permissions, and user management always live in Supabase regardless of auth path.
+Handles email, OAuth (Google, Apple), OTP, and magic link. Keycloak is not used in this project.
+
+Roles, permissions, and user management always live in Supabase.
 
 ---
 

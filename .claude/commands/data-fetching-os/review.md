@@ -17,33 +17,31 @@ For each file, check:
 
 ### Caching
 
-- [ ] Supabase queries wrapped in `'use cache'` functions where appropriate
-- [ ] `cacheTag` set for granular invalidation
-- [ ] `cacheLife` set explicitly
-- [ ] `revalidateTag` called with two args: `revalidateTag('tag', 'max')`
-- [ ] User-specific or RLS-governed data is NOT cached
-- [ ] Auth state is NOT cached
-- [ ] `unstable_cache` is NOT used (deprecated in Next.js 16)
+- [ ] TanStack Query is the only caching layer — no `'use cache'`, `unstable_cache`, `cacheTag`, `cacheLife`, or `revalidateTag` (these are Next.js only, not applicable in React Native)
+- [ ] `staleTime` is set explicitly on each query (default: 5 minutes)
+- [ ] `gcTime` is set at QueryClient level (default: 10 minutes)
+- [ ] User-specific or RLS-governed data is NOT cached beyond the TanStack Query session
+- [ ] Auth state is NOT cached in TanStack Query — it lives in `UserContext`
+- [ ] Realtime subscription events invalidate via `queryClient.invalidateQueries()`
 
-### Server vs Client
+### Data Fetching
 
-- [ ] Default to Server Components — `'use client'` only at leaf level
-- [ ] No `useEffect` + `fetch` patterns
-- [ ] TanStack Query for all client-side data fetching
-- [ ] `HydrationBoundary` + `prefetchQuery` where client component needs
-      data on first render without a loading spinner
-- [ ] Realtime subscriptions invalidate via `queryClient.invalidateQueries()`
+- [ ] All data fetching uses TanStack Query (`useQuery`, `useMutation`, `useInfiniteQuery`)
+- [ ] No `useEffect` + `fetch` for data fetching — known violation: `useLocationAutocomplete` (to be migrated)
+- [ ] No direct Supabase calls in component bodies — calls live inside `queryFn` or `mutationFn`
+- [ ] Expo API routes used only for server-side secret proxying (Google Maps), not for general data fetching
+- [ ] `queryClient.invalidateQueries()` called in `onSuccess` after every mutation
 
 ### Report format
 
 ```
-❌ src/features/dashboard/components/DashboardStats.tsx
-   Issue: Direct Supabase query in Client Component via useEffect+fetch
+❌ src/hooks/useLocationAutocomplete.ts
+   Issue: Uses useEffect + fetch instead of useQuery
    Standard: data-fetching-os/server-vs-client.md
-   Fix: Move query to Server Component parent, pass data as props
+   Fix: Migrate to useQuery with debounced queryKey
 
-✅ src/features/projects/queries.ts — Correctly wrapped with 'use cache',
-   cacheTag and cacheLife set
+✅ src/hooks/usePlaceDetails.ts — correctly uses useQuery,
+   Zod safeParse on response, AppError thrown on failure
 ```
 
 ---

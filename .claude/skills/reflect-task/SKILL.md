@@ -66,11 +66,16 @@ Generate and output this at the end of every qualifying task:
 
 ## Writing the reflection
 
-Ask the operator: "Should I write this reflection to `foundation/feedback-os/reflections/[date]-[task-slug].md`?"
+Write the reflection to `docs/knowledge/reflections/REFLECTION-[YYYY-MM-DD]-[task-slug].md`.
 
-On confirmation, write the file.
+Use the template at `docs/knowledge/reflections/_template.md`.
 
-Reflections accumulate over time. They become the institutional memory of the AI Software Factory.
+Do not ask for confirmation — writing the reflection is mandatory after every qualifying task.
+If an architectural decision was made, also write `docs/knowledge/architecture-decisions/ADR-NNN-title.md`.
+If a pattern was found, also write `docs/knowledge/patterns/PATTERN-title.md`.
+If a failure occurred, also write `docs/knowledge/postmortems/POSTMORTEM-[YYYY-MM-DD]-title.md`.
+
+Reflections accumulate over time. They are shared across Claude Code, Cursor, and Antigravity — the institutional memory of the whole team, not just this agent.
 
 ---
 

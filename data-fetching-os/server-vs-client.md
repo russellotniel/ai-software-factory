@@ -1,382 +1,230 @@
-# Server vs Client Data Fetching
+# Data Fetching
 
 > Part of the AI Software Factory — Data Fetching OS
+> Written for **Expo (React Native) + Supabase**
 
 ## The Core Rule
 
-**Default to Server Components. Push `'use client'` to the leaves.**
-
-A Server Component that renders a Client Component is fine. A Client Component cannot render a Server Component inside it. Every time you add `'use client'`, you draw a boundary — everything below that boundary ships to the browser.
+**All data fetching uses TanStack Query.** React Native has no Server Components — every component is client-side. `useEffect` + `fetch` and bare `useEffect` + Supabase calls are banned. TanStack Query handles caching, deduplication, background refetch, loading states, and error states.
 
 ---
 
 ## Decision Tree
 
 ```
-Is this data needed for the initial render?
+Does this component need data?
 │
-├── YES — Does it differ per user / depend on auth?
-│   │
-│   ├── YES — Fetch in Server Component
-│   │         • await supabase query directly
-│   │         • requireAuth() to get tenantId / userId
-│   │         • Pass result as props to Client Components
-│   │         • Use HydrationBoundary if Client Component also
-│   │           needs to refetch / mutate this data later
-│   │
-│   └── NO — Is it shared across all users?
-│             • 'use cache' directive with cacheLife + cacheTag
-│             • Or fetch at build time (static route)
+├── READ (display data)
+│   └── useQuery (TanStack Query)
+│         • queryFn calls supabase directly
+│         • validate response with Zod safeParse
+│         • queryKey: [resource, tenantId, ...filters]
 │
-└── NO — Is it triggered by user interaction?
-    │
-    ├── User interacts → data changes (mutation)
-    │   • Server Action — always
-    │   • useMutation (TanStack Query) to manage state
-    │
-    └── User interacts → data loads (lazy / conditional)
-        • useQuery (TanStack Query) in a Client Component
-        • Prefetch with HydrationBoundary if first load needs to be fast
+├── WRITE (create / update / delete)
+│   └── useMutation (TanStack Query)
+│         • mutationFn calls supabase directly
+│         • onSuccess: invalidate affected queryKeys
+│         • validate input with Zod safeParse before calling supabase
+│
+└── LIVE (real-time updates)
+    └── useEffect subscription + invalidateQueries
+          • supabase.channel(...).on('postgres_changes', ...)
+          • on event: queryClient.invalidateQueries(...)
+          • cleanup: supabase.removeChannel(channel) on unmount
 ```
 
 ---
 
 ## Patterns
 
-### Pattern 1: Pure Server Fetch (Most Common)
+### Pattern 1: Query (Most Common)
 
-Data is fetched on the server and rendered entirely in Server Components. No client-side data fetching needed.
-
-**Use when:** The page or section is read-only, doesn't require real-time updates, and the user doesn't need to interact with or mutate the data after load.
+Use for all read operations — lists, detail views, profile data, etc.
 
 ```typescript
-// app/(dashboard)/projects/[id]/page.tsx
-import { requireAuth } from '@/lib/auth/server';
-import { createServerClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+// hooks/usePlacesQuery.ts
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
+import { PlaceSchema } from '@/types';
+import { AppError } from '@/utils/error';
+import { z } from 'zod';
 
-interface Props {
-  params: { id: string };
-}
-
-export default async function ProjectPage({ params }: Props) {
-  const { tenantId } = await requireAuth();
-  const supabase = await createServerClient();
-
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, name, description, status, created_at, members(id, display_name)')
-    .eq('id', params.id)
-    .eq('tenant_id', tenantId)
-    .single();
-
-  if (!project) notFound();
-
-  return <ProjectDetail project={project} />;
-}
-```
-
-**No TanStack Query, no `useEffect`, no `useState` for data.** Just `await`.
-
----
-
-### Pattern 2: Server Fetch + Client Interactivity (Standard)
-
-Data is fetched on the server for the initial render, then the Client Component manages further interaction, mutations, and refetching.
-
-**Use when:** A page has data on load AND the user can mutate or filter that data interactively.
-
-```typescript
-// app/(dashboard)/projects/page.tsx — Server Component
-import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
-import { makeQueryClient } from '@/lib/query-client';
-import { requireAuth } from '@/lib/auth/server';
-import { createServerClient } from '@/lib/supabase/server';
-import { ProjectsDashboard } from './_components/ProjectsDashboard';
-
-export default async function ProjectsPage() {
-  const { tenantId } = await requireAuth();
-  const queryClient = makeQueryClient();
-
-  await queryClient.prefetchQuery({
-    queryKey: ['projects', tenantId],
+export function usePlacesQuery(tenantId: string) {
+  return useQuery({
+    queryKey: ['places', tenantId],
     queryFn: async () => {
-      const supabase = await createServerClient();
-      const { data } = await supabase
-        .from('projects')
-        .select('id, name, status, created_at')
+      const { data, error } = await supabase
+        .from('places')
+        .select('*')
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false });
-      return data ?? [];
+
+      if (error) throw AppError.from(error, 'usePlacesQuery');
+
+      const parsed = z.array(PlaceSchema).safeParse(data);
+      if (!parsed.success) throw AppError.from(parsed.error, 'usePlacesQuery:parse');
+      return parsed.data;
     },
+    enabled: !!tenantId,
   });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <ProjectsDashboard tenantId={tenantId} />
-    </HydrationBoundary>
-  );
 }
 ```
 
 ```typescript
-// _components/ProjectsDashboard.tsx — Client Component
-'use client';
-import { useProjects } from '@/features/projects/queries';
+// features/place/PlaceScreen.tsx
+export function PlaceScreen() {
+  const { userData } = useContext(UserContext);
+  const { data: places, isLoading, isError } = usePlacesQuery(userData?.tenantId);
 
-interface Props {
-  tenantId: string;
-}
-
-export function ProjectsDashboard({ tenantId }: Props) {
-  // Data is already in cache from server prefetch — no loading spinner on first render
-  const { data: projects, isLoading } = useProjects(tenantId);
-
-  return (
-    <div>
-      {projects?.map(project => (
-        <ProjectCard key={project.id} project={project} />
-      ))}
-    </div>
-  );
-}
-```
-
----
-
-### Pattern 3: Lazy / Conditional Client Fetch
-
-Data is not needed on initial render — it loads in response to a user action (tab switch, filter, modal open, infinite scroll).
-
-**Use when:** Data is behind a user interaction, or the volume of data makes it impractical to load everything server-side.
-
-```typescript
-'use client';
-import { useQuery } from '@tanstack/react-query';
-
-interface Props {
-  tenantId: string;
-  selectedStatus: string;
-}
-
-export function ProjectsByStatus({ tenantId, selectedStatus }: Props) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['projects', tenantId, { status: selectedStatus }],
-    queryFn: () => fetchProjectsByStatus(tenantId, selectedStatus),
-    // Only fetch when a status is selected
-    enabled: !!selectedStatus,
-  });
-
-  if (isLoading) return <ProjectsSkeleton />;
+  if (isLoading) return <LoadingSkeleton />;
   if (isError) return <ErrorState />;
 
-  return <ProjectList projects={data ?? []} />;
+  return <PlaceList places={places ?? []} />;
 }
 ```
 
 ---
 
-### Pattern 4: Mutations with Server Actions
+### Pattern 2: Mutation
 
-All writes go through Server Actions. Client Components trigger the action and use TanStack Query to sync the cache.
+Use for all writes — create, update, delete.
 
 ```typescript
-// features/projects/actions.ts
-"use server";
-import { requireAuth } from "@/lib/auth/server";
-import { createServerClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import type { ActionResult } from "@/lib/types";
-import { CreateProjectSchema } from "./schemas";
+// hooks/useCreateMoment.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
+import { CreateMomentSchema } from '@/types';
+import { AppError } from '@/utils/error';
+import type { z } from 'zod';
 
-export async function createProject(
-  _prev: unknown,
-  formData: FormData
-): Promise<ActionResult<{ id: string }>> {
-  const { tenantId } = await requireAuth();
-  const parsed = CreateProjectSchema.safeParse(Object.fromEntries(formData));
+type Input = z.infer<typeof CreateMomentSchema>;
 
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: "VALIDATION_ERROR",
-      fieldErrors: parsed.error.flatten().fieldErrors
-    };
-  }
+export function useCreateMoment(tenantId: string) {
+  const queryClient = useQueryClient();
 
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("projects")
-    .insert({ ...parsed.data, tenant_id: tenantId })
-    .select("id")
-    .single();
+  return useMutation({
+    mutationFn: async (input: Input) => {
+      const parsed = CreateMomentSchema.safeParse(input);
+      if (!parsed.success) throw AppError.from(parsed.error, 'useCreateMoment:validate');
 
-  if (error) return { success: false, error: "DB_ERROR" };
+      const { data, error } = await supabase
+        .from('moments')
+        .insert(parsed.data)
+        .select()
+        .single();
 
-  revalidatePath("/dashboard/projects");
-  return { success: true, data: { id: data.id } };
+      if (error) throw AppError.from(error, 'useCreateMoment:insert');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['moments', tenantId] });
+    },
+  });
 }
 ```
 
-```typescript
-// _components/CreateProjectForm.tsx
-'use client';
-import { useActionState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { createProject } from '../actions';
+---
 
-export function CreateProjectForm({ tenantId }: { tenantId: string }) {
+### Pattern 3: RPC (Complex Operations)
+
+For joins, aggregations, or business logic — use Supabase RPC instead of direct table queries.
+
+```typescript
+// hooks/useActivityFeedQuery.ts
+export function useActivityFeedQuery(tenantId: string) {
+  return useQuery({
+    queryKey: ['activity-feed', tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc('get_activity_feed', { p_tenant_id: tenantId });
+
+      if (error) throw AppError.from(error, 'useActivityFeedQuery');
+      return data;
+    },
+    enabled: !!tenantId,
+  });
+}
+```
+
+Full RPC standards: `architecture-os/rpc-standards.md`
+
+---
+
+### Pattern 4: Realtime Subscription
+
+Initial data fetched via `useQuery`. Subscription invalidates cache on change.
+
+```typescript
+// hooks/useMomentsRealtime.ts
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
+
+export function useMomentsRealtime(tenantId: string) {
   const queryClient = useQueryClient();
-  const [state, formAction, isPending] = useActionState(createProject, null);
 
   useEffect(() => {
-    if (state?.success) {
-      queryClient.invalidateQueries({ queryKey: ['projects', tenantId] });
-    }
-  }, [state, tenantId, queryClient]);
+    const channel = supabase
+      .channel(`moments:${tenantId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'moments', filter: `tenant_id=eq.${tenantId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['moments', tenantId] });
+        },
+      )
+      .subscribe();
 
-  return (
-    <form action={formAction}>
-      <input name="name" required />
-      {state?.success === false && <p>{state.error}</p>}
-      <button type="submit" disabled={isPending}>
-        {isPending ? 'Creating...' : 'Create Project'}
-      </button>
-    </form>
-  );
+    return () => { supabase.removeChannel(channel); };
+  }, [tenantId, queryClient]);
 }
 ```
+
+Call this hook alongside `useMomentsQuery` in the same screen component.
 
 ---
 
-## Where Does the Supabase Client Live?
+## Where the Supabase Client Lives
 
-The right client depends on where the code runs.
-
-| Context                                           | Client                  | Import                  |
-| ------------------------------------------------- | ----------------------- | ----------------------- |
-| Server Components, Server Actions, Route Handlers | `createServerClient()`  | `@/lib/supabase/server` |
-| Client Components (browser only)                  | `createBrowserClient()` | `@/lib/supabase/client` |
-
-**Never use the browser client in Server Components or Server Actions.** It carries the anon key and does not have access to the server-side session cookie.
+One client, shared across the app:
 
 ```typescript
-// lib/supabase/server.ts — async, reads cookies for the session
-import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import type { Database } from "@/types/supabase";
+// lib/supabase/client.ts
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database';
+import { env } from '@/constants/env';
 
-export async function createServerClient() {
-  const cookieStore = await cookies();
-  return createSupabaseServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        }
-      }
-    }
-  );
-}
+export const supabase = createClient<Database>(
+  env.EXPO_PUBLIC_SUPABASE_URL,
+  env.EXPO_PUBLIC_SUPABASE_KEY,
+);
 ```
 
-```typescript
-// lib/supabase/client.ts — singleton, lives in browser
-import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "@/types/supabase";
-
-export function createBrowserClientInstance() {
-  return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
-```
+There is no server/browser client split in React Native. One client, one session managed by Supabase Auth.
 
 ---
 
-## What Belongs on the Server vs Client
+## What Belongs Where
 
-### Always on the server
-
-- `requireAuth()` / session validation
-- Any query involving `SERVICE_ROLE_KEY`
-- Queries where RLS is the security boundary (never call from client if the intent is security)
-- File upload — get a signed URL server-side, upload from client
-- Aggregations or joins that are expensive and don't change per interaction
-
-### Always on the client
-
-- Anything that responds to user interaction in real-time (search, filter, infinite scroll)
-- Optimistic updates
-- Subscriptions (Supabase Realtime)
-- Polling
-
-### Either (decide per feature)
-
-- Initial page data — prefer server; use `HydrationBoundary` if the client also needs to refetch
-- List pages with filters — fetch unfiltered server-side, filter client-side via TanStack Query with `enabled`
+| Responsibility | Location |
+| --- | --- |
+| Auth session | Supabase Auth + `UserContext` |
+| Data reads | `useQuery` in `src/hooks/` |
+| Data writes | `useMutation` in `src/hooks/` |
+| Complex queries/aggregations | Supabase RPC → `useQuery` |
+| Real-time updates | `useEffect` subscription + `invalidateQueries` |
+| Input validation | `safeParse()` before every Supabase call |
+| Error normalization | `AppError.from(error, context)` |
 
 ---
 
 ## Anti-Patterns
 
-| Anti-pattern                                                | Problem                                                             | Correct approach                                                                     |
-| ----------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `useEffect` + `fetch` in a Client Component                 | No caching, no deduplication, no DevTools                           | `useQuery` with TanStack Query                                                       |
-| Supabase query in a Client Component without TanStack Query | No cache, double-fetches on re-render                               | Wrap in `useQuery`                                                                   |
-| Calling a Server Action from `useEffect`                    | Actions run on mount, bypassing form state management               | Use `useActionState` for form-bound actions; `useMutation` for programmatic triggers |
-| Importing server-only code into a Client Component          | Runtime error — `cookies()`, `headers()` don't exist in the browser | Mark server utilities with `import 'server-only'`                                    |
-| `createServerClient()` in a Client Component                | Can't call `cookies()` in the browser                               | Use `createBrowserClientInstance()`                                                  |
-| Fetching inside a `useEffect` for initial data              | Loading spinner on every mount                                      | Prefetch in Server Component with `HydrationBoundary`                                |
-| Returning large data sets from Server Actions               | Actions are not designed for data fetching                          | Use Server Components or `useQuery` for reads                                        |
-
----
-
-## Realtime (Supabase)
-
-Supabase Realtime is client-only. Subscriptions open a WebSocket from the browser. The pattern is: server-fetch the initial data, subscribe client-side for updates.
-
-```typescript
-"use client";
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { createBrowserClientInstance } from "@/lib/supabase/client";
-
-export function useProjectsRealtime(tenantId: string) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const supabase = createBrowserClientInstance();
-
-    const channel = supabase
-      .channel(`projects:${tenantId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "projects",
-          filter: `tenant_id=eq.${tenantId}`
-        },
-        () => {
-          // Invalidate TanStack Query cache — triggers a refetch
-          queryClient.invalidateQueries({ queryKey: ["projects", tenantId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tenantId, queryClient]);
-}
-```
-
-Call this hook in the same Client Component that uses `useProjects(tenantId)`. The Realtime event triggers `invalidateQueries`, which causes TanStack Query to refetch — keeping the UI in sync without managing separate state.
+| Anti-pattern | Problem | Correct approach |
+| --- | --- | --- |
+| `useEffect` + `fetch` | No caching, no deduplication, no DevTools | `useQuery` |
+| `useEffect` + bare Supabase call | No cache, double-fetches on re-render | Wrap in `useQuery` |
+| Supabase call outside a hook | Cannot be cancelled, no cache | Always wrap in `useQuery` or `useMutation` |
+| `parse()` instead of `safeParse()` | Throws unhandled exception on bad data | Always `safeParse()` |
+| Storing fetched data in React Context | Duplicates TanStack Query's responsibility | Keep server state in TanStack Query |
+| Direct Supabase calls in components | Bypasses caching, hard to test | Always go through a custom hook |

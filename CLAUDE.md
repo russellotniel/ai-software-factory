@@ -80,12 +80,12 @@ The gate checks:
 
 ## Stack
 
-- Frontend: Next.js 16 (App Router) + TypeScript
-- Backend: Supabase (PostgreSQL, self-hosted on Kubernetes)
-- Auth: Supabase Auth (public apps) or Keycloak (AD/LDAP apps)
-- Styling: Tailwind CSS 4.x + Shadcn/ui
-- Runtime: Node.js 20.9+
-- Runtime env: next-runtime-env (build-once, deploy-anywhere)
+- Frontend: Expo (React Native) + TypeScript
+- Backend: Supabase (PostgreSQL, cloud-hosted)
+- Auth: Supabase Auth
+- Styling: NativeWind (Tailwind-compatible utilities) + React Native StyleSheet
+- Runtime: Node.js 20.9+ (EAS CLI tooling)
+- Env vars: `EXPO_PUBLIC_*` prefix for client-exposed vars — validated at startup via Zod; server-only vars used in Expo API routes only
 
 ---
 
@@ -117,18 +117,20 @@ The gate checks:
 
 ## Implementation
 
-- `requireAuth()` is always the first call in every Server Action
-- Input validated with `safeParse()` before any database call
-- Always return `ActionResult<T>` — never throw from Server Actions
-- `'use client'` pushed to leaf components only
+- All data fetching via TanStack Query — `useEffect` + `fetch` is banned
+- Input validated with `safeParse()` before any Supabase call
+- Always return typed results from query/mutation hooks — never throw unhandled errors to the UI
+- Supabase client is a single `createClient()` instance — no server/browser split in React Native
+- React Native has no Server Components or `'use client'` directive — all components are client-side
 
 ---
 
 ## Caching
 
-- `'use cache'` + `cacheLife` + `cacheTag` for server-side caching
-- `unstable_cache` is deprecated — never use it
-- Never cache user-specific or RLS-governed data
+- TanStack Query is the only caching layer (`staleTime`, `gcTime`, `invalidateQueries`)
+- `staleTime: 5min`, `gcTime: 10min`, `refetchOnWindowFocus: false` as project defaults
+- Never cache user-specific or RLS-governed data beyond the TanStack Query session
+- No server-side caching directives (`'use cache'`, `unstable_cache`) — not applicable in React Native
 
 ---
 
@@ -240,8 +242,8 @@ Every workflow begins with the newborn gate. No exceptions.
 3. Never store tenant context in session variables
 4. Never put service_role keys in client-side code
 5. Always use `safeParse()` — never `parse()`
-6. Always return `ActionResult<T>` — never throw from Server Actions
-7. Never use `unstable_cache` (use `'use cache'` directive)
+6. Always return typed results from query/mutation hooks — never throw unhandled errors to UI
+7. Never use `useEffect` + `fetch` for data fetching — always use TanStack Query
 8. Never commit secrets
 9. Never push directly to `main` or `dev`
 10. Never deploy to production without a version tag from semantic-release

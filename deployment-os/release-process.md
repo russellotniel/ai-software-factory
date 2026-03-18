@@ -168,81 +168,83 @@ npm install --save-dev \
 
 ---
 
-## Docker Image
+## EAS Build
 
-The Next.js application is built as a Docker image for deployment to Kubernetes.
+The Expo app is built using **EAS Build** (Expo Application Services). There is no Docker image or server infrastructure to deploy — the deliverable is an iOS `.ipa` and Android `.aab` binary submitted to the App Store / Play Store.
 
-### Build-once architecture
+### Build profiles (eas.json)
 
-This project uses `next-runtime-env` to implement a true build-once, deploy-anywhere model. `NEXT_PUBLIC_*` variables are **not baked into the Docker image at build time**. Instead, they are injected at container start via Kubernetes ConfigMaps and read at request time by the server, which injects them into the client via a `<script>` tag.
-
-This means a single Docker image SHA is built once, deployed to staging, validated, and then the exact same SHA is promoted to production. Nothing is rebuilt between environments.
-
-See `environments.md` for the full `next-runtime-env` setup.
-
-### Dockerfile
-
-```dockerfile
-FROM node:20-alpine AS base
-
-# Dependencies
-FROM base AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
-# Build — no NEXT_PUBLIC_ build args needed (next-runtime-env handles them at runtime)
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NODE_ENV=production
-RUN npm run build
-
-# Runtime
-FROM base AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
+```json
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": { "simulator": false },
+      "env": { "APP_ENV": "staging" }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": { "APP_ENV": "production" }
+    }
+  }
+}
 ```
 
-Enable standalone output in `next.config.ts`:
+### Build commands
 
-```typescript
-const nextConfig: NextConfig = {
-  cacheComponents: true,
-  output: "standalone"
-};
+```bash
+# Development build (internal distribution)
+eas build --profile development --platform all
+
+# Preview build (staging — internal distribution via TestFlight / internal track)
+eas build --profile preview --platform all
+
+# Production build (App Store / Play Store submission)
+eas build --profile production --platform all
 ```
 
-### Image tagging
+### Image tagging equivalent
 
-```
-ghcr.io/org/app:sha-abc1234    ← every commit (staging uses this)
-ghcr.io/org/app:v1.2.0         ← release tag (production always uses this)
+EAS assigns a build ID to every build. The production build ID is the immutable artifact that is submitted. Never re-submit a different build between staging validation and production release.
+
+---
+
+## EAS Submit
+
+After a production build passes QA:
+
+```bash
+eas submit --platform ios --latest
+eas submit --platform android --latest
 ```
 
-Production deployments always use an explicit version tag — the same SHA that was validated in staging.
+---
+
+## OTA Updates (EAS Update)
+
+For JS-only changes (no native code changes), use EAS Update to push over-the-air without an App Store review:
+
+```bash
+eas update --branch production --message "Fix: moment feed sorting"
+```
+
+**When to use OTA vs full build:**
+- OTA: JS logic changes, UI fixes, copy changes, query changes
+- Full build: native dependency changes, Expo SDK upgrade, app.config.ts changes, new permissions
 
 ---
 
 ## Rollback
 
-If a production release is broken:
+**JS changes (OTA):** Roll back by publishing the previous EAS Update channel:
+```bash
+eas update --branch production --message "Rollback: revert to previous bundle"
+```
 
-1. Re-deploy the previous version tag — the previous image is always retained in the registry
-2. Create a `hotfix/*` branch from `main`, fix forward
-3. If a migration was applied, assess whether a down migration is needed — prefer additive schema changes (add before remove, never rename in a single step) so the previous app version still works against the new schema during rollback
+**Native builds:** Re-submit the previous build from EAS dashboard. Never delete old builds from EAS — they are retained automatically.
+
+If a Supabase migration was part of the release, assess whether a down migration is needed — prefer additive schema changes so the previous app version still works against the new schema during rollback.

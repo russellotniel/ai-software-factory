@@ -29,12 +29,13 @@ Agents must read these documents when working on implementation, testing, or dep
 
 ## Non-negotiable rules (from Human Intent OS)
 
-- Never use `unstable_cache` — use `'use cache'` directive
 - Never use `parse()` — always `safeParse()`
-- Never throw from Server Actions — always return `ActionResult<T>`
+- Never throw unhandled errors to the UI — handle in TanStack Query hooks, surface via `query.error`
+- Never use `useEffect` + `fetch` for data fetching — always use TanStack Query
+- Never use server-side caching directives (`'use cache'`, `unstable_cache`, `cacheTag`, `cacheLife`) — not applicable in React Native
+- Never use `'use server'` or `'use client'` directives — not applicable in React Native
 - Never create a table without RLS in the same migration
 - Never use SECURITY DEFINER outside the `private` schema
 - Never store tenant context in session variables
 - Never put service_role keys in client-side code
-- `requireAuth()` is always the first call in every Server Action
-- `'use client'` only on leaf components
+- All components are client-side — there is no server/client component split in React Native

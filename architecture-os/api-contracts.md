@@ -1,14 +1,16 @@
 # API Contracts
 
-**Status:** Active  
-**Last Updated:** 2026-03-08  
-**Scope:** All Next.js + Supabase projects
+**Status:** Active
+**Last Updated:** 2026-03-19
+**Scope:** Weeknd Core — Expo (React Native) + Supabase
 
 ---
 
 ## Purpose
 
-This document defines the contract for all server-side logic in this project: where it lives, how it is called, how errors are shaped, and how inputs are validated. Every developer and AI agent must follow these standards — no exceptions without a recorded decision.
+This document defines the contract for all data fetching and server-side logic in this project: where it lives, how it is called, how errors are shaped, and how inputs are validated. Every developer and AI agent must follow these standards — no exceptions without a recorded decision.
+
+React Native has no Server Components, no Server Actions, and no `'use server'` or `'use client'` directives. All components are client-side. All data fetching is done in hooks.
 
 ---
 
@@ -16,201 +18,315 @@ This document defines the contract for all server-side logic in this project: wh
 
 ### The Four Layers
 
-| Layer                                   | When to use                                                              | Who calls it                               |
-| --------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------ |
-| Server Component (direct Supabase call) | Reading data for a server-rendered page or layout                        | Server Components only                     |
-| Server Action                           | Mutations from React components (create, update, delete)                 | Client and Server Components               |
-| Route Handler (`/app/api/`)             | Webhooks, OAuth callbacks, external HTTP callers                         | External services, mobile apps             |
-| Supabase Edge Function                  | Third-party integrations, background tasks, scheduled jobs, AI inference | pg_cron, external triggers, Supabase hooks |
+| Layer | When to use | Who calls it |
+| --- | --- | --- |
+| TanStack Query hook (`useQuery` / `useMutation`) | All reads and mutations from React Native screens | React Native components |
+| Expo API Route (`src/app/api/`) | Server-only secrets proxy (e.g. Google Maps API key) | Client hooks via `fetch(ENV.apiBaseUrl + '/api/...')` |
+| Supabase Edge Function | Background jobs, scheduled tasks, third-party integrations, AI inference | pg_cron, external triggers, Supabase hooks |
+| Direct Supabase client call | Simple single-table reads/writes — wrapped inside a TanStack Query hook | Never called raw from a component |
 
 ### Decision Tree
 
 ```
-Is this a READ for a server-rendered page or layout?
-  → YES: Direct Supabase client call in the Server Component. No action. No route.
+Does this read or mutate data that the component needs?
+  → YES: TanStack Query hook (useQuery or useMutation).
+         Wrap the Supabase client call inside queryFn or mutationFn.
 
-Is this a MUTATION called from a React component?
-  → YES: Server Action. Always.
+Does this require a server-only secret (API key never bundled to the client)?
+  → YES: Expo API Route in src/app/api/.
+         Client hook calls fetch(ENV.apiBaseUrl + '/api/endpoint').
+         Example: Google Maps API key lives only in the API route.
 
-Does an external service need to call this via HTTP? (Stripe webhook, mobile app, third-party)
-  → YES: Route Handler (/app/api/). Never expose a Server Action to external callers.
-
-Does this need to run independently of the Next.js lifecycle?
-(scheduled job, background processing, AI inference, third-party integration)
+Does this need to run independently of the mobile app lifecycle?
+(scheduled job, background processing, AI inference, third-party webhook)
   → YES: Supabase Edge Function.
 
-If none of the above apply, default to Server Action.
+If none of the above apply, default to TanStack Query.
 ```
 
 ### What Each Layer Is NOT For
 
-**Server Actions are NOT for:**
+**TanStack Query hooks are NOT for:**
+- Direct DOM/native side-effects without a query or mutation
+- Wrapping non-async state (use React Context or Zustand for local UI state)
 
-- Reading data on the client (use React Query + Route Handler or server-side fetch instead)
-- Receiving webhooks from Stripe, GitHub, or any external service
-- Endpoints shared with a mobile app or other client
-
-**Route Handlers are NOT for:**
-
-- Internal mutations from React components (use Server Actions)
-- Logic that only your own frontend calls — this creates unnecessary HTTP overhead
+**Expo API Routes are NOT for:**
+- Internal Supabase mutations from the app (use TanStack Query + Supabase client directly)
+- Any business logic that can live in a TanStack Query hook
 
 **Supabase Edge Functions are NOT for:**
-
-- Simple form submissions or UI mutations
-- Logic that is tightly coupled to the Next.js request lifecycle
+- UI-triggered mutations from the mobile app — those belong in TanStack Query hooks
+- Logic tightly coupled to a single screen's lifecycle
 
 ---
 
-## Server Actions Standard
+## TanStack Query Standard
 
-### File Structure
+### QueryClient Configuration
 
-```
-app/
-  (features)/
-    [feature]/
-      actions.ts       ← Server Actions for this feature
-      page.tsx
-      components/
-```
-
-Group actions by feature. One `actions.ts` per feature domain. Never scatter actions inside component files.
-
-### Function Signature
-
-Every Server Action must follow this pattern:
+Defined once in `src/contexts/AppProviders.tsx` and provided at the app root.
 
 ```typescript
-"use server";
+// src/contexts/AppProviders.tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,    // 5 minutes
+      gcTime: 10 * 60 * 1000,      // 10 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      retry: 2,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+})
+```
 
-import { z } from "zod";
-import { createServerClient } from "@/lib/supabase/server";
-import { requireAuth } from "@/lib/auth/server";
-import type { ActionResult } from "@/types/actions";
+These are the project defaults. Hooks may override `staleTime` per-query if the data is time-sensitive.
 
-const CreateProjectSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional()
-});
+### Hook File Structure
 
-export async function createProject(
-  input: z.infer<typeof CreateProjectSchema>
-): Promise<ActionResult<{ id: string }>> {
-  // 1. Authenticate
-  const { user, tenantId } = await requireAuth();
+```
+src/hooks/
+  use[Resource].ts       ← one hook file per resource or concern
+  use[Resource]Query.ts  ← for hooks that group multiple queries on the same domain
+```
 
-  // 2. Validate
-  const parsed = CreateProjectSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid input.",
-        details: parsed.error.flatten().fieldErrors
+One hook per file. Hook files live in `src/hooks/`. Feature-specific hooks that are only used within one feature may live in `src/features/[feature]/hooks/`.
+
+### useQuery Pattern
+
+```typescript
+// src/hooks/usePlaceDetails.ts
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { GooglePlaceDetailSchema } from '@/types/googlePlace'
+import { AppError } from '@/utils/error'
+import { ENV } from '@/constants/env'
+
+export function usePlaceDetails(placeId: string | undefined) {
+  return useQuery({
+    queryKey: ['placeDetails', placeId],
+    queryFn: async () => {
+      if (!placeId) {
+        throw new AppError({
+          code: 'PLACE_DETAILS_INVALID_ID',
+          message: 'Place ID is required',
+          context: 'fetchPlaceDetails',
+        })
       }
-    };
-  }
 
-  // 3. Execute
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("projects")
-    .insert({
-      tenant_id: tenantId,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      created_by: user.id
-    })
-    .select("id")
-    .single();
+      const res = await fetch(
+        `${ENV.apiBaseUrl}/api/maps/details?placeId=${placeId}`
+      )
+      const result = await res.json()
 
-  if (error) {
-    return {
-      success: false,
-      error: {
-        code: "DATABASE_ERROR",
-        message: "Failed to create project."
+      const parsed = GooglePlaceDetailSchema.safeParse(result)
+      if (!parsed.success) {
+        throw new AppError({
+          code: 'PLACE_DETAILS_VALIDATION_ERROR',
+          message: 'Invalid place details response',
+          debugMessage: parsed.error.message,
+          context: 'fetchPlaceDetails',
+        })
       }
-    };
-  }
 
-  // 4. Return
-  return { success: true, data: { id: data.id } };
+      return parsed.data
+    },
+    enabled: Boolean(placeId),
+    staleTime: 5 * 60 * 1000,
+  })
 }
 ```
 
+### useMutation Pattern
+
+```typescript
+// src/hooks/usePlacesQuery.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { PlaceSchema } from '@/types'
+import { AppError } from '@/utils/error'
+
+export function useAddPlaceMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (placeData: Omit<Place, 'id'>) => {
+      const validated = PlaceSchema.omit({ id: true }).safeParse(placeData)
+      if (!validated.success) {
+        throw new AppError({
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid place data',
+          debugMessage: validated.error.message,
+          context: 'addPlace',
+        })
+      }
+
+      const { data, error } = await supabase
+        .from('places')
+        .insert({ ...validated.data })
+        .select('id')
+        .single()
+
+      if (error) {
+        throw new AppError({
+          code: 'DATABASE_ERROR',
+          message: 'Failed to save place',
+          debugMessage: error.message,
+          context: 'addPlace',
+          cause: error,
+        })
+      }
+
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['places'] })
+    },
+    onError: (error) => {
+      // AppError.from normalises any unknown error into AppError
+      throw AppError.from(error, 'addPlace')
+    },
+  })
+}
+```
+
+### useInfiniteQuery Pattern
+
+Used for paginated lists (e.g. nearby places batched by type category).
+
+```typescript
+// src/hooks/useNearbyPlaces.ts
+const nearbyQuery = useInfiniteQuery({
+  queryKey: ['nearbyPlaces', latitude, longitude, radius],
+  queryFn: ({ pageParam }) =>
+    fetchNearbyBatch(latitude!, longitude!, radius, pageParam),
+  initialPageParam: 0,
+  getNextPageParam: (lastPage) => {
+    const nextBatch = lastPage.batchIndex + 1
+    if (nextBatch >= TYPE_BATCHES.length) return undefined
+    return nextBatch
+  },
+  enabled: hasCoords && !isTextSearch,
+  staleTime: 5 * 60 * 1000,
+})
+```
+
+### Query Key Conventions
+
+Query keys are defined inline in each hook. No query key factory pattern is used.
+
+| Resource | Key shape |
+| --- | --- |
+| Nearby places | `['nearbyPlaces', lat, lng, radius]` |
+| Text search places | `['textSearchPlaces', lat, lng, radius, textQuery]` |
+| Place details | `['placeDetails', placeId]` |
+| All places (internal) | `['places']` |
+| User's places | `['places', 'user', userId]` |
+| Activities | `['activities']` |
+| Moments | `['moments']` |
+| User credit | `['credit', userId]` |
+
+Rules:
+1. First element is the resource name as a string literal.
+2. Add identifying parameters after the resource name.
+3. Use the same key shape everywhere you reference the same resource — for `invalidateQueries` to work correctly.
+
 ### Rules
 
-1. **Always authenticate first.** Call `requireAuth()` before any Supabase operation. Never trust the client.
-2. **Always validate with Zod.** Every action has a named Zod schema. Inline validation is not acceptable.
-3. **Always return `ActionResult<T>`.** Never throw from a Server Action — thrown errors surface as unhandled exceptions on the client. Return the error shape instead.
-4. **Never return sensitive data.** Do not return database error messages, stack traces, or internal IDs that were not deliberately included.
-5. **Revalidate after mutations.** Use `revalidatePath()` or `revalidateTag()` after state-changing actions.
+1. **Always validate with Zod before any Supabase call.** Use `safeParse()`, never `parse()`. Throw `AppError` on failure.
+2. **Never call Supabase directly from a component.** Supabase calls live inside `queryFn` or `mutationFn`.
+3. **Never use `useEffect` + `fetch` for data fetching.** Every fetch belongs in a TanStack Query hook. Known violation: `useLocationAutocomplete` — to be migrated.
+4. **Always invalidate related queries on mutation success.** Call `queryClient.invalidateQueries()` in `onSuccess`.
+5. **Always return typed data.** Hook return types are inferred from the schema — never use `any`.
+6. **Never throw unhandled errors to the UI.** Screens check `query.error` and render inline error states.
 
 ---
 
-## Route Handlers Standard
+## Expo API Routes Standard
+
+### Purpose
+
+Expo API routes exist for one reason only: to proxy calls that require a server-only secret that must never be bundled into the client.
+
+Current use: Google Maps Places API v1 — the `GOOGLE_MAPS_API_KEY` must never appear in the client bundle.
 
 ### File Structure
 
 ```
-app/
-  api/
-    webhooks/
-      stripe/
-        route.ts
-      github/
-        route.ts
-    [other-external-endpoints]/
-      route.ts
+src/app/api/
+  maps/
+    nearby+api.ts
+    autocomplete+api.ts
+    details+api.ts
+    photo+api.ts
+    textsearch+api.ts
 ```
 
-All Route Handlers live under `app/api/`. Webhook handlers are nested under `app/api/webhooks/`.
+All API routes live under `src/app/api/`. Routes are named `[name]+api.ts` (Expo Router convention).
 
 ### Function Signature
 
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { verifyStripeWebhook } from "@/lib/stripe/webhooks";
-import type { ApiErrorResponse } from "@/types/api";
+// src/app/api/maps/nearby+api.ts
+import { ExpoRequest, ExpoResponse } from 'expo-router/server'
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  // 1. Verify signature (webhooks) or authenticate (external APIs)
-  const { event, error } = await verifyStripeWebhook(request);
-  if (error) {
-    return NextResponse.json<ApiErrorResponse>(
-      {
-        success: false,
-        error: { code: "UNAUTHORIZED", message: "Invalid signature." }
-      },
-      { status: 401 }
-    );
+export async function GET(request: ExpoRequest): Promise<ExpoResponse> {
+  const { searchParams } = new URL(request.url)
+  const latitude = searchParams.get('latitude')
+  const longitude = searchParams.get('longitude')
+
+  if (!latitude || !longitude) {
+    return ExpoResponse.json(
+      { success: false, error: { code: 'VALIDATION_ERROR', message: 'latitude and longitude are required' } },
+      { status: 400 }
+    )
   }
 
-  // 2. Process
   try {
-    await handleStripeEvent(event);
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err) {
-    return NextResponse.json<ApiErrorResponse>(
-      {
-        success: false,
-        error: { code: "INTERNAL_ERROR", message: "Webhook processing failed." }
+    const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': process.env.GOOGLE_MAPS_API_KEY!,
+        'X-Goog-FieldMask': '...',
       },
+      body: JSON.stringify({ ... }),
+    })
+
+    const data = await res.json()
+    return ExpoResponse.json(data, { status: res.status })
+  } catch (err) {
+    return ExpoResponse.json(
+      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Maps request failed' } },
       { status: 500 }
-    );
+    )
   }
 }
 ```
 
+### How clients call API routes
+
+Client hooks call the route via `fetch` using `ENV.apiBaseUrl`:
+
+```typescript
+// src/hooks/useNearbyPlaces.ts
+const res = await fetch(
+  `${ENV.apiBaseUrl}/api/maps/nearby?latitude=${lat}&longitude=${lng}`
+)
+```
+
+`ENV.apiBaseUrl` is `EXPO_PUBLIC_API_BASE_URL` — validated at startup via the Zod schema in `src/constants/env.ts`.
+
 ### Rules
 
-1. **Always verify webhook signatures.** Never process an incoming webhook without verifying the signature from the source (Stripe, GitHub, etc.).
-2. **Always return structured JSON.** Use `ApiErrorResponse` for errors, always include `success` field.
-3. **Always set appropriate HTTP status codes.** 200 = success, 400 = bad input, 401 = unauthorised, 403 = forbidden, 404 = not found, 500 = server error.
-4. **Do not call Route Handlers from your own frontend.** If a React component needs to trigger something, use a Server Action instead.
+1. **API routes are for secret proxying only.** Do not put business logic here.
+2. **Always validate query params before forwarding.** Return 400 with a structured error if required params are missing.
+3. **Never return the raw Google API error to the client.** Return a normalised error shape.
+4. **Never put `GOOGLE_MAPS_API_KEY` in any client-side file.** Only `process.env.GOOGLE_MAPS_API_KEY` in `+api.ts` files.
 
 ---
 
@@ -218,11 +334,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
 ### When to create an Edge Function
 
-- Stripe payment processing logic that must run on Supabase infrastructure
 - Scheduled background jobs (via pg_cron trigger)
-- AI inference calls (OpenAI, Anthropic) that should not block the Next.js server
+- AI inference calls (OpenAI, Anthropic) that should not run on-device
 - Third-party integrations that benefit from running close to the database
 - Sending transactional emails (Resend, SendGrid)
+- Payment processing hooks
 
 ### File Structure
 
@@ -236,532 +352,290 @@ supabase/
 ### Function Signature
 
 ```typescript
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 Deno.serve(async (req: Request) => {
   // 1. Authenticate (for user-facing functions)
-  const authHeader = req.headers.get("Authorization");
+  const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: { code: "UNAUTHORIZED", message: "Missing auth header." }
-      }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+      JSON.stringify({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing auth header.' } }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } }
-  );
+  )
 
   // 2. Process
   try {
-    const body = await req.json();
+    const body = await req.json()
     // ... logic
     return new Response(JSON.stringify({ success: true, data: {} }), {
-      headers: { "Content-Type": "application/json" }
-    });
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (err) {
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: { code: "INTERNAL_ERROR", message: "Processing failed." }
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+      JSON.stringify({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Processing failed.' } }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
   }
-});
+})
 ```
 
 ---
 
-## Standard Error and Result Types
+## Error Handling Standard
 
-These types are defined once in `types/actions.ts` and `types/api.ts` and used across all layers.
+### AppError Class
 
-### `types/actions.ts` — for Server Actions
-
-```typescript
-export type ActionResult<T = null> =
-  | { success: true; data: T }
-  | { success: false; error: ActionError };
-
-export type ActionError = {
-  code: ActionErrorCode;
-  message: string;
-  details?: Record<string, string[]> | unknown; // Zod field errors or custom details
-};
-
-export type ActionErrorCode =
-  | "UNAUTHORIZED" // User is not authenticated
-  | "FORBIDDEN" // User lacks permission
-  | "NOT_FOUND" // Resource does not exist
-  | "VALIDATION_ERROR" // Zod schema failed
-  | "CONFLICT" // Duplicate / uniqueness violation
-  | "DATABASE_ERROR" // Supabase/Postgres returned an error
-  | "EXTERNAL_ERROR" // Third-party API failed
-  | "INTERNAL_ERROR"; // Unexpected server error
-```
-
-### `types/api.ts` — for Route Handlers and Edge Functions
+All errors are normalised through `AppError` defined in `src/utils/error.ts`. This is the single error type used across all hooks and utilities.
 
 ```typescript
-export type ApiSuccessResponse<T = null> = {
-  success: true;
-  data: T;
-};
+// src/utils/error.ts
+export class AppError extends Error {
+  public readonly code: string
+  public readonly debugMessage?: string
+  public readonly context?: string
+  public readonly cause?: unknown
 
-export type ApiErrorResponse = {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-};
+  constructor(options: AppErrorOptions) {
+    super(options.message)
+    this.name = 'AppError'
+    this.code = options.code
+    this.debugMessage = options.debugMessage
+    this.context = options.context
+    this.cause = options.cause
+  }
 
-export type ApiResponse<T = null> = ApiSuccessResponse<T> | ApiErrorResponse;
+  static from(error: unknown, context?: string): AppError { ... }
+  static isNetworkError(error: AppError): boolean { ... }
+  static isValidationError(error: AppError): boolean { ... }
+}
 ```
 
-### Error Code Mapping
+### Error Codes
 
-| Situation             | Code               | HTTP Status (Route Handlers) | Postgres ERRCODE (RPC) |
-| --------------------- | ------------------ | ---------------------------- | ---------------------- |
-| Not authenticated     | `UNAUTHORIZED`     | 401                          | 42501                  |
-| Lacks permission      | `FORBIDDEN`        | 403                          | 42501                  |
-| Record not found      | `NOT_FOUND`        | 404                          | P0002                  |
-| Zod validation failed | `VALIDATION_ERROR` | 400                          | 22023                  |
-| Uniqueness conflict   | `CONFLICT`         | 409                          | 23505                  |
-| Supabase/DB error     | `DATABASE_ERROR`   | 500                          | —                      |
-| Third-party API error | `EXTERNAL_ERROR`   | 502                          | —                      |
-| Unexpected error      | `INTERNAL_ERROR`   | 500                          | —                      |
+| Code | Meaning |
+| --- | --- |
+| `VALIDATION_ERROR` | Zod safeParse failed on input |
+| `DATABASE_ERROR` | Supabase returned an error |
+| `NEARBY_FETCH_ERROR` | HTTP failure fetching nearby places |
+| `NEARBY_API_ERROR` | Google API returned a non-2xx response |
+| `TEXT_SEARCH_FETCH_ERROR` | HTTP failure on text search |
+| `TEXT_SEARCH_API_ERROR` | Google API text search non-2xx |
+| `PLACE_DETAILS_FETCH_ERROR` | HTTP failure fetching place details |
+| `PLACE_DETAILS_VALIDATION_ERROR` | Zod validation failed on place details response |
+| `PLACE_DETAILS_INVALID_ID` | placeId was undefined when the hook was called |
+| `UNKNOWN_ERROR` | Catch-all from `AppError.from()` |
+
+### How errors surface in the UI
+
+Screens check `query.error` directly and render an inline retry state. There is no global toast system.
+
+```typescript
+// src/features/place/PlaceScreen.tsx
+if (nearbyQuery.error) {
+  return (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>Failed to load nearby places</Text>
+      <TouchableOpacity onPress={() => nearbyQuery.refetch()}>
+        <Text>Retry</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+```
+
+### Rules
+
+1. **Always throw `AppError` from `queryFn` and `mutationFn`.** Never throw raw errors or plain strings.
+2. **Use `AppError.from(error, context)` in catch blocks.** Normalises any unknown error.
+3. **Never expose `debugMessage` or `cause` to the user.** These are for logs only.
+4. **Map known Supabase error codes explicitly.** `23505` → conflict, `42501` → forbidden, etc.
+
+### Supabase Error Code Mapping
+
+| Postgres ERRCODE | Meaning | AppError code |
+| --- | --- | --- |
+| `23505` | Unique constraint violation | `CONFLICT` |
+| `23503` | Foreign key violation | `DATABASE_ERROR` |
+| `42501` | RLS / permission denied | `FORBIDDEN` |
+| `P0002` | No rows found (RPC) | `NOT_FOUND` |
+| `22023` | Invalid parameter (RPC) | `VALIDATION_ERROR` |
 
 ---
 
 ## Validation Standard
 
-**Library:** Zod. No alternatives.
+**Library:** Zod v4. No alternatives.
 
 ### Rules
 
-1. Every Server Action has a named Zod schema defined at the top of the file, outside the function.
-2. Schema names follow the pattern: `{ActionName}Schema` (e.g., `CreateProjectSchema`, `UpdateProfileSchema`).
-3. Use `safeParse()`, not `parse()`. Never let Zod throw — catch it and return the error shape.
-4. Reuse schemas for the client-side form validation by exporting them from `actions.ts`.
+1. **Always `safeParse()`, never `parse()`.** The one allowed exception is mock data helpers that are intended to crash early — must be replaced when real Supabase integration is wired.
+2. **Name schemas after the resource and suffix with `Schema`.** e.g. `PlaceSchema`, `GooglePlaceDetailSchema`, `UserDataSchema`.
+3. **Domain schemas live in `src/types/index.ts`.** API response schemas live in `src/types/[api-name].ts` (e.g. `googlePlace.ts`).
+4. **Validate API responses, not just inputs.** Every external API response (Google Maps, Edge Function) must be parsed through a Zod schema before use.
+5. **Export inferred types alongside schemas.** `export type Place = z.infer<typeof PlaceSchema>`.
 
 ```typescript
-// actions.ts — schema is exported so the form can reuse it
-export const CreateProjectSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
-  description: z.string().max(500).optional()
-});
+// src/types/index.ts — domain schema example
+export const PlaceSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1),
+  category: z.string().min(1),
+  image: z.string().url(),
+  rating: z.number().min(0).max(5),
+})
+export type Place = z.infer<typeof PlaceSchema>
 
-// form.tsx — reuse the same schema
-import { CreateProjectSchema } from "./actions";
-const form = useForm({ resolver: zodResolver(CreateProjectSchema) });
+// Usage in a hook
+const parsed = PlaceSchema.safeParse(rawData)
+if (!parsed.success) {
+  throw new AppError({
+    code: 'VALIDATION_ERROR',
+    message: 'Invalid place data',
+    debugMessage: parsed.error.message,
+    context: 'fetchPlace',
+  })
+}
+const place = parsed.data
 ```
 
 ---
 
-## Authentication Helper
+## Auth Standard
 
-Every project must implement `requireAuth()` in `lib/auth/server.ts`. It is the single place that verifies a user is authenticated and extracts their active tenant context.
+### Current state (prototype)
 
-```typescript
-// lib/auth/server.ts
-import { createServerClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+Auth is mock-only. `UserContext` stores login state in memory + AsyncStorage. `supabase.auth` is not yet wired into any screen. Session restore is disabled. See `src/contexts/UserContext.tsx`.
 
-export type AuthContext = {
-  user: { id: string; email: string };
-  tenantId: string;
-  role: string;
-};
+### Target state (production)
 
-export async function requireAuth(): Promise<AuthContext> {
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    redirect("/login");
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("active_tenant_id, global_role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.active_tenant_id) {
-    redirect("/onboarding");
-  }
-
-  return {
-    user: { id: user.id, email: user.email! },
-    tenantId: profile.active_tenant_id,
-    role: profile.global_role
-  };
-}
-```
-
----
-
-## Consuming Server Actions on the Client
-
-### Pattern: useActionState (React 19 / Next.js 16+)
-
-Use `useActionState` for form-bound mutations. Use a manual `isPending` + `useState` pattern for programmatic mutations.
+When real auth is implemented, it must follow this pattern:
 
 ```typescript
-// Form-bound mutation
-'use client';
-import { useActionState } from 'react';
-import { createProject } from './actions';
-import type { ActionResult } from '@/types/actions';
-
-const initialState: ActionResult<{ id: string }> = null as any;
-
-export function CreateProjectForm() {
-  const [state, formAction, isPending] = useActionState(createProject, initialState);
-
-  return (
-    <form action={formAction}>
-      <input name="name" />
-      {state && !state.success && (
-        <p className="text-red-500">{state.error.message}</p>
-      )}
-      <button type="submit" disabled={isPending}>
-        {isPending ? 'Creating...' : 'Create Project'}
-      </button>
-    </form>
-  );
-}
+// src/lib/supabase.ts — already correct
+export const supabase = createClient(ENV.supabaseUrl, ENV.supabaseAnonKey, {
+  auth: {
+    storage: getStorage(),   // AsyncStorage on native, localStorage on web
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+})
 ```
 
 ```typescript
-// Programmatic mutation (button click, not a form)
-'use client';
-import { useState, useTransition } from 'react';
-import { deleteProject } from './actions';
-
-export function DeleteButton({ projectId }: { projectId: string }) {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  const handleDelete = () => {
-    startTransition(async () => {
-      const result = await deleteProject({ projectId });
-      if (!result.success) {
-        setError(result.error.message);
+// src/contexts/UserContext.tsx — target pattern
+useEffect(() => {
+  // Subscribe to auth state changes
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      if (session?.user) {
+        setIsLoggedIn(true)
+        // fetch profile from supabase to get accountType
+      } else {
+        setIsLoggedIn(false)
       }
-    });
-  };
-
-  return (
-    <>
-      <button onClick={handleDelete} disabled={isPending}>Delete</button>
-      {error && <p className="text-red-500">{error}</p>}
-    </>
-  );
-}
-```
-
----
-
-## Error Handling and Try-Catch Standard
-
-### The Rule
-
-**Never let an unexpected error escape unhandled from a Server Action, Route Handler, or Edge Function.** Every async boundary must have a try-catch. Errors are caught, logged, and returned as `INTERNAL_ERROR` — they are never thrown to the caller.
-
-### Server Action Pattern
-
-Wrap the entire action body in a try-catch. Auth and validation happen before the try block so their failures return structured errors directly. The try block covers all Supabase calls and business logic.
-
-```typescript
-"use server";
-
-export async function createProject(
-  input: z.infer<typeof CreateProjectSchema>
-): Promise<ActionResult<{ id: string }>> {
-  // Auth — outside try (redirect throws internally, that's fine)
-  const { user, tenantId } = await requireAuth();
-
-  // Validation — outside try, returns structured error
-  const parsed = CreateProjectSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid input.",
-        details: parsed.error.flatten().fieldErrors
-      }
-    };
-  }
-
-  // Everything else — inside try
-  try {
-    const supabase = await createServerClient();
-    const { data, error } = await supabase
-      .from("projects")
-      .insert({
-        tenant_id: tenantId,
-        name: parsed.data.name,
-        created_by: user.id
-      })
-      .select("id")
-      .single();
-
-    if (error) {
-      // Known Supabase errors — map to specific codes
-      if (error.code === "23505") {
-        return {
-          success: false,
-          error: {
-            code: "CONFLICT",
-            message: "A project with this name already exists."
-          }
-        };
-      }
-      logger.error("createProject: supabase insert failed", {
-        error: error.message,
-        tenantId
-      });
-      return {
-        success: false,
-        error: { code: "DATABASE_ERROR", message: "Failed to create project." }
-      };
+      setIsRestoring(false)
     }
-
-    return { success: true, data: { id: data.id } };
-  } catch (err) {
-    logger.error("createProject: unexpected error", { err, tenantId });
-    return {
-      success: false,
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred."
-      }
-    };
-  }
-}
+  )
+  return () => subscription.unsubscribe()
+}, [])
 ```
 
-### Supabase Error Code Mapping
+### Route protection
 
-When Supabase returns a `PostgrestError`, map known `error.code` values before falling through to `DATABASE_ERROR`:
-
-| Postgres ERRCODE | Meaning                     | ActionErrorCode    |
-| ---------------- | --------------------------- | ------------------ |
-| `23505`          | Unique constraint violation | `CONFLICT`         |
-| `23503`          | Foreign key violation       | `DATABASE_ERROR`   |
-| `42501`          | RLS / permission denied     | `FORBIDDEN`        |
-| `P0002`          | No rows found (RPC)         | `NOT_FOUND`        |
-| `22023`          | Invalid parameter (RPC)     | `VALIDATION_ERROR` |
-
-### Route Handler Pattern
+No middleware is available in Expo Router for server-side redirects. Auth guards are implemented at the layout level:
 
 ```typescript
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  try {
-    // 1. Verify / authenticate
-    const { event, error } = await verifySignature(request);
-    if (error) {
-      return NextResponse.json<ApiErrorResponse>(
-        {
-          success: false,
-          error: { code: "UNAUTHORIZED", message: "Invalid signature." }
-        },
-        { status: 401 }
-      );
-    }
+// src/app/(tabs)/_layout.tsx — target pattern
+const { isLoggedIn, isRestoring } = useUser()
 
-    // 2. Process
-    await handleEvent(event);
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err) {
-    logger.error("POST /api/webhooks/stripe: unexpected error", { err });
-    return NextResponse.json<ApiErrorResponse>(
-      {
-        success: false,
-        error: { code: "INTERNAL_ERROR", message: "Request failed." }
-      },
-      { status: 500 }
-    );
-  }
+if (isRestoring) return <SplashScreen />
+if (!isLoggedIn) {
+  router.replace('/(auth)')
+  return null
 }
 ```
 
 ### Rules
 
-1. **Every async function at a layer boundary has a try-catch.** Server Actions, Route Handlers, Edge Functions — all of them.
-2. **Log before returning an error.** If you're returning `DATABASE_ERROR` or `INTERNAL_ERROR`, a `logger.error()` call must come first.
-3. **Never expose internal error messages to the client.** Supabase error details, stack traces, and query information stay in the log. The client gets only the `message` field.
-4. **Map known Postgres error codes explicitly.** Don't fall through everything to `DATABASE_ERROR` — a conflict should surface as `CONFLICT`.
-5. **Do not catch errors you cannot handle.** If `requireAuth()` calls `redirect()`, that's a Next.js internal throw — don't wrap it in try-catch.
+1. **Never use service_role key in client code.** Only `supabase.auth.anon` key (`EXPO_PUBLIC_SUPABASE_KEY`).
+2. **Session storage:** AsyncStorage on native, `window.localStorage` on web. Never store tokens in plain memory only.
+3. **Auth guard must be added to `(tabs)` and `(business-tabs)` layouts before production.** Current prototype has no guard.
+4. **Business user mode is determined by `accountType` on the user profile in Supabase**, not by email string matching (prototype workaround must be replaced).
+
+---
+
+## Environment Variables Standard
+
+Validated at startup in `src/constants/env.ts`. The app throws with a clear message before rendering if any required var is missing.
+
+```typescript
+// src/constants/env.ts
+const envSchema = z.object({
+  supabaseUrl: z.string().url('EXPO_PUBLIC_SUPABASE_URL must be a valid URL'),
+  supabaseAnonKey: z.string().min(1, 'EXPO_PUBLIC_SUPABASE_KEY is required'),
+  apiBaseUrl: z.string().min(1, 'EXPO_PUBLIC_API_BASE_URL is required'),
+})
+```
+
+| Variable | Type | Purpose |
+| --- | --- | --- |
+| `EXPO_PUBLIC_SUPABASE_URL` | Client | Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_KEY` | Client | Supabase anon key |
+| `EXPO_PUBLIC_API_BASE_URL` | Client | Base URL for all Expo API route calls |
+| `GOOGLE_MAPS_API_KEY` | Server-only | Google Maps Places API v1 — Expo API routes only |
 
 ---
 
 ## Logging Standard
 
-### Philosophy
-
-Log structured data at every error boundary. Never log PII. Write logs so that a developer who has never seen this codebase can diagnose a production failure from the log entry alone, without needing to ask the user what happened.
-
-Infrastructure (where logs are routed, retention, log drain configuration) is defined in `deployment-os/environments.md`. This section covers code-level standards only.
-
-### Logger Abstraction
-
-All projects use a thin logger abstraction at `lib/logger.ts`. This wraps `console` today and is swappable to Pino, Winston, or a log drain with no changes to call sites.
+Use `src/utils/telemetry.ts` for all logging and performance tracking. This wraps `console` and provides structured output.
 
 ```typescript
-// lib/logger.ts
-
-type LogLevel = "debug" | "info" | "warn" | "error";
-
-type LogContext = Record<string, unknown>;
-
-function formatEntry(level: LogLevel, message: string, context?: LogContext) {
-  return JSON.stringify({
-    level,
-    message,
-    timestamp: new Date().toISOString(),
-    ...context
-  });
-}
-
-export const logger = {
-  debug: (message: string, context?: LogContext) => {
-    if (process.env.NODE_ENV !== "production") {
-      console.debug(formatEntry("debug", message, context));
-    }
-  },
-  info: (message: string, context?: LogContext) => {
-    console.log(formatEntry("info", message, context));
-  },
-  warn: (message: string, context?: LogContext) => {
-    console.warn(formatEntry("warn", message, context));
-  },
-  error: (message: string, context?: LogContext) => {
-    console.error(formatEntry("error", message, context));
-  }
-};
+// src/utils/telemetry.ts — available helpers
+safeLog(level, message, context?)   // structured log
+measureAsync(label, fn)             // async perf measurement
+measure(label, fn)                  // sync perf measurement
 ```
 
-**To swap to Pino in the future:** replace the internals of `lib/logger.ts` only. Every call site stays identical.
+### What must always be logged
 
-### Log Levels
+| Event | Level | Required context |
+| --- | --- | --- |
+| Unexpected catch block hit | `error` | hook/function name, error code, raw error |
+| Supabase error returned | `error` | function name, `error.code`, `error.message` |
+| External API failure | `error` | function name, status code |
+| Auth state change | `info` | event type |
 
-| Level   | When to use                                                                                          |
-| ------- | ---------------------------------------------------------------------------------------------------- |
-| `debug` | Development-only. Verbose state, query parameters, intermediate values. Never appears in production. |
-| `info`  | Significant business events. User completed onboarding. Webhook received and processed.              |
-| `warn`  | Unexpected but recoverable. Retrying a failed third-party call. Missing optional config.             |
-| `error` | Something failed and the user was affected or an operation did not complete.                         |
+### What must never be logged
 
-### Log Entry Shape
-
-Every log entry is a JSON object. Minimum required fields:
-
-```json
-{
-  "level": "error",
-  "message": "createProject: supabase insert failed",
-  "timestamp": "2026-03-08T10:22:11.000Z",
-  "action": "createProject",
-  "tenantId": "uuid",
-  "userId": "uuid",
-  "errorCode": "DATABASE_ERROR",
-  "error": "duplicate key value violates unique constraint"
-}
-```
-
-Include as much context as needed to diagnose the failure. At minimum: the action or handler name, tenantId, and the error value.
-
-### What Must Always Be Logged
-
-| Event                                       | Level   | Required context                                     |
-| ------------------------------------------- | ------- | ---------------------------------------------------- |
-| Unexpected catch block hit                  | `error` | action/handler name, tenantId, userId, raw error     |
-| Supabase error returned                     | `error` | action name, tenantId, `error.code`, `error.message` |
-| External API failure (Stripe, OpenAI, etc.) | `error` | function name, tenantId, status code, response body  |
-| Webhook received                            | `info`  | handler name, event type, source                     |
-| Background job started / completed          | `info`  | function name, tenantId, record counts               |
-| Auth failure (missing token, invalid JWT)   | `warn`  | handler name, reason                                 |
-
-### What Must Never Be Logged
-
-This is non-negotiable. Projects handling health or genomic data (Gene-X) are subject to additional regulatory scrutiny if PII appears in logs.
-
-**Never log:**
-
-- Passwords, tokens, API keys, or secrets of any kind
-- Full JWT tokens or session cookies
+- Passwords, tokens, API keys, or secrets
 - User email addresses or phone numbers
-- User full names
-- Health data, diagnoses, genomic data, or any clinical values
-- Any field prefixed with `health_`, `genomic_`, `dna_`, `medical_`
-- Credit card numbers or payment details
-- The full request body (log field names only, never values, when in doubt)
+- Full JWT tokens or session cookies
+- Health data or any PII
 
-**Safe to log:**
-
-- UUIDs (user IDs, tenant IDs, record IDs)
-- Error codes and error messages from your own system
-- HTTP status codes
-- Timestamps and durations
-- Event types and operation names
-
-### Usage in Actions and Handlers
-
-```typescript
-// ✅ Correct — logs context, no PII
-logger.error("updateProfile: supabase update failed", {
-  action: "updateProfile",
-  userId: user.id, // UUID only — safe
-  tenantId,
-  errorCode: error.code,
-  error: error.message
-});
-
-// ❌ Wrong — logs PII
-logger.error("updateProfile failed", {
-  email: user.email, // Never log email
-  fullName: input.name, // Never log user names
-  error: error.message
-});
-
-// ❌ Wrong — logs secrets
-logger.info("calling OpenAI", {
-  apiKey: process.env.OPENAI_API_KEY // Never log secrets
-});
-```
+**Safe to log:** UUIDs, error codes, HTTP status codes, timestamps, operation names.
 
 ---
 
 ## Decisions Log
 
-| Decision                    | Choice                                                    | Rationale                                                                                                      |
-| --------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Primary mutation layer      | Server Actions                                            | Type-safe, CSRF protected, no boilerplate                                                                      |
-| External HTTP endpoints     | Route Handlers only                                       | Server Actions must not be called by external services                                                         |
-| Background / scheduled / AI | Supabase Edge Functions                                   | Decoupled from Next.js lifecycle, runs close to DB                                                             |
-| Validation library          | Zod                                                       | Type inference, reusable across client and server                                                              |
-| Error handling              | Return `ActionResult<T>`, never throw                     | Thrown errors surface poorly on the client                                                                     |
-| Error shape                 | `{ success, error: { code, message, details? } }`         | Consistent across all layers — actions, routes, edge functions                                                 |
-| Auth helper                 | `requireAuth()` in `lib/auth/server.ts`                   | Single entry point, fail fast on every action                                                                  |
-| Schema location             | Defined and exported from `actions.ts`                    | Shared between server action and client form validation                                                        |
-| Try-catch placement         | Auth + validation outside try, all else inside            | Auth redirects are intentional throws; Zod errors are structured — only Supabase/business logic needs catching |
-| Postgres error mapping      | Explicit mapping before falling through to DATABASE_ERROR | Conflicts and permission errors have meaningful codes the client can act on                                    |
-| Logger abstraction          | `lib/logger.ts` wrapping console                          | Swappable to Pino/log drain with no call site changes                                                          |
-| Log format                  | Structured JSON                                           | Machine-parseable in production; human-readable in dev                                                         |
-| debug level                 | Suppressed in production                                  | Avoid verbose noise and accidental PII in prod logs                                                            |
-| PII in logs                 | Strictly prohibited                                       | Health and genomic data projects have regulatory exposure; UUIDs only for user/tenant identity                 |
-| Log infrastructure          | Deferred to Deployment OS                                 | Code-level standard is here; routing and retention live in deployment-os/environments.md                       |
+| Decision | Choice | Rationale |
+| --- | --- | --- |
+| Primary data fetching layer | TanStack Query (useQuery / useMutation) | React Native has no Server Components or Server Actions |
+| Server-only secret proxy | Expo API Routes | GOOGLE_MAPS_API_KEY must never be bundled to the client |
+| Background / scheduled / AI | Supabase Edge Functions | Decoupled from mobile app lifecycle, runs close to DB |
+| Validation library | Zod v4 | Type inference, reusable across hooks and API response parsing |
+| Error type | `AppError` class extending `Error` | Normalises all errors; carries code, debugMessage, context, cause |
+| Auth state storage | AsyncStorage (native) / localStorage (web) | Supabase recommended storage adapter for React Native |
+| Styling | StyleSheet.create only (no NativeWind) | Project-level override — NativeWind not used in Weeknd Core |
+| QueryClient defaults | staleTime 5min, gcTime 10min, refetchOnWindowFocus false | Standard for mobile app with moderate freshness requirements |
+| Photo resolution | useEffect + setState (known tech debt) | Temporary workaround for second-pass photo URL resolution — to be migrated to TanStack Query |
+| Google Maps pagination | Type-batch pagination (not cursor-based) | Google Places v1 does not expose a stable cursor for nearby search |

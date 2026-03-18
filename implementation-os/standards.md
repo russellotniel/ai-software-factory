@@ -2,7 +2,7 @@
 
 **Status:** Active  
 **Last Updated:** 2026-03-09  
-**Scope:** All Next.js + Supabase projects
+**Scope:** Weeknd Expo (React Native) + Supabase project
 
 ---
 
@@ -15,88 +15,69 @@ This document defines how code is written, structured, and organised across all 
 ## Project Folder Structure
 
 ```
-my-project/
-├── public/                        # Static assets (images, fonts, icons)
-├── src/
-│   ├── app/                       # Next.js App Router — routing only
-│   │   ├── (auth)/                # Route group — auth pages (no URL segment)
-│   │   │   ├── login/
-│   │   │   │   ├── page.tsx
-│   │   │   │   └── _components/   # Private — only used by this route
-│   │   │   │       └── LoginForm.tsx
-│   │   │   └── layout.tsx
-│   │   ├── (dashboard)/           # Route group — authenticated app
-│   │   │   ├── layout.tsx
-│   │   │   ├── page.tsx
-│   │   │   ├── projects/
-│   │   │   │   ├── page.tsx
-│   │   │   │   ├── [id]/
-│   │   │   │   │   └── page.tsx
-│   │   │   │   └── _components/   # Private — only used by projects routes
-│   │   │   │       ├── ProjectList.tsx
-│   │   │   │       └── ProjectCard.tsx
-│   │   │   └── settings/
-│   │   │       └── page.tsx
-│   │   ├── api/                   # Route Handlers (webhooks, external HTTP)
-│   │   │   └── webhooks/
-│   │   │       └── stripe/
-│   │   │           └── route.ts
-│   │   ├── auth/
-│   │   │   └── callback/
-│   │   │       └── route.ts       # Supabase auth callback
-│   │   ├── layout.tsx             # Root layout
-│   │   ├── page.tsx               # Landing / root page
-│   │   ├── loading.tsx
-│   │   ├── error.tsx
-│   │   └── not-found.tsx
-│   │
-│   ├── components/                # Shared, reusable components
-│   │   ├── ui/                    # Shadcn generated components — never edit directly
-│   │   └── [shared-component].tsx # Custom shared components composed on top of ui/
-│   │
-│   ├── features/                  # Feature modules (for large domains)
-│   │   └── [feature-name]/
-│   │       ├── actions.ts         # Server Actions for this feature
-│   │       ├── queries.ts         # TanStack Query hooks for this feature
-│   │       ├── types.ts           # Feature-specific types
-│   │       └── components/        # Feature-specific components
-│   │
-│   ├── hooks/                     # Shared custom hooks
-│   ├── lib/                       # Shared utilities and configurations
-│   │   ├── supabase/
-│   │   │   ├── client.ts          # Browser Supabase client
-│   │   │   ├── server.ts          # Server Supabase client
-│   │   │   └── proxy.ts           # updateSession() helper — called by root proxy.ts
-│   │   ├── auth/
-│   │   │   └── server.ts          # requireAuth() helper
-│   │   └── logger.ts              # Logger abstraction
-│   ├── types/                     # Global TypeScript types
-│   │   ├── actions.ts             # ActionResult<T>, ActionError
-│   │   ├── api.ts                 # ApiResponse<T>
-│   │   └── database.ts            # Generated Supabase types
-│   └── styles/
-│       └── globals.css            # Tailwind + Shadcn CSS variables
-├── supabase/
-│   ├── migrations/                # SQL migration files
-│   └── functions/                 # Supabase Edge Functions
-├── .claude/
-│   ├── CLAUDE.md
-│   └── commands/
-├── proxy.ts                       # Next.js Proxy — delegates to lib/supabase/proxy.ts
-├── .env.local
-├── .env.example
-├── next.config.ts
-├── tailwind.config.ts
-└── tsconfig.json
+src/
+├── app/                        # Expo Router — routing only (thin shells)
+│   ├── _layout.tsx             # Root layout — AppProviders + ThemeProvider
+│   ├── (auth)/                 # Auth flow: splash → welcome → login/register
+│   ├── (tabs)/                 # User tab bar: Moments, Activity, Place, Profile
+│   ├── (business-tabs)/        # Business tab bar: same + Create tab
+│   ├── (modals)/               # Modal screens
+│   ├── activity/[id].tsx
+│   ├── place/[id].tsx
+│   ├── moments/[id].tsx
+│   ├── moments/create.tsx
+│   ├── settings/
+│   └── api/                    # Expo API routes (server-side, e.g. Maps proxy)
+│       └── maps/
+│
+├── features/                   # All UI logic — mirrors route structure
+│   ├── auth/
+│   ├── activity/
+│   ├── place/
+│   ├── moments/
+│   │   └── components/         # Feature-specific components
+│   ├── profile/
+│   ├── business/
+│   ├── settings/
+│   └── modal/
+│
+├── components/                 # Shared, reusable React Native components
+│
+├── hooks/                      # Shared custom hooks (use*Query.ts pattern)
+│
+├── contexts/                   # React Context providers
+│   └── AppProviders.tsx        # Composes all providers
+│
+├── types/                      # Global TypeScript types + Zod schemas
+│   └── index.ts                # PlaceSchema / Place, ActivitySchema / Activity, etc.
+│
+├── utils/                      # Shared utilities
+│   └── error.ts                # AppError
+│
+├── constants/
+│   └── env.ts                  # Zod-validated EXPO_PUBLIC_* env vars
+│
+└── lib/
+    └── supabase/
+        └── client.ts           # Single Supabase client instance
+
+supabase/
+├── migrations/                 # SQL migration files
+└── functions/                  # Supabase Edge Functions
+
+.env
+.env.example
+app.config.ts
+tsconfig.json
 ```
 
 ### Key Rules
 
-1. **`app/` is for routing only.** Pages and layouts live here. Business logic, components, and utilities do not.
-2. **`_components/` (private folder) for route-specific components.** The underscore prefix prevents Next.js from treating the folder as a route segment. If a component is only used by one route, it lives next to that route.
-3. **`components/` for shared components only.** If only one route uses it, it does not belong here.
-4. **`features/` for large, self-contained domains.** Auth, billing, genomics, etc. When a feature outgrows a single route's `_components/` folder, promote it to `features/`.
-5. **`actions.ts` lives next to the route or in the feature folder.** Never in `lib/` or `utils/`.
+1. **`app/` is for routing only.** Route files are thin shells that import and render the corresponding screen from `src/features/`. No business logic in route files.
+2. **`features/` mirrors the route structure.** All UI logic, query hooks, and feature-specific components live here.
+3. **`components/` for shared components only.** If only one feature uses it, it belongs in `features/[feature]/components/`.
+4. **No Server Components.** React Native is all client-side — every component has access to hooks and event handlers by default.
+5. **Many features have user and business variants** (e.g. `PlaceScreen.tsx` vs `PlaceScreenBusiness.tsx`) — routing decides which to render based on `accountType`.
 
 ---
 
@@ -107,253 +88,157 @@ my-project/
 | Folders                | `kebab-case`               | `user-profile/`, `tenant-settings/`                |
 | Files (components)     | `PascalCase.tsx`           | `ProjectCard.tsx`, `UserAvatar.tsx`                |
 | Files (non-components) | `camelCase.ts`             | `actions.ts`, `queries.ts`, `useProjects.ts`       |
-| Files (route handlers) | `route.ts`                 | Next.js convention — always `route.ts`             |
-| React components       | `PascalCase`               | `ProjectList`, `TenantSwitcher`                    |
-| Functions              | `camelCase`                | `createProject`, `getUserRole`                     |
-| Constants              | `SCREAMING_SNAKE_CASE`     | `MAX_TENANT_MEMBERS`, `DEFAULT_PAGE_SIZE`          |
-| Types / Interfaces     | `PascalCase`               | `ProjectRecord`, `AuthContext`                     |
-| Custom hooks           | `use` prefix + `camelCase` | `useProjects`, `useTenantMembers`                  |
-| Zod schemas            | `PascalCase` + `Schema`    | `CreateProjectSchema`, `UpdateProfileSchema`       |
-| Server Actions         | verb + subject             | `createProject`, `updateProfile`, `deleteDocument` |
-| TanStack Query keys    | `kebab-case` strings       | `['projects', tenantId]`, `['profile', userId]`    |
+| React components       | `PascalCase`               | `MomentFeed`, `BusinessTabBar`                     |
+| Functions              | `camelCase`                | `createMoment`, `getUserProfile`                   |
+| Constants              | `SCREAMING_SNAKE_CASE`     | `MAX_UPLOAD_SIZE`, `DEFAULT_STALE_TIME`            |
+| Types / Interfaces     | `PascalCase`               | `Place`, `ActivitySchema`                          |
+| Custom hooks           | `use` prefix + `camelCase` | `usePlacesQuery`, `useMomentsQuery`                |
+| Zod schemas            | `PascalCase` + `Schema`    | `PlaceSchema`, `MomentSchema`                      |
+| TanStack Query keys    | `kebab-case` strings       | `['places', tenantId]`, `['profile', userId]`      |
 
 ---
 
-## Server vs Client Components
+## Components
 
-### The Default Rule
+### The Default
 
-**Every component is a Server Component by default.** Only add `'use client'` when the component actually needs it.
+All React Native components have full access to hooks and event handlers — there is no Server Component concept. Every component is a client component.
 
 ### Decision Tree
 
 ```
-Does this component need any of the following?
-  - onClick, onChange, or any event handler
-  - useState, useReducer, useEffect, or any React hook
-  - Browser-only APIs (window, localStorage, navigator)
-  - A third-party library that requires the browser (charts, drag-and-drop, etc.)
-  - Real-time Supabase subscription (useChannel, useRealtimeChannel)
+Does this component need to fetch or display data?
+  → Use TanStack Query (useQuery) — never useEffect + fetch
 
-  → YES to any of the above: add 'use client'
-  → NO to all of the above: keep as Server Component (no directive needed)
+Does this component need to trigger a write (create/update/delete)?
+  → Use TanStack Query (useMutation) with a Supabase client call
+
+Does this component need shared state from a distant component?
+  → Use React Context (read src/contexts/)
+
+Does this component need local toggle/input state?
+  → useState
 ```
 
-### Push `'use client'` as Deep as Possible
+### Component Colocation
 
-The goal is to keep the outer shell server-rendered and push interactivity to leaf nodes.
-
-```
-// ✅ Good — only the interactive part is a Client Component
-// ProjectsPage.tsx (Server Component — fetches data directly)
-export default async function ProjectsPage() {
-  const supabase = await createServerClient();
-  const { data: projects } = await supabase.from('projects').select('*');
-  return <ProjectList projects={projects} />;  // passes data down
+```typescript
+// ✅ Good — feature screen imports sub-components
+// features/moments/MomentFeed.tsx
+export function MomentFeed() {
+  const { data: moments } = useMomentsQuery();
+  return moments?.map(m => <MomentCard key={m.id} moment={m} />);
 }
 
-// ProjectList.tsx (Server Component — pure display)
-export function ProjectList({ projects }) {
-  return projects.map(p => <ProjectCard key={p.id} project={p} />);
-}
-
-// ProjectCardMenu.tsx — only this tiny component needs 'use client'
-'use client';
-export function ProjectCardMenu({ projectId }) {
-  const [open, setOpen] = useState(false);
-  // ...dropdown menu logic
+// features/moments/components/MomentCard.tsx
+export function MomentCard({ moment }: { moment: Moment }) {
+  // Pure display component
 }
 ```
-
-```
-// ❌ Wrong — 'use client' on the whole page because of one dropdown
-'use client';
-export default function ProjectsPage() {
-  // entire page is now client-side, loses all RSC benefits
-}
-```
-
-### What Server Components Can Do (and Client Components Cannot)
-
-| Capability                     | Server Component | Client Component                    |
-| ------------------------------ | ---------------- | ----------------------------------- |
-| Direct Supabase queries        | ✅               | ❌                                  |
-| Access environment secrets     | ✅               | ❌                                  |
-| async/await at component level | ✅               | ❌                                  |
-| useState, useEffect, hooks     | ❌               | ✅                                  |
-| Event handlers                 | ❌               | ✅                                  |
-| Browser APIs                   | ❌               | ✅                                  |
-| Import Server Components       | ✅               | ❌ (pass as children/props instead) |
 
 ---
 
 ## Data Fetching
 
-### The Two Modes
+### The Rule
 
-| Situation                                                                 | Approach                                          |
-| ------------------------------------------------------------------------- | ------------------------------------------------- |
-| Data for a server-rendered page or layout                                 | Direct Supabase client call in a Server Component |
-| Data needed in a Client Component (real-time, user interactions, polling) | TanStack Query                                    |
+**All data fetching uses TanStack Query.** `useEffect` + `fetch` and bare `useEffect` + Supabase calls are banned. No exceptions.
 
-**`useEffect` + `fetch` is banned** for data fetching. It produces duplicate requests, poor loading states, no caching, and inconsistent error handling. TanStack Query replaces it everywhere.
-
-### Server-Side Fetching (Default)
+### Configuration
 
 ```typescript
-// app/(dashboard)/projects/page.tsx — Server Component
-import { createServerClient } from '@/lib/supabase/server';
-import { requireAuth } from '@/lib/auth/server';
-
-export default async function ProjectsPage() {
-  const { tenantId } = await requireAuth();
-  const supabase = await createServerClient();
-
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('id, name, created_at')
-    .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false });
-
-  return <ProjectList projects={projects ?? []} />;
-}
+// Configured in AppProviders.tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,         // 5 minutes
+      gcTime: 10 * 60 * 1000,           // 10 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 ```
 
-### Client-Side Fetching (TanStack Query)
-
-Use TanStack Query when a Client Component needs data that may change without a page navigation — dashboards, real-time feeds, search results, optimistic updates.
-
-**Setup — `src/lib/query-client.ts`:**
+### Query hooks live in `src/hooks/`
 
 ```typescript
-import { QueryClient } from "@tanstack/react-query";
+// hooks/usePlacesQuery.ts
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
+import { PlaceSchema } from '@/types';
+import { AppError } from '@/utils/error';
+import { z } from 'zod';
 
-export function makeQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60 * 1000 // 1 minute default — prevents unnecessary refetches
-      }
-    }
+export function usePlacesQuery(tenantId: string) {
+  return useQuery({
+    queryKey: ['places', tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('places')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw AppError.from(error, 'usePlacesQuery');
+
+      const parsed = z.array(PlaceSchema).safeParse(data);
+      if (!parsed.success) throw AppError.from(parsed.error, 'usePlacesQuery:parse');
+      return parsed.data;
+    },
+    enabled: !!tenantId,
   });
 }
 ```
 
-**Query hooks live in `queries.ts` next to their feature:**
+### Mutations
 
 ```typescript
-// features/projects/queries.ts
-import { useQuery } from "@tanstack/react-query";
-import { createBrowserClient } from "@/lib/supabase/client";
+// hooks/useCreateMoment.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
+import { CreateMomentSchema } from '@/types';
+import { AppError } from '@/utils/error';
+import type { z } from 'zod';
 
-export function useProjects(tenantId: string) {
-  return useQuery({
-    queryKey: ["projects", tenantId],
-    queryFn: async () => {
-      const supabase = createBrowserClient();
+type Input = z.infer<typeof CreateMomentSchema>;
+
+export function useCreateMoment(tenantId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: Input) => {
+      const parsed = CreateMomentSchema.safeParse(input);
+      if (!parsed.success) throw AppError.from(parsed.error, 'useCreateMoment:validate');
+
       const { data, error } = await supabase
-        .from("projects")
-        .select("id, name, created_at")
-        .eq("tenant_id", tenantId)
-        .order("created_at", { ascending: false });
+        .from('moments')
+        .insert(parsed.data)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) throw AppError.from(error, 'useCreateMoment:insert');
       return data;
     },
-    enabled: !!tenantId
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['moments', tenantId] });
+    },
   });
-}
-```
-
-**Cache invalidation after Server Actions:**
-
-```typescript
-// After a mutation Server Action succeeds, invalidate the relevant query
-'use client';
-import { useQueryClient } from '@tanstack/react-query';
-import { createProject } from './actions';
-
-export function CreateProjectButton({ tenantId }: { tenantId: string }) {
-  const queryClient = useQueryClient();
-  const [isPending, startTransition] = useTransition();
-
-  const handleCreate = () => {
-    startTransition(async () => {
-      const result = await createProject({ name: 'New Project' });
-      if (result.success) {
-        // Invalidate so TanStack Query refetches fresh data
-        await queryClient.invalidateQueries({ queryKey: ['projects', tenantId] });
-      }
-    });
-  };
-
-  return <button onClick={handleCreate} disabled={isPending}>Create</button>;
 }
 ```
 
 ### Query Key Conventions
 
-Query keys are arrays. Always start with the resource name, then scope by tenantId, then any filters.
+Keys are arrays. Always start with the resource name, then scope by tenantId/userId, then filters.
 
 ```typescript
-["projects", tenantId][("projects", tenantId, projectId)][ // all projects for tenant // single project
-  ("projects", tenantId, { status: "active" })
-][("profile", userId)][("tenant-members", tenantId)]; // filtered projects // user profile // members of a tenant
+['places', tenantId]
+['places', tenantId, placeId]              // single place
+['places', tenantId, { status: 'active' }] // filtered
+['moments', tenantId]
+['profile', userId]
+['saved-places', userId]
 ```
-
-### Server Prefetch + HydrationBoundary (Preferred for Initial Page Load)
-
-When a page has Client Components that need data on first render, use TanStack Query's prefetch pattern to eliminate the loading spinner. The data is fetched on the server, serialised, and hydrated into the client cache before the component mounts.
-
-```typescript
-// app/(dashboard)/projects/page.tsx — Server Component
-import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
-import { makeQueryClient } from '@/lib/query-client';
-import { ProjectsDashboard } from './_components/ProjectsDashboard';
-import { requireAuth } from '@/lib/auth/server';
-import { createServerClient } from '@/lib/supabase/server';
-
-export default async function ProjectsPage() {
-  const { tenantId } = await requireAuth();
-  const queryClient = makeQueryClient();
-
-  // Prefetch on the server — Client Component gets data from cache immediately, no spinner
-  await queryClient.prefetchQuery({
-    queryKey: ['projects', tenantId],
-    queryFn: async () => {
-      const supabase = await createServerClient();
-      const { data } = await supabase
-        .from('projects')
-        .select('id, name, created_at')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false });
-      return data ?? [];
-    },
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <ProjectsDashboard tenantId={tenantId} />
-    </HydrationBoundary>
-  );
-}
-```
-
-```typescript
-// _components/ProjectsDashboard.tsx — Client Component
-// Data is already in cache — renders immediately, no loading state on first paint
-'use client';
-import { useProjects } from '@/features/projects/queries';
-
-export function ProjectsDashboard({ tenantId }: { tenantId: string }) {
-  const { data: projects } = useProjects(tenantId);
-  return <ProjectList projects={projects ?? []} />;
-}
-```
-
-**When to use this pattern:** Any page where a Client Component needs data on the initial render and a loading spinner would degrade the experience. Dashboard pages, detail pages, anything user-facing.
-
-**When to skip it:** Simple pages where the data is rendered entirely server-side (no Client Components need it) — just fetch directly in the Server Component.
 
 ---
 
@@ -365,63 +250,28 @@ With the App Router, the amount of client-side state you need is dramatically sm
 
 Reach for each layer in order — only move to the next if the current one genuinely cannot handle it:
 
-| Priority | Tool                                    | Use for                                                   | Examples                                                                    |
-| -------- | --------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1st      | URL state (search params, route params) | Shareable, bookmarkable UI state                          | Filters, active tabs, selected items, pagination, search query              |
-| 2nd      | `useState` / lifted state               | Local component state or small shared subtree             | Input values, dropdown open/closed, toggle states                           |
-| 3rd      | React Context                           | Static config shared across a deep tree                   | Theme, locale, current user object (read-only)                              |
-| 4th      | Zustand                                 | Complex mutable UI state needed across distant tree parts | Multi-step wizard state, notification queue, complex modal with many fields |
+| Priority | Tool                                          | Use for                                                   | Examples                                                                    |
+| -------- | --------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1st      | Navigation params (`useLocalSearchParams`)    | Screen-scoped shareable state                             | Selected item ID, filter values passed via route                            |
+| 2nd      | `useState` / lifted state                     | Local component state or small shared subtree             | Input values, modal open/closed, toggle states                              |
+| 3rd      | React Context                                 | Static config shared across a deep tree                   | Theme, current user object (read-only), account type                        |
+| 4th      | Zustand                                       | Complex mutable UI state needed across distant tree parts | Multi-step wizard state, notification queue, complex modal with many fields |
 
 **TanStack Query handles all server state.** Do not put Supabase data into any of the layers above.
 
-**No Redux.** The App Router architecture makes Redux an anti-pattern — global stores are shared across requests on the server, causing data contamination between users.
+**No Redux.** React Native Context + TanStack Query covers all use cases without global store complexity.
 
-### URL State — Use This First
+### Navigation Params — Use This First
 
-URL state is the most underused tool in Next.js. It is shareable, bookmarkable, survives a refresh, and requires zero libraries.
-
-```typescript
-// ✅ Filters, search, pagination — use URL state
-'use client';
-import { useRouter, useSearchParams } from 'next/navigation';
-
-export function ProjectFilters() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const status = searchParams.get('status') ?? 'all';
-
-  const setStatus = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('status', value);
-    router.push(`?${params.toString()}`);
-  };
-
-  return (
-    <select value={status} onChange={(e) => setStatus(e.target.value)}>
-      <option value="all">All</option>
-      <option value="active">Active</option>
-      <option value="archived">Archived</option>
-    </select>
-  );
-}
-```
-
-The Server Component reading that filter:
+For state that needs to survive navigation or be passed between screens, use Expo Router params.
 
 ```typescript
-// page.tsx — Server Component reads URL params directly
-export default async function ProjectsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string }>
-}) {
-  const { status } = await searchParams;
-  const supabase = await createServerClient();
-  const query = supabase.from('projects').select('*');
-  if (status && status !== 'all') query.eq('status', status);
-  const { data } = await query;
-  return <ProjectList projects={data ?? []} />;
-}
+// Navigate with params
+router.push({ pathname: '/place/[id]', params: { id: place.id } });
+
+// Read in the destination screen
+import { useLocalSearchParams } from 'expo-router';
+const { id } = useLocalSearchParams<{ id: string }>();
 ```
 
 ### useState — Second Reach
@@ -479,76 +329,54 @@ export const useNotifications = create<NotificationsStore>((set) => ({
 
 **Stack:** React Hook Form + Zod. Always. No exceptions.
 
-The Zod schema is defined and exported from `actions.ts`. React Hook Form uses it via `zodResolver`. This means the same schema validates both the client form and the server action — one source of truth.
+The Zod schema is defined and exported from `src/types/index.ts`. React Hook Form uses it via `zodResolver`. The same schema validates both the form and the Supabase mutation — one source of truth.
 
 ```typescript
-// features/projects/actions.ts
-export const CreateProjectSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name must be under 100 characters'),
-  description: z.string().max(500, 'Description must be under 500 characters').optional(),
+// types/index.ts
+export const CreateMomentSchema = z.object({
+  caption: z.string().min(1, 'Caption is required').max(300),
+  place_id: z.string().uuid(),
 });
+export type CreateMomentInput = z.infer<typeof CreateMomentSchema>;
 
-// features/projects/_components/CreateProjectForm.tsx
-'use client';
-import { useForm } from 'react-hook-form';
+// features/moments/components/CreateMomentForm.tsx
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { CreateProjectSchema, createProject } from '../actions';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { TextInput, TouchableOpacity, Text, View } from 'react-native';
+import { CreateMomentSchema, type CreateMomentInput } from '@/types';
+import { useCreateMoment } from '@/hooks/useCreateMoment';
 
-type FormValues = z.infer<typeof CreateProjectSchema>;
-
-export function CreateProjectForm() {
-  const form = useForm<FormValues>({
-    resolver: zodResolver(CreateProjectSchema),
-    defaultValues: { name: '', description: '' },
+export function CreateMomentForm({ tenantId }: { tenantId: string }) {
+  const { mutate, isPending, error } = useCreateMoment(tenantId);
+  const { control, handleSubmit, formState: { errors } } = useForm<CreateMomentInput>({
+    resolver: zodResolver(CreateMomentSchema),
   });
 
-  const onSubmit = async (values: FormValues) => {
-    const result = await createProject(values);
-    if (!result.success) {
-      form.setError('root', { message: result.error.message });
-      return;
-    }
-    form.reset();
-  };
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Project Name</FormLabel>
-              <FormControl>
-                <Input placeholder="My Project" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {form.formState.errors.root && (
-          <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+    <View>
+      <Controller
+        control={control}
+        name="caption"
+        render={({ field: { onChange, value } }) => (
+          <TextInput value={value} onChangeText={onChange} placeholder="What's happening?" />
         )}
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? 'Creating...' : 'Create Project'}
-        </Button>
-      </form>
-    </Form>
+      />
+      {errors.caption && <Text>{errors.caption.message}</Text>}
+      {error && <Text>{error.message}</Text>}
+      <TouchableOpacity onPress={handleSubmit(v => mutate(v))} disabled={isPending}>
+        <Text>{isPending ? 'Posting...' : 'Post'}</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 ```
 
 ### Form Rules
 
-1. Schema always defined in `actions.ts` — exported so the form can import it.
-2. Use Shadcn `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage` wrappers — consistent error display.
-3. Server errors from `result.error.message` go to `form.setError('root')`.
-4. Field-level errors from `result.error.details` (Zod flatten) can be mapped to individual fields using `form.setError('fieldName', ...)`.
+1. Schema always defined in `src/types/index.ts` — exported so forms and hooks share the same schema.
+2. Use `react-hook-form` + `zodResolver` for all forms.
+3. Mutation errors from the hook's `error` field go to the UI — do not throw unhandled.
+4. Always use `safeParse()` inside mutation hooks before calling Supabase — never `parse()`.
 
 ---
 
@@ -566,7 +394,7 @@ All custom hooks live in `src/hooks/` (shared) or `features/[feature]/` (feature
 ```typescript
 // hooks/useCurrentUser.ts
 import { useQuery } from "@tanstack/react-query";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 export type CurrentUser = {
   id: string;
@@ -579,10 +407,7 @@ export function useCurrentUser() {
   return useQuery<CurrentUser>({
     queryKey: ["current-user"],
     queryFn: async () => {
-      const supabase = createBrowserClient();
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data: profile } = await supabase
@@ -595,9 +420,9 @@ export function useCurrentUser() {
         id: user.id,
         email: user.email!,
         tenantId: profile!.active_tenant_id,
-        role: profile!.global_role
+        role: profile!.global_role,
       };
-    }
+    },
   });
 }
 ```
@@ -610,50 +435,6 @@ export function useCurrentUser() {
 
 ---
 
-## Shadcn/ui Usage
-
-### The Three-Layer Model
-
-```
-components/ui/         ← Shadcn generated. Never touch.
-components/            ← Your custom components, built by composing ui/ components.
-app/*/_components/     ← Route-specific components, can use both layers above.
-```
-
-### Adding Components
-
-Always use the CLI — never copy-paste from the docs:
-
-```bash
-npx shadcn@latest add button
-npx shadcn@latest add form input dialog
-```
-
-### Customising
-
-Extend via `className` prop using `cn()` — never edit files in `components/ui/`:
-
-```typescript
-// ✅ Correct — compose and extend, don't edit ui/
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-
-export function DangerButton({ className, ...props }: React.ComponentProps<typeof Button>) {
-  return (
-    <Button
-      variant="outline"
-      className={cn('border-destructive text-destructive hover:bg-destructive/10', className)}
-      {...props}
-    />
-  );
-}
-```
-
-### Theming
-
-All colour and spacing tokens live in `globals.css` as CSS variables. Change the theme by updating the variables, not by overriding Tailwind classes throughout the codebase.
-
----
 
 ## TypeScript Standards
 
@@ -700,20 +481,18 @@ const config = {
 
 ## Decisions Log
 
-| Decision                 | Choice                                                                           | Rationale                                                                                       |
-| ------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Folder structure         | `src/app/` routing + route groups + `_components/` private folders + `features/` | Follows Next.js/Vercel 2025 conventions; colocates feature code without bloating shared folders |
-| File naming              | PascalCase for components, kebab-case for folders, camelCase for utilities       | Industry standard for Next.js projects; matches Shadcn conventions                              |
-| Server Component default | Server Component unless `'use client'` explicitly needed                         | Smaller bundles, no secrets in browser, better performance                                      |
-| `'use client'` placement | As deep/late in the tree as possible                                             | Keeps maximum surface area server-rendered                                                      |
-| Client data fetching     | TanStack Query — `useEffect` + `fetch` is banned                                 | Caching, deduplication, DevTools, mutation handling, prefetch/hydration with RSC                |
-| Server state             | TanStack Query                                                                   | Separates server state from UI state cleanly                                                    |
-| URL state                | `useSearchParams` + `useRouter`                                                  | Primary tool — shareable, bookmarkable, survives refresh                                        |
-| Local UI state           | useState / useReducer                                                            | No library needed for component-local state                                                     |
-| Static shared config     | React Context                                                                    | Theme, locale, read-only current user                                                           |
-| Zustand                  | Only if genuinely needed                                                         | Complex mutable cross-tree UI state — most projects never need this                             |
-| Form stack               | React Hook Form + Zod + Shadcn Form components                                   | Type-safe, schema shared between client and server, consistent error display                    |
-| Schema location          | Defined and exported from `actions.ts`                                           | One schema, used by both Server Action validation and client-side form                          |
-| Shadcn customisation     | Compose on top via `cn()`, never edit `components/ui/`                           | Preserves ability to update Shadcn components via CLI                                           |
-| TypeScript               | strict mode, no any, generated DB types                                          | Prevents entire classes of runtime errors                                                       |
-| Database types           | Generated via Supabase CLI after every migration                                 | Single source of truth — never duplicated or hand-written                                       |
+| Decision             | Choice                                                             | Rationale                                                                         |
+| -------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| Folder structure     | `src/app/` routing + `src/features/` + `src/hooks/` + `src/contexts/` | Follows Expo Router conventions; colocates feature code without bloating shared folders |
+| File naming          | PascalCase for components, kebab-case for folders, camelCase for utilities | Industry standard; consistent across team                                     |
+| All components       | Client-side (React Native has no Server Components)                | React Native is always client-side                                                |
+| Data fetching        | TanStack Query — `useEffect` + `fetch` is banned                   | Caching, deduplication, DevTools, mutation handling                               |
+| Server state         | TanStack Query                                                     | Separates server state from UI state cleanly                                      |
+| Navigation state     | `useLocalSearchParams` + Expo Router params                        | Primary tool — survives navigation, shareable between screens                     |
+| Local UI state       | useState / useReducer                                              | No library needed for component-local state                                       |
+| Static shared config | React Context                                                      | Theme, current user, account type (read-only)                                     |
+| Zustand              | Only if genuinely needed                                           | Complex mutable cross-tree UI state — most features never reach this              |
+| Form stack           | React Hook Form + Zod + React Native inputs                        | Type-safe, schema shared between form and mutation hook                           |
+| Schema location      | Defined and exported from `src/types/index.ts`                     | One schema, used by both form validation and Supabase mutation                    |
+| TypeScript           | strict mode, no any, generated DB types                            | Prevents entire classes of runtime errors                                         |
+| Database types       | Generated via Supabase CLI after every migration                   | Single source of truth — never duplicated or hand-written                         |

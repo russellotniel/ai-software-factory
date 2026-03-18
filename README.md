@@ -90,11 +90,11 @@ deployment-os/             CI/CD, environments, release process
 
 This framework is designed for:
 
-- **Frontend:** Next.js 16 (App Router) + TypeScript
-- **Backend/Database:** Supabase (PostgreSQL, self-hosted on Kubernetes)
-- **Auth:** Supabase Auth or Keycloak (AD/LDAP)
-- **Styling:** Tailwind CSS 4.x + Shadcn/ui
-- **Runtime:** Node.js 20.9+
+- **Frontend:** Expo (React Native) + TypeScript (SDK 54+)
+- **Backend/Database:** Supabase (PostgreSQL, cloud-hosted)
+- **Auth:** Supabase Auth (email, OAuth, OTP, magic link)
+- **Styling:** NativeWind + React Native StyleSheet (project-level choice)
+- **Runtime:** Node.js 20.9+ (EAS CLI tooling)
 - **AI Agent:** Claude Code (primary), compatible with any AI coding tool
 
 ---
