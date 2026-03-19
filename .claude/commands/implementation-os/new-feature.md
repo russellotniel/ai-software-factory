@@ -6,7 +6,7 @@ component structure, and TanStack Query hook if needed.
 Read before starting:
 
 - `.claude/docs/foundation/product-mission.md` — project context
-- `.claude/docs/.claude/docs/implementation-os/standards.md`
+- `.claude/docs/implementation-os/standards.md`
 - `.claude/docs/architecture-os/api-contracts.md` (find the contract for this feature)
 - `.claude/docs/specs/{feature-name}.md` — if a spec exists for this feature
 - `.claude/docs/design-os/screens/{feature-name}.md` — if a screen spec exists

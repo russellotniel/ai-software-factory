@@ -2,7 +2,7 @@
 
 Review existing implementation code against AI Software Factory standards.
 
-Read `.claude/docs/.claude/docs/implementation-os/standards.md` before starting.
+Read `.claude/docs/implementation-os/standards.md` before starting.
 
 ---
 

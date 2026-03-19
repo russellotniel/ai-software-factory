@@ -32,16 +32,19 @@ AI Software Factory is a **template repository**. For every new project:
 ## Framework Structure
 
 ```
-foundation/              → Global principles inherited by all phases
-architecture-os/         → System design, schema, RPC, API contracts
-implementation-os/       → Coding standards, feature specs
-data-fetching-os/        → Caching, server vs client fetching, optimization
-qa-os/                   → Test strategy, test cases, acceptance criteria
-deployment-os/           → CI/CD, environments, release process
-
 .claude/
   CLAUDE.md              → Auto-loaded context for every Claude Code session
   commands/              → Slash commands for each phase
+  docs/
+    foundation/          → Core principles and standards
+    architecture-os/     → System design, schema, RPC, API contracts
+    implementation-os/   → Coding standards, feature specs
+    data-fetching-os/    → Caching, server vs client fetching, optimization
+    qa-os/               → Test strategy, test cases, acceptance criteria
+    deployment-os/       → CI/CD, environments, release process
+    design-os/           → Product vision, design system, screen specs
+    specs/               → Feature specs (generated per project)
+    standards-index.yml  → Maps topics to document paths
 ```
 
 ---
