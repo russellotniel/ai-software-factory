@@ -5,8 +5,8 @@ language that all feature implementations will follow.
 
 Read before starting:
 
-- `design-os/design-system.md` — existing decisions (if any)
-- `foundation/tech-standards.md` — Tailwind 4 + Shadcn confirmed
+- `.claude/docs/design-os/design-system.md` — existing decisions (if any)
+- `.claude/docs/foundation/tech-standards.md` — Tailwind 4 + Shadcn confirmed
 
 ---
 
@@ -61,9 +61,9 @@ Focus on: Button, Card, Table, Dialog, Form, Badge, Sheet, Tabs.
 
 ## Step 5 — Generate and Write
 
-Show the complete `design-os/design-system.md` content.
+Show the complete `.claude/docs/design-os/design-system.md` content.
 Ask: "Should I write this?"
-On confirmation, write to `design-os/design-system.md`.
+On confirmation, write to `.claude/docs/design-os/design-system.md`.
 
 ---
 

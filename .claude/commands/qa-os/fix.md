@@ -3,7 +3,7 @@
 Run the test suite, read failures, fix the source, re-run until green.
 Works for Vitest (unit/component) and Playwright (E2E).
 
-Read `qa-os/strategy.md` if you need context on the test setup.
+Read `.claude/docs/qa-os/strategy.md` if you need context on the test setup.
 
 ---
 

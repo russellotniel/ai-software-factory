@@ -19,12 +19,13 @@ agent and team member starts from the same source of truth."
 
 ## Step 2 — Project Identity
 
+The project name and new/existing status were already captured by `/foundation:init`.
+Do not ask for these again.
+
 Ask:
 
-- What is this project called?
-- What does it do in one sentence?
+- What does this project do in one sentence?
 - Who are the primary users?
-- Is this a new project or an existing one?
 
 ---
 
@@ -68,7 +69,7 @@ Ask:
 
 Based on the conversation, generate or confirm:
 
-### foundation/product-mission.md
+### .claude/docs/foundation/product-mission.md
 
 Fill every section using the conversation answers:
 
@@ -80,22 +81,22 @@ Fill every section using the conversation answers:
 - Technical context (multi-tenant, auth path, regulated, integrations)
 - Definition of done
 
-### foundation/tech-standards.md
+### .claude/docs/foundation/tech-standards.md
 
 Confirm or update:
 
 - Auth decision: Supabase Auth or Keycloak + Supabase
 - Any project-specific deviations from defaults (requires justification)
 
-### foundation/auth-model.md
+### .claude/docs/foundation/auth-model.md
 
 Confirm the auth path for this specific project.
 
-### foundation/compliance-standards.md
+### .claude/docs/foundation/compliance-standards.md
 
 Note any regulated requirements beyond the baseline.
 
-### design-os/product-vision.md
+### .claude/docs/design-os/product-vision.md
 
 Populate from design context gathered in Step 5:
 
@@ -129,7 +130,7 @@ Tell the user:
 
 "Foundation documented. Choose your next step:
 
-- **If you have a Figma file or mockup images:** run `/design:import` to import your design into `design-os/screens/`
+- **If you have a Figma file or mockup images:** run `/design:import` to import your design into `.claude/docs/design-os/screens/`
 - **If you have no design yet:** run `/foundation:shape-spec` to spec your first feature and start building"
 
 ```

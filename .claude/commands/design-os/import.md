@@ -6,8 +6,8 @@ Import a design into the factory. Accepts three sources:
 2. **Image** — read a mockup image (PNG, JPG, screenshot) from docs/designs/
 3. **Manual** — structured Q&A to document a design that exists only in someone's head
 
-Output: populates `design-os/screens/{feature-name}.md` and optionally
-`design-os/design-system.md` if design tokens are found.
+Output: populates `.claude/docs/design-os/screens/{feature-name}.md` and optionally
+`.claude/docs/design-os/design-system.md` if design tokens are found.
 
 ---
 
@@ -53,18 +53,18 @@ Ask these questions to document a design that doesn't exist as a file yet:
 
 If the source contains color, typography, or spacing information:
 
-- Map colors to CSS custom property names following `design-os/design-system.md`
+- Map colors to CSS custom property names following `.claude/docs/design-os/design-system.md`
 - Identify font choices and sizes
 - Note any Shadcn component variants that appear
 
-Ask: "Should I update design-os/design-system.md with these tokens?"
+Ask: "Should I update .claude/docs/design-os/design-system.md with these tokens?"
 If yes, merge into the existing file — do not overwrite existing decisions.
 
 ---
 
 ## Step 4 — Generate Screen Spec
 
-Generate a screen spec using `design-os/screens/_template.md` format.
+Generate a screen spec using `.claude/docs/design-os/screens/_template.md` format.
 
 For each screen or feature area in the design:
 
@@ -79,9 +79,9 @@ For each screen or feature area in the design:
 ## Step 5 — Confirm and Write
 
 Show the generated screen spec(s).
-Ask: "Should I write these to design-os/screens/?"
+Ask: "Should I write these to .claude/docs/design-os/screens/?"
 
-On confirmation, write `design-os/screens/{feature-name}.md`.
+On confirmation, write `.claude/docs/design-os/screens/{feature-name}.md`.
 
 After writing:
 

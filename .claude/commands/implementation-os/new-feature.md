@@ -5,11 +5,11 @@ component structure, and TanStack Query hook if needed.
 
 Read before starting:
 
-- `foundation/product-mission.md` — project context
-- `implementation-os/standards.md`
-- `architecture-os/api-contracts.md` (find the contract for this feature)
-- `specs/{feature-name}.md` — if a spec exists for this feature
-- `design-os/screens/{feature-name}.md` — if a screen spec exists
+- `.claude/docs/foundation/product-mission.md` — project context
+- `.claude/docs/.claude/docs/implementation-os/standards.md`
+- `.claude/docs/architecture-os/api-contracts.md` (find the contract for this feature)
+- `.claude/docs/specs/{feature-name}.md` — if a spec exists for this feature
+- `.claude/docs/design-os/screens/{feature-name}.md` — if a screen spec exists
 
 **If a screen spec or Figma frame exists, read it before writing any component code.**
 The design spec is the source of truth for what the UI should look like.
@@ -103,7 +103,7 @@ On confirmation, write to `src/features/{domain}/`.
 Remind the user:
 
 - Add tests with `/qa:new-tests`
-- If this needs cached data, check `data-fetching-os/caching-strategy.md`
+- If this needs cached data, check `.claude/docs/data-fetching-os/caching-strategy.md`
 
 ---
 

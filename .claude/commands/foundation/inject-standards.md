@@ -5,7 +5,7 @@ Use this at the start of any session where you need to make sure the
 right standards are loaded — especially for long implementation sessions
 or when switching between feature areas.
 
-Read `standards-index.yml` first.
+Read `.claude/docs/standards-index.yml` first.
 
 ---
 
@@ -14,7 +14,7 @@ Read `standards-index.yml` first.
 Ask: "What are you working on right now?"
 (Or infer from conversation context if already established.)
 
-Using `standards-index.yml`:
+Using `.claude/docs/standards-index.yml`:
 
 1. Match the task description against keywords in each standard entry
 2. Identify the 3–5 most relevant standard IDs
@@ -23,8 +23,8 @@ Using `standards-index.yml`:
 
 If the task involves a specific feature, also check:
 
-- `specs/{feature-name}.md` — if a spec exists
-- `design-os/screens/{feature-name}.md` — if a screen spec exists
+- `.claude/docs/specs/{feature-name}.md` — if a spec exists
+- `.claude/docs/design-os/screens/{feature-name}.md` — if a screen spec exists
 
 ---
 

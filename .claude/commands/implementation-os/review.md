@@ -2,7 +2,7 @@
 
 Review existing implementation code against AI Software Factory standards.
 
-Read `implementation-os/standards.md` before starting.
+Read `.claude/docs/.claude/docs/implementation-os/standards.md` before starting.
 
 ---
 
@@ -45,7 +45,7 @@ For each file, check:
 ```
 ❌ src/features/projects/actions.ts:42
    Issue: Input not validated before database call
-   Standard: implementation-os/standards.md — Validation
+   Standard: .claude/docs/implementation-os/standards.md — Validation
    Fix: Add safeParse() before the supabase call
 
 ✅ src/features/projects/schemas.ts — Zod schemas correct, types exported

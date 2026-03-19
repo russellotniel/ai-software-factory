@@ -3,7 +3,7 @@
 Generate test scaffolding for a feature: unit tests for schemas and actions,
 component tests for forms, and E2E specs for user flows.
 
-Read `qa-os/strategy.md` before starting.
+Read `.claude/docs/qa-os/strategy.md` before starting.
 
 ---
 

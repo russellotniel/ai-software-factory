@@ -5,10 +5,10 @@ Output: migration file, optional RPC functions, and an API contract entry.
 
 Read before starting:
 
-- `architecture-os/schema-conventions.md`
-- `architecture-os/rpc-standards.md`
-- `architecture-os/api-contracts.md`
-- `architecture-os/audit-trail.md`
+- `.claude/docs/architecture-os/schema-conventions.md`
+- `.claude/docs/architecture-os/rpc-standards.md`
+- `.claude/docs/architecture-os/api-contracts.md`
+- `.claude/docs/architecture-os/audit-trail.md`
 
 ---
 
@@ -63,7 +63,7 @@ If RPC is needed:
 ## Step 4 — API Contract
 
 Does this feature expose a Server Action or Route Handler?
-If yes, add an entry to `architecture-os/api-contracts.md`:
+If yes, add an entry to `.claude/docs/architecture-os/api-contracts.md`:
 
 - Name
 - Input schema (Zod)
@@ -86,7 +86,7 @@ Ask: "Should I write these files to the repo?"
 On confirmation:
 
 - Write migration to `supabase/migrations/{timestamp}_{name}.sql`
-- Append to `architecture-os/api-contracts.md`
+- Append to `.claude/docs/architecture-os/api-contracts.md`
 
 ---
 

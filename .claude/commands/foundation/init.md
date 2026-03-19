@@ -564,7 +564,7 @@ Tell the user: "Fill in `.env.local` with your actual Supabase URL and keys befo
 
 Tell the user:
 
-"Project initialized. Run `/foundation:discover` next to document your project's standards and generate `foundation/product-mission.md`."
+"Project initialized. Run `/foundation:discover` next to document your project's standards and generate `.claude/docs/foundation/product-mission.md`."
 
 ```
 Next command: /foundation:discover

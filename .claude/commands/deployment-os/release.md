@@ -6,7 +6,7 @@ through the deploy gate.
 This command does not push tags or deploy. Semantic-release handles tagging
 automatically. This command ensures the human verifies the right things first.
 
-Read `deployment-os/release-process.md` before starting.
+Read `.claude/docs/deployment-os/release-process.md` before starting.
 
 ---
 
@@ -78,7 +78,7 @@ Once the tag exists, `production.yml` fires automatically:
 - [ ] Manually verify one or two key flows on production
 - [ ] Watch error monitoring for 10 minutes post-deploy
 - [ ] If something is wrong: assess hotfix vs rollback before acting
-      (see `deployment-os/release-process.md` — Rollback section)
+      (see `.claude/docs/deployment-os/release-process.md` — Rollback section)
 
 ---
 

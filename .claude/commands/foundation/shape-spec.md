@@ -9,10 +9,10 @@ right questions, then use plan mode to work through the implementation.
 
 Read before starting:
 
-- `foundation/product-mission.md` — project context
-- `architecture-os/schema-conventions.md` — data shape constraints
-- `specs/_template.md` — output format
-- `design-os/screens/` — check if a screen spec exists for this feature
+- `.claude/docs/foundation/product-mission.md` — project context
+- `.claude/docs/architecture-os/schema-conventions.md` — data shape constraints
+- `.claude/docs/specs/_template.md` — output format
+- `.claude/docs/design-os/screens/` — check if a screen spec exists for this feature
 
 ---
 
@@ -73,19 +73,19 @@ Ask:
 
 ## Step 5 — Generate and Save
 
-Generate the spec using `specs/_template.md` format.
-Filename: `specs/{feature-name}.md`
+Generate the spec using `.claude/docs/specs/_template.md` format.
+Filename: `.claude/docs/specs/{feature-name}.md`
 
 Show the complete spec. Ask: "Should I save this?"
 
-On confirmation, write to `specs/{feature-name}.md`.
+On confirmation, write to `.claude/docs/specs/{feature-name}.md`.
 
 After saving:
 
 - If data shape requires a new table or columns, suggest running
   `/architecture:new-feature` next
 - If implementation is ready to start, suggest Claude Code plan mode:
-  "Open plan mode and reference specs/{feature-name}.md as the source of truth"
+  "Open plan mode and reference .claude/docs/specs/{feature-name}.md as the source of truth"
 
 ---
 

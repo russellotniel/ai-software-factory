@@ -4,10 +4,10 @@ Review existing schema and RPC code against AI Software Factory standards.
 
 Read before starting:
 
-- `architecture-os/schema-conventions.md`
-- `architecture-os/rpc-standards.md`
-- `architecture-os/audit-trail.md`
-- `foundation/compliance-standards.md`
+- `.claude/docs/architecture-os/schema-conventions.md`
+- `.claude/docs/architecture-os/rpc-standards.md`
+- `.claude/docs/architecture-os/audit-trail.md`
+- `.claude/docs/foundation/compliance-standards.md`
 
 ---
 

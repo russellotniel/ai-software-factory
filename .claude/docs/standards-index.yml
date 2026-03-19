@@ -8,33 +8,33 @@ standards:
   - id: product-mission
     keywords: [project, product, mission, users, personas, use cases, scope]
     files:
-      - foundation/product-mission.md
+      - .claude/docs/foundation/product-mission.md
 
   - id: principles
     keywords: [principles, rules, non-negotiable, always, never]
     files:
-      - foundation/principles.md
+      - .claude/docs/foundation/principles.md
 
   - id: tech-stack
     keywords:
       [nextjs, next.js, supabase, tailwind, typescript, node, stack, versions]
     files:
-      - foundation/tech-standards.md
+      - .claude/docs/foundation/tech-standards.md
 
   - id: auth
     keywords: [auth, authentication, keycloak, session, jwt, user, login, oauth]
     files:
-      - foundation/auth-model.md
+      - .claude/docs/foundation/auth-model.md
 
   - id: compliance
     keywords: [security, owasp, compliance, hipaa, audit, gdpr, regulation]
     files:
-      - foundation/compliance-standards.md
+      - .claude/docs/foundation/compliance-standards.md
 
   - id: mcp
     keywords: [mcp, supabase mcp, playwright mcp, figma mcp, tools, claude code]
     files:
-      - foundation/mcp-setup.md
+      - .claude/docs/foundation/mcp-setup.md
 
   - id: schema
     keywords:
@@ -50,7 +50,7 @@ standards:
         tenant_id
       ]
     files:
-      - architecture-os/schema-conventions.md
+      - .claude/docs/architecture-os/schema-conventions.md
 
   - id: rpc
     keywords:
@@ -63,23 +63,23 @@ standards:
         plpgsql
       ]
     files:
-      - architecture-os/rpc-standards.md
+      - .claude/docs/architecture-os/rpc-standards.md
 
   - id: api-contracts
     keywords:
       [api, route handler, server action, endpoint, contract, input, output]
     files:
-      - architecture-os/api-contracts.md
+      - .claude/docs/architecture-os/api-contracts.md
 
   - id: audit
     keywords: [audit, audit trail, audit log, log changes, who changed, history]
     files:
-      - architecture-os/audit-trail.md
+      - .claude/docs/architecture-os/audit-trail.md
 
   - id: system-design
     keywords: [architecture, system design, adr, decision, proxy, middleware]
     files:
-      - architecture-os/system-design.md
+      - .claude/docs/architecture-os/system-design.md
 
   - id: implementation
     keywords:
@@ -95,7 +95,7 @@ standards:
         react hook form
       ]
     files:
-      - implementation-os/standards.md
+      - .claude/docs/implementation-os/standards.md
 
   - id: caching
     keywords:
@@ -109,7 +109,7 @@ standards:
         unstable_cache
       ]
     files:
-      - data-fetching-os/caching-strategy.md
+      - .claude/docs/data-fetching-os/caching-strategy.md
 
   - id: data-fetching
     keywords:
@@ -123,7 +123,7 @@ standards:
         fetch
       ]
     files:
-      - data-fetching-os/server-vs-client.md
+      - .claude/docs/data-fetching-os/server-vs-client.md
 
   - id: testing
     keywords:
@@ -138,7 +138,7 @@ standards:
         tenant isolation
       ]
     files:
-      - qa-os/strategy.md
+      - .claude/docs/qa-os/strategy.md
 
   - id: ci-cd
     keywords:
@@ -154,7 +154,7 @@ standards:
         semantic-release
       ]
     files:
-      - deployment-os/ci-cd.md
+      - .claude/docs/deployment-os/ci-cd.md
 
   - id: environments
     keywords:
@@ -168,7 +168,7 @@ standards:
         NEXT_PUBLIC
       ]
     files:
-      - deployment-os/environments.md
+      - .claude/docs/deployment-os/environments.md
 
   - id: release
     keywords:
@@ -183,7 +183,7 @@ standards:
         conventional commits
       ]
     files:
-      - deployment-os/release-process.md
+      - .claude/docs/deployment-os/release-process.md
 
   - id: kubernetes
     keywords:
@@ -200,15 +200,15 @@ standards:
         manifest
       ]
     files:
-      - deployment-os/k8s-sizing.md
+      - .claude/docs/deployment-os/k8s-sizing.md
 
   - id: design-system
     keywords:
       [design, color, typography, shadcn, tailwind tokens, components, ui]
     files:
-      - design-os/design-system.md
+      - .claude/docs/design-os/design-system.md
 
   - id: screens
     keywords: [screen, mockup, figma, layout, ui spec, wireframe, design spec]
     files:
-      - design-os/product-vision.md
+      - .claude/docs/design-os/product-vision.md

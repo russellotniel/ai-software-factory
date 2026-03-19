@@ -5,7 +5,7 @@ characteristics. This command asks a structured set of questions and produces
 deployment.yaml, service.yaml, configmap.yaml, ingress.yaml, and optionally
 hpa.yaml — sized correctly for this project, not from a generic template.
 
-Read `deployment-os/k8s-sizing.md` before starting. The sizing guide contains
+Read `.claude/docs/deployment-os/k8s-sizing.md` before starting. The sizing guide contains
 the formulas and worked examples that inform the values you will generate.
 
 ---
@@ -50,7 +50,7 @@ Group them naturally in conversation — do not fire them as a numbered list.
 
 ## Step 2 — Derive Resource Values
 
-Using the answers and the sizing formulas from `deployment-os/k8s-sizing.md`:
+Using the answers and the sizing formulas from `.claude/docs/deployment-os/k8s-sizing.md`:
 
 1. Calculate `requests.memory` = peak observed memory + 10–15% headroom
    (if peak unknown, use baseline × 1.5 as estimate and flag it)
@@ -183,7 +183,7 @@ On confirmation, write the files.
 Remind the user:
 
 - Replace `latest` image tags with the actual SHA or version tag in CI
-  (the workflows in `deployment-os/ci-cd.md` handle this automatically)
+  (the workflows in `.claude/docs/deployment-os/ci-cd.md` handle this automatically)
 - Populate Kubernetes Secrets via your cluster's secrets approach
   (do not commit actual secret values to the repo)
 - Run `kubectl apply -k k8s/staging/` or apply each file individually

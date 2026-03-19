@@ -67,41 +67,34 @@ Every command enforces those standards.
 
 ## Finding the Right Standards
 
-Use `standards-index.yml` to find which document covers a topic.
+Use `.claude/docs/standards-index.yml` to find which document covers a topic.
 Or run `/foundation:inject-standards` to auto-load relevant standards
 for what you're working on.
 
 Key documents:
 
-- `foundation/product-mission.md` — what this project is, who it's for
-- `foundation/tech-standards.md` — technology decisions
-- `foundation/auth-model.md` — auth path for this project
-- `foundation/mcp-setup.md` — MCP server configuration and usage
-- `architecture-os/schema-conventions.md` — database standards
-- `architecture-os/rpc-standards.md` — RPC patterns
-- `deployment-os/release-process.md` — branching and release
-- `design-os/design-system.md` — visual design tokens
-- `design-os/screens/` — per-feature screen specs
+- `.claude/docs/foundation/product-mission.md` — what this project is, who it's for
+- `.claude/docs/foundation/tech-standards.md` — technology decisions
+- `.claude/docs/foundation/auth-model.md` — auth path for this project
+- `.claude/docs/foundation/mcp-setup.md` — MCP server configuration and usage
+- `.claude/docs/architecture-os/schema-conventions.md` — database standards
+- `.claude/docs/architecture-os/rpc-standards.md` — RPC patterns
+- `.claude/docs/deployment-os/release-process.md` — branching and release
+- `.claude/docs/design-os/design-system.md` — visual design tokens
+- `.claude/docs/design-os/screens/` — per-feature screen specs
 
 ---
 
 ## Development Workflow
 
 ```
-── Setup (run once per project) ─────────────────────────
-/foundation:init        → initialize project (new or existing)
+/design:import          → import Figma or mockup into .claude/docs/design-os/screens/
 /foundation:discover    → document project standards + product-mission.md
-/design:import          → import Figma or mockup into design-os/screens/ (optional)
-/design:system          → document design tokens (optional)
-
-── Per feature (repeat) ─────────────────────────────────
-/foundation:shape-spec  → spec the feature
+/foundation:shape-spec  → spec a feature before building it
 /architecture:new-feature → schema migration + RPC + API contract
 /implementation:new-feature → Server Action + Zod schema + component
 /qa:new-tests           → unit + component + E2E test scaffold
 /qa:fix                 → run tests, fix failures, re-run until green
-
-── Shipping ─────────────────────────────────────────────
 /deployment:k8s-config  → generate Kubernetes manifests for this project
 /deployment:release     → pre-release checklist + production deploy gate
 ```
@@ -109,30 +102,29 @@ Key documents:
 Start every new project with:
 
 ```
-/foundation:init
+/foundation:discover
 ```
 
 ---
 
 ## All Commands
 
-| Command                        | Purpose                                                            |
-| ------------------------------ | ------------------------------------------------------------------ |
-| `/foundation:init`             | Initialize project — new or existing, generates all baseline files |
-| `/foundation:discover`         | Document project standards, generate product-mission.md            |
-| `/foundation:shape-spec`       | Spec a feature — acceptance criteria, data shape, UI ref           |
-| `/foundation:inject-standards` | Load relevant standards for current task                           |
-| `/design:import`               | Import Figma or image mockup into design-os/screens/               |
-| `/design:system`               | Document or update the design system tokens                        |
-| `/architecture:new-feature`    | Schema migration, RPC, API contract                                |
-| `/architecture:review`         | Audit schema and RPC against standards                             |
-| `/implementation:new-feature`  | Scaffold Server Action + Zod schema + component                    |
-| `/implementation:review`       | Audit implementation code against standards                        |
-| `/data-fetching:review`        | Audit caching and server/client patterns                           |
-| `/qa:new-tests`                | Generate unit, component, and E2E test scaffolding                 |
-| `/qa:fix`                      | Run tests → fix failures → re-run until green                      |
-| `/deployment:k8s-config`       | Generate Kubernetes manifests sized for this project               |
-| `/deployment:release`          | Pre-release checklist and production deploy walkthrough            |
+| Command                        | Purpose                                                           |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `/foundation:discover`         | Document project standards, generate product-mission.md           |
+| `/foundation:shape-spec`       | Spec a feature — acceptance criteria, data shape, UI ref          |
+| `/foundation:inject-standards` | Load relevant standards for current task                          |
+| `/design:import`               | Import Figma or image mockup into .claude/docs/design-os/screens/ |
+| `/design:system`               | Document or update the design system tokens                       |
+| `/architecture:new-feature`    | Schema migration, RPC, API contract                               |
+| `/architecture:review`         | Audit schema and RPC against standards                            |
+| `/implementation:new-feature`  | Scaffold Server Action + Zod schema + component                   |
+| `/implementation:review`       | Audit implementation code against standards                       |
+| `/data-fetching:review`        | Audit caching and server/client patterns                          |
+| `/qa:new-tests`                | Generate unit, component, and E2E test scaffolding                |
+| `/qa:fix`                      | Run tests → fix failures → re-run until green                     |
+| `/deployment:k8s-config`       | Generate Kubernetes manifests sized for this project              |
+| `/deployment:release`          | Pre-release checklist and production deploy walkthrough           |
 
 ---
 

@@ -4,8 +4,8 @@ Audit data fetching patterns against caching and server/client standards.
 
 Read before starting:
 
-- `data-fetching-os/caching-strategy.md`
-- `data-fetching-os/server-vs-client.md`
+- `.claude/docs/data-fetching-os/caching-strategy.md`
+- `.claude/docs/data-fetching-os/server-vs-client.md`
 
 ---
 
@@ -39,7 +39,7 @@ For each file, check:
 ```
 ❌ src/features/dashboard/components/DashboardStats.tsx
    Issue: Direct Supabase query in Client Component via useEffect+fetch
-   Standard: data-fetching-os/server-vs-client.md
+   Standard: .claude/docs/data-fetching-os/server-vs-client.md
    Fix: Move query to Server Component parent, pass data as props
 
 ✅ src/features/projects/queries.ts — Correctly wrapped with 'use cache',

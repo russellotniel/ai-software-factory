@@ -383,7 +383,7 @@ These tables still follow all other conventions — standard columns, indexes, R
 ```sql
 -- Example: tenants table RLS
 CREATE POLICY "superadmin_all" ON public.tenants
-  FOR ALL USING ((SELECT private.get_user_role()) = 'superadmin');
+  FOR ALL USING (public.get_user_role() = 'superadmin');
 
 CREATE POLICY "members_read_own" ON public.tenants
   FOR SELECT USING (
