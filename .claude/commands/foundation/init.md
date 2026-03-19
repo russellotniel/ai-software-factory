@@ -2,10 +2,14 @@
 
 Initialize the AI Software Factory for a project. Handles two scenarios:
 
-- **New project** — bootstraps a full Next.js 16 + Supabase project from scratch
+- **New project** — scaffolds Next.js 16 + Supabase into the current directory (the template repo IS the project)
 - **Existing project** — adds missing standardized files to a project already in progress
 
 Both paths end at the same place: a fully wired project ready for `/foundation:discover`.
+
+> **How this works:** Use the AI Software Factory GitHub template to create your project repo,
+> clone it locally, open Claude Code inside it, then run this command.
+> Everything is generated in-place — no nested folders.
 
 ---
 
@@ -19,24 +23,27 @@ Ask: "Is this a new project or an existing one?"
 
 ### Step A1 — Project Name
 
-Ask: "What is the project name?" (used for the directory and package name, kebab-case)
+Ask: "What is the project name?" (used for `package.json` name field and display, kebab-case)
 
 ### Step A2 — Bootstrap
 
 Run the following in sequence. Show each command before running it.
+**All commands run in the current directory (`.`) — never create a subdirectory.**
 
 ```bash
-# 1. Create Next.js project
-npx create-next-app@latest {project-name} \
+# 1. Scaffold Next.js into the current directory
+npx create-next-app@latest . \
   --typescript \
   --tailwind \
   --app \
   --src-dir \
   --no-git \
   --import-alias "@/*"
+```
 
-cd {project-name}
+When prompted for the project name by create-next-app, use the name from Step A1.
 
+```bash
 # 2. Initialize Supabase
 npx supabase init
 
@@ -163,7 +170,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database";
 
-export async function createServerClient() {
+export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(
@@ -193,7 +200,7 @@ export async function createServerClient() {
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 
-export function createBrowserClientInstance() {
+export function createSupabaseBrowserClient() {
   return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -239,7 +246,7 @@ export async function updateSession(request: NextRequest) {
 ### `src/lib/auth/server.ts`
 
 ```typescript
-import { createServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export type AuthContext = {
@@ -249,7 +256,7 @@ export type AuthContext = {
 };
 
 export async function requireAuth(): Promise<AuthContext> {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
     error
