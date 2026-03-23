@@ -67,7 +67,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createServerClient: vi.fn().mockReturnValue({ from: vi.fn().mockReturnThis() }),
+  createSupabaseServerClient: vi.fn().mockReturnValue({ from: vi.fn().mockReturnThis() }),
 }));
 ```
 

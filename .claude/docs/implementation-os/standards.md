@@ -147,7 +147,7 @@ The goal is to keep the outer shell server-rendered and push interactivity to le
 // ✅ Good — only the interactive part is a Client Component
 // ProjectsPage.tsx (Server Component — fetches data directly)
 export default async function ProjectsPage() {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: projects } = await supabase.from('projects').select('*');
   return <ProjectList projects={projects} />;  // passes data down
 }
@@ -202,12 +202,12 @@ export default function ProjectsPage() {
 
 ```typescript
 // app/(dashboard)/projects/page.tsx — Server Component
-import { createServerClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth/server';
 
 export default async function ProjectsPage() {
   const { tenantId } = await requireAuth();
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data: projects } = await supabase
     .from('projects')
@@ -244,13 +244,13 @@ export function makeQueryClient() {
 ```typescript
 // features/projects/queries.ts
 import { useQuery } from "@tanstack/react-query";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function useProjects(tenantId: string) {
   return useQuery({
     queryKey: ["projects", tenantId],
     queryFn: async () => {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const { data, error } = await supabase
         .from("projects")
         .select("id, name, created_at")
@@ -311,7 +311,7 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { makeQueryClient } from '@/lib/query-client';
 import { ProjectsDashboard } from './_components/ProjectsDashboard';
 import { requireAuth } from '@/lib/auth/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function ProjectsPage() {
   const { tenantId } = await requireAuth();
@@ -321,7 +321,7 @@ export default async function ProjectsPage() {
   await queryClient.prefetchQuery({
     queryKey: ['projects', tenantId],
     queryFn: async () => {
-      const supabase = await createServerClient();
+      const supabase = await createSupabaseServerClient();
       const { data } = await supabase
         .from('projects')
         .select('id, name, created_at')
@@ -416,7 +416,7 @@ export default async function ProjectsPage({
   searchParams: Promise<{ status?: string }>
 }) {
   const { status } = await searchParams;
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const query = supabase.from('projects').select('*');
   if (status && status !== 'all') query.eq('status', status);
   const { data } = await query;
@@ -566,7 +566,7 @@ All custom hooks live in `src/hooks/` (shared) or `features/[feature]/` (feature
 ```typescript
 // hooks/useCurrentUser.ts
 import { useQuery } from "@tanstack/react-query";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type CurrentUser = {
   id: string;
@@ -579,7 +579,7 @@ export function useCurrentUser() {
   return useQuery<CurrentUser>({
     queryKey: ["current-user"],
     queryFn: async () => {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const {
         data: { user }
       } = await supabase.auth.getUser();

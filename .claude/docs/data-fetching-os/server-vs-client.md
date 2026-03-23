@@ -52,7 +52,7 @@ Data is fetched on the server and rendered entirely in Server Components. No cli
 ```typescript
 // app/(dashboard)/projects/[id]/page.tsx
 import { requireAuth } from '@/lib/auth/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 
 interface Props {
@@ -61,7 +61,7 @@ interface Props {
 
 export default async function ProjectPage({ params }: Props) {
   const { tenantId } = await requireAuth();
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data: project } = await supabase
     .from('projects')
@@ -91,7 +91,7 @@ Data is fetched on the server for the initial render, then the Client Component 
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { makeQueryClient } from '@/lib/query-client';
 import { requireAuth } from '@/lib/auth/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ProjectsDashboard } from './_components/ProjectsDashboard';
 
 export default async function ProjectsPage() {
@@ -101,7 +101,7 @@ export default async function ProjectsPage() {
   await queryClient.prefetchQuery({
     queryKey: ['projects', tenantId],
     queryFn: async () => {
-      const supabase = await createServerClient();
+      const supabase = await createSupabaseServerClient();
       const { data } = await supabase
         .from('projects')
         .select('id, name, status, created_at')
@@ -184,7 +184,7 @@ All writes go through Server Actions. Client Components trigger the action and u
 // features/projects/actions.ts
 "use server";
 import { requireAuth } from "@/lib/auth/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { CreateProjectSchema } from "./schemas";
@@ -204,7 +204,7 @@ export async function createProject(
     };
   }
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("projects")
     .insert({ ...parsed.data, tenant_id: tenantId })
@@ -254,22 +254,22 @@ export function CreateProjectForm({ tenantId }: { tenantId: string }) {
 
 The right client depends on where the code runs.
 
-| Context                                           | Client                  | Import                  |
-| ------------------------------------------------- | ----------------------- | ----------------------- |
-| Server Components, Server Actions, Route Handlers | `createServerClient()`  | `@/lib/supabase/server` |
-| Client Components (browser only)                  | `createBrowserClient()` | `@/lib/supabase/client` |
+| Context                                           | Client                          | Import                  |
+| ------------------------------------------------- | ------------------------------- | ----------------------- |
+| Server Components, Server Actions, Route Handlers | `createSupabaseServerClient()`  | `@/lib/supabase/server` |
+| Client Components (browser only)                  | `createSupabaseBrowserClient()` | `@/lib/supabase/client` |
 
 **Never use the browser client in Server Components or Server Actions.** It carries the anon key and does not have access to the server-side session cookie.
 
 ```typescript
 // lib/supabase/server.ts — async, reads cookies for the session
-import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/supabase";
 
-export async function createServerClient() {
+export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
-  return createSupabaseServerClient<Database>(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -333,7 +333,7 @@ export function createBrowserClientInstance() {
 | Supabase query in a Client Component without TanStack Query | No cache, double-fetches on re-render                               | Wrap in `useQuery`                                                                   |
 | Calling a Server Action from `useEffect`                    | Actions run on mount, bypassing form state management               | Use `useActionState` for form-bound actions; `useMutation` for programmatic triggers |
 | Importing server-only code into a Client Component          | Runtime error — `cookies()`, `headers()` don't exist in the browser | Mark server utilities with `import 'server-only'`                                    |
-| `createServerClient()` in a Client Component                | Can't call `cookies()` in the browser                               | Use `createBrowserClientInstance()`                                                  |
+| `createSupabaseServerClient()` in a Client Component        | Can't call `cookies()` in the browser                               | Use `createBrowserClientInstance()`                                                  |
 | Fetching inside a `useEffect` for initial data              | Loading spinner on every mount                                      | Prefetch in Server Component with `HydrationBoundary`                                |
 | Returning large data sets from Server Actions               | Actions are not designed for data fetching                          | Use Server Components or `useQuery` for reads                                        |
 
