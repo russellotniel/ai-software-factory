@@ -106,7 +106,7 @@ export async function getCachedTenantConfig(tenantId: string) {
   cacheTag('tenant-config', `tenant-config-${tenantId}`);
   cacheLife('hours');   // Server revalidates every hour
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from('tenants')
     .select('id, name, plan, settings')
@@ -181,7 +181,7 @@ export async function updateTenantSettings(
   if (tenantId !== authedTenantId)
     return { success: false, error: "FORBIDDEN" };
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from("tenants")
     .update({ settings })

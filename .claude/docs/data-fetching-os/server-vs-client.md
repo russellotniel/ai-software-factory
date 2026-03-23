@@ -291,7 +291,7 @@ export async function createSupabaseServerClient() {
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/supabase";
 
-export function createBrowserClientInstance() {
+export function createSupabaseBrowserClient() {
   return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -333,7 +333,7 @@ export function createBrowserClientInstance() {
 | Supabase query in a Client Component without TanStack Query | No cache, double-fetches on re-render                               | Wrap in `useQuery`                                                                   |
 | Calling a Server Action from `useEffect`                    | Actions run on mount, bypassing form state management               | Use `useActionState` for form-bound actions; `useMutation` for programmatic triggers |
 | Importing server-only code into a Client Component          | Runtime error — `cookies()`, `headers()` don't exist in the browser | Mark server utilities with `import 'server-only'`                                    |
-| `createSupabaseServerClient()` in a Client Component        | Can't call `cookies()` in the browser                               | Use `createBrowserClientInstance()`                                                  |
+| `createSupabaseServerClient()` in a Client Component        | Can't call `cookies()` in the browser                               | Use `createSupabaseBrowserClient()`                                                  |
 | Fetching inside a `useEffect` for initial data              | Loading spinner on every mount                                      | Prefetch in Server Component with `HydrationBoundary`                                |
 | Returning large data sets from Server Actions               | Actions are not designed for data fetching                          | Use Server Components or `useQuery` for reads                                        |
 
@@ -347,13 +347,13 @@ Supabase Realtime is client-only. Subscriptions open a WebSocket from the browse
 "use client";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { createBrowserClientInstance } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function useProjectsRealtime(tenantId: string) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const supabase = createBrowserClientInstance();
+    const supabase = createSupabaseBrowserClient();
 
     const channel = supabase
       .channel(`projects:${tenantId}`)
