@@ -14,14 +14,20 @@ Read before starting:
 
 ## Step 1 — Feature Context
 
+Read `.claude/docs/foundation/product-mission.md` before asking anything.
+This tells you whether the project is multi-tenant and what the feature domain is.
+
 Ask:
 
 - What is the feature name? (e.g. "project invitations")
 - Describe it in one or two sentences.
 - What tables will this feature need?
 - Does any existing table need new columns?
-- Does this involve multi-tenancy? (almost always yes — confirm)
-- Does this feature need audit logging?
+
+Note: Multi-tenancy is applied automatically based on `product-mission.md` —
+do not ask the user. If the project is multi-tenant, `tenant_id` is required
+on every new table. Audit logging is always enabled on business-critical tables
+per `audit-trail.md` — do not ask the user, apply it automatically.
 
 ---
 

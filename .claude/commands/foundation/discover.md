@@ -4,7 +4,7 @@ Document the project's foundation standards through a structured conversation.
 Run this at the start of every new project, or when onboarding AI Software
 Factory onto an existing one.
 
-Output: populated foundation documents + product-mission.md + design-os stubs.
+Output: completes product-mission.md stub (written by /foundation:init) + populates all other foundation docs + design-os stubs.
 
 ---
 
@@ -19,8 +19,11 @@ agent and team member starts from the same source of truth."
 
 ## Step 2 — Project Identity
 
-The project name and new/existing status were already captured by `/foundation:init`.
-Do not ask for these again.
+Read `.claude/docs/foundation/product-mission.md` — it was written by `/foundation:init`
+and already contains the project name and init mode. Do not ask for these again.
+
+Confirm to the user: "I can see this project is named **{name}** and was initialized as a
+{New / Existing} project. Let's complete the rest of the foundation."
 
 Ask:
 
@@ -44,11 +47,21 @@ Ask:
 
 ## Step 4 — Standards Discovery
 
-Ask:
+Read the following before asking anything:
 
-- What are the things your team always does on every project?
-- What decisions have caused the most rework in the past?
-- Any security or compliance requirements specific to this project?
+- `.claude/docs/foundation/principles.md`
+- `.claude/docs/foundation/tech-standards.md`
+- `.claude/docs/foundation/compliance-standards.md`
+
+These documents define the baseline standards that apply to all projects.
+Do NOT ask the user to re-specify anything already documented there.
+
+Only ask:
+
+- Are there any standards in these docs that do NOT apply to this project?
+  (Deviations require justification — record them in `tech-standards.md`)
+- Are there any project-specific standards or constraints beyond the baseline?
+- Any compliance requirements beyond the baseline? (healthcare, pharma, finance, etc.)
 
 ---
 
@@ -65,21 +78,22 @@ Ask:
 
 ---
 
-## Step 6 — Generate Documents
+## Step 6 — Complete Documents
 
-Based on the conversation, generate or confirm:
+`product-mission.md` was already created as a stub by `/foundation:init`.
+Extend it — fill every section that is still marked "_To be completed_" or "_To be determined_".
+Do not overwrite the **Name**, **Init mode**, or stub header.
 
 ### .claude/docs/foundation/product-mission.md
 
-Fill every section using the conversation answers:
+Fill every remaining section using the conversation answers:
 
-- Project name, description, status
+- One-line description, status (set to "Active development")
 - Primary and secondary users
 - Problem statement
 - Key use cases (3–5 concrete actions)
 - Out of scope
-- Technical context (multi-tenant, auth path, regulated, integrations)
-- Definition of done
+- Technical context: multi-tenant (yes/no), auth path, regulated (yes/no + which), integrations
 
 ### .claude/docs/foundation/tech-standards.md
 

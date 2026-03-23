@@ -9,12 +9,15 @@ Read `.claude/docs/qa-os/strategy.md` before starting.
 
 ## Step 1 — Feature Context
 
+Read `.claude/docs/foundation/product-mission.md` before asking anything.
+This tells you whether the project is multi-tenant — if it is, tenant isolation
+tests are always included, do not ask the user.
+
 Ask:
 
 - What feature are we writing tests for?
 - Where does the feature code live? (e.g. `src/features/projects/`)
 - Does it have a form or just triggered actions?
-- Does it have tenant isolation requirements? (almost always yes — confirm)
 - Is there an existing E2E spec for this domain, or is this new?
 
 ---
@@ -89,7 +92,7 @@ If the feature has a form component:
 - Success state is visible
 - Data appears correctly in subsequent view
 
-### Tenant isolation (always include)
+### Tenant isolation (always include for multi-tenant projects — never skip)
 
 - Tenant A creates data
 - Tenant B cannot see or access that data

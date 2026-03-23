@@ -87,7 +87,11 @@ Proceed to Step 3 (Generate Files) below.
 
 ## Path B — Existing Project
 
-### Step B1 — Scan Existing Structure
+### Step B1 — Project Name
+
+Ask: "What is the project name?" (used for `package.json` name field and display, kebab-case)
+
+### Step B2 — Scan Existing Structure
 
 Check which baseline files already exist:
 
@@ -105,7 +109,7 @@ ls playwright.config.ts 2>/dev/null
 Report what exists and what's missing.
 **Never overwrite a file that already exists.** Only generate what's missing.
 
-### Step B2 — Check Dependencies
+### Step B3 — Check Dependencies
 
 Run:
 
@@ -119,7 +123,7 @@ Identify which standard dependencies are missing. Install only the missing ones:
 npm install {missing-packages}
 ```
 
-### Step B3 — Generate Missing Files
+### Step B4 — Generate Missing Files
 
 Proceed to Step 3 (Generate Files) below, skipping any file that already exists.
 
@@ -550,7 +554,87 @@ On confirmation, write the files.
 
 ---
 
-## Step 5 — Copy `.env.example` to `.env.local`
+## Step 5 — Write Foundation Stub
+
+Write `.claude/docs/foundation/product-mission.md` using the project name collected in
+Step A1 or Step B1, the init mode (New project / Existing project), and today's date.
+Leave all other sections as explicit placeholders so `/foundation:discover` knows what
+still needs to be filled.
+
+```markdown
+# Product Mission
+
+> Part of the AI Software Factory — Foundation Layer
+> Stub written by /foundation:init on {today's date}. Completed by /foundation:discover.
+> Run /foundation:discover to populate all remaining sections.
+
+---
+
+## Project
+
+**Name:** {project-name}
+
+**Init mode:** {New project / Existing project}
+
+**One-line description:** _To be completed by /foundation:discover_
+
+**Status:** Initializing
+
+---
+
+## Users
+
+**Primary users:** _To be completed by /foundation:discover_
+
+**Secondary users:** _To be completed by /foundation:discover_
+
+---
+
+## Problem
+
+_To be completed by /foundation:discover_
+
+---
+
+## Key Use Cases
+
+_To be completed by /foundation:discover_
+
+---
+
+## Out of Scope
+
+_To be completed by /foundation:discover_
+
+---
+
+## Technical Context
+
+**Multi-tenant:** _To be determined by /foundation:discover_
+
+**Auth:** _To be determined by /foundation:discover_
+
+**Regulated industry:** _To be determined by /foundation:discover_
+
+**Integrations:** _To be determined by /foundation:discover_
+
+---
+
+## Definition of Done
+
+A feature is complete when:
+
+- [ ] Implements the use case as described
+- [ ] All tenant isolation tests pass
+- [ ] Matches the design spec in `design-os/screens/`
+- [ ] Unit and E2E tests added
+- [ ] No TypeScript errors, no lint errors
+- [ ] Reviewed against implementation standards
+```
+
+---
+
+## Step 6 — Copy `.env.example` to `.env.local`
 
 ```bash
 cp .env.example .env.local
@@ -564,7 +648,7 @@ Tell the user: "Fill in `.env.local` with your actual Supabase URL and keys befo
 
 Tell the user:
 
-"Project initialized. Run `/foundation:discover` next to document your project's standards and generate `.claude/docs/foundation/product-mission.md`."
+"Project initialized. A foundation stub has been written to `.claude/docs/foundation/product-mission.md`. Run `/foundation:discover` next to complete it."
 
 ```
 Next command: /foundation:discover

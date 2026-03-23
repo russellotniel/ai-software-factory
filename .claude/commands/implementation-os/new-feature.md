@@ -62,7 +62,7 @@ export type {FeatureName}Input = z.infer<typeof {featureName}Schema>;
 'use server';
 
 import { requireAuth } from '@/lib/auth';
-import { createServerClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { ActionResult } from '@/types/actions';
 import { {featureName}Schema, type {FeatureName}Input } from './schemas';
 
@@ -76,7 +76,7 @@ export async function {featureName}Action(
     return { success: false, error: parsed.error.flatten().fieldErrors };
   }
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   // implementation
 }
 ```
