@@ -61,7 +61,7 @@ export type {FeatureName}Input = z.infer<typeof {featureName}Schema>;
 ```typescript
 'use server';
 
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { ActionResult } from '@/types/actions';
 import { {featureName}Schema, type {FeatureName}Input } from './schemas';
