@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Software Factory Project Config",
+  "description": "Machine-readable project configuration written by /foundation:init and read by all commands. Single source of truth for architectural choices.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "projectName",
+    "initDate",
+    "multiTenant",
+    "authModel",
+    "regulated",
+    "auditTrail",
+    "status"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "0.1.0",
+      "description": "Schema version for forward compatibility."
+    },
+    "projectName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Project name in kebab-case. Used in package.json and display."
+    },
+    "initDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the project was initialized (ISO 8601 date)."
+    },
+    "multiTenant": {
+      "type": "boolean",
+      "description": "Whether the project uses organisation-based multi-tenancy. When true: tenant_id on business tables, tenant-scoped RLS, onboarding flow. When false: role-based access only."
+    },
+    "authModel": {
+      "type": "string",
+      "enum": ["supabase-auth", "keycloak"],
+      "description": "Authentication model. supabase-auth: email/password + OAuth via Supabase Auth. keycloak: OIDC via Keycloak for AD/LDAP environments."
+    },
+    "regulated": {
+      "type": "boolean",
+      "description": "Whether the project operates in a regulated industry."
+    },
+    "regulationType": {
+      "type": ["string", "null"],
+      "enum": ["hipaa", "soc2", "pci-dss", "gdpr", null],
+      "description": "Specific regulation type. Null when regulated is false."
+    },
+    "auditTrail": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether audit logging is enabled. Defaults to true for all projects."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["initializing", "discovering", "active", "archived"],
+      "description": "Project lifecycle status. initializing: init completed. discovering: discover in progress. active: ready for feature development. archived: no longer active."
+    }
+  },
+  "additionalProperties": false
+}
