@@ -60,6 +60,10 @@ policies — all without leaving the terminal.
 **Configuration in `.mcp.json`:** Set `SUPABASE_MCP_URL` and
 `SUPABASE_MCP_ANON_KEY` to your dev project values.
 
+**After `/foundation:init`:** If you chose "Local CLI" or "Self-hosted / Cloud"
+during init, the correct MCP env var values were printed at the end of the
+command. Copy them to your shell profile.
+
 **Security rules — read carefully:**
 
 - The server is configured `--read-only` by default. This prevents accidental

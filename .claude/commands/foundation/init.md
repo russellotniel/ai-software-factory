@@ -36,6 +36,44 @@ Ask these three questions — they determine everything downstream:
 
 ---
 
+## Step 2.5 — Supabase Connectivity
+
+Ask: "Do you have a Supabase instance ready for development?"
+
+Explain the options:
+
+- **Local CLI** — runs Supabase in Docker on your machine via `supabase start`.
+  Requires Docker. We'll start it, apply migrations, and generate types automatically.
+- **Self-hosted / Cloud** — you already have a Supabase project running (Kubernetes,
+  VM, or Supabase Cloud). You'll provide the URL, keys, and database connection string.
+  We'll apply migrations and generate types against it.
+- **Skip for now** — configure Supabase later. Types will be stubbed and migrations
+  won't be applied. Everything still builds — you just won't have a live database yet.
+
+### When "Local CLI":
+
+Verify prerequisites before proceeding:
+1. Run `docker info` — if Docker is not running, warn and suggest "Skip for now" instead
+2. Run `supabase --version` — if not installed, tell user to install it first
+
+Record `supabaseMode: "local-cli"` for Step 3. Actual startup happens in Step 12.
+
+### When "Self-hosted / Cloud":
+
+Collect:
+1. **Supabase API URL** (e.g., `https://supabase.dev.example.com` or `https://abcdef.supabase.co`)
+2. **Anon key**
+3. **Service role key** (for migrations — stored in `.env.local` only, never committed)
+4. **Database connection string** (e.g., `postgresql://postgres:password@host:5432/postgres`)
+
+Record `supabaseMode: "remote"` for Step 3. Actual connectivity happens in Step 12.
+
+### When "Skip for now":
+
+Record `supabaseMode: "deferred"` for Step 3. No credentials collected.
+
+---
+
 ## Step 3 — Write Project Config
 
 Write `.claude/project-config.json`:
@@ -50,6 +88,7 @@ Write `.claude/project-config.json`:
   "regulated": {true/false from step 2.3},
   "regulationType": "{hipaa/soc2/pci-dss/gdpr or null}",
   "auditTrail": true,
+  "supabaseMode": "{local-cli | remote | deferred from step 2.5}",
   "status": "initializing"
 }
 ```
@@ -66,15 +105,31 @@ Change the `name` field to the project name from Step 1.
 
 Change the `metadata.title` to the project name (title case).
 
+### Update `src/app/layout.tsx` — add Suspense wrapper
+
+Add `import { Suspense } from "react";` and wrap `{children}` in the body with `<Suspense>`:
+
+```typescript
+<body className="min-h-full flex flex-col">
+  <Suspense>{children}</Suspense>
+</body>
+```
+
+This is required because Next.js 16 with `cacheComponents: true` requires uncached
+data access (auth checks, DB queries) to be inside a `<Suspense>` boundary.
+
 ### Replace `src/app/page.tsx`
 
-Replace the welcome/setup page with a root redirect:
+Replace the welcome/setup page with a root redirect. Uses `connection()` to opt into
+dynamic rendering under `cacheComponents: true`:
 
 ```typescript
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function Home() {
+  await connection();
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -797,20 +852,28 @@ CREATE TRIGGER audit_profiles AFTER INSERT OR UPDATE OR DELETE ON public.profile
 
 ## Step 8 — Generate Dashboard Shell
 
+> **Important:** Use `src/app/dashboard/` (a real route segment), NOT `src/app/(dashboard)/`
+> (a route group). A `(dashboard)` route group maps to `/` which conflicts with the root
+> `page.tsx`. The dashboard must live at `/dashboard`.
+
 ### Always generate:
 
-#### `src/app/(dashboard)/layout.tsx`
+#### `src/app/dashboard/layout.tsx`
+
+Uses `connection()` to opt into dynamic rendering (required for auth checks under `cacheComponents: true`).
 
 When `multiTenant: true`:
 
 ```typescript
 import { requireAuth } from "@/lib/auth/server";
+import { connection } from "next/server";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await connection();
   const { user, tenantId } = await requireAuth();
 
   return (
@@ -831,12 +894,14 @@ When `multiTenant: false`:
 
 ```typescript
 import { requireAuth } from "@/lib/auth/server";
+import { connection } from "next/server";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await connection();
   const { user } = await requireAuth();
 
   return (
@@ -853,7 +918,7 @@ export default async function DashboardLayout({
 }
 ```
 
-#### `src/app/(dashboard)/page.tsx`
+#### `src/app/dashboard/page.tsx`
 
 ```typescript
 export default function DashboardPage() {
@@ -994,6 +1059,32 @@ export function OnboardingForm() {
 
 ---
 
+## Step 8b — Update Database Types
+
+### When `supabaseMode` is `"deferred"` (no live database):
+
+The template ships with empty database types (`Tables: Record<string, never>`).
+Update `src/types/database.ts` to match the baseline migration so TypeScript
+can type-check Supabase queries (e.g. `profile.global_role`).
+
+When `multiTenant: false`:
+Add `profiles` table with: id, full_name, avatar_url, global_role, created_at, updated_at.
+Add `app_role` enum.
+
+When `multiTenant: true`:
+Add `profiles` (with active_tenant_id), `tenants`, and `tenant_members` tables.
+Add `app_role` enum.
+
+> This is a stopgap. The types will be overwritten by `supabase gen types` once
+> a live database is connected.
+
+### When `supabaseMode` is `"local-cli"` or `"remote"`:
+
+Skip this step. Types will be generated from the live database in Step 12
+via `supabase gen types typescript`.
+
+---
+
 ## Step 9 — Write Product Mission Stub
 
 Write `.claude/docs/foundation/product-mission.md` with architectural choices filled in:
@@ -1108,13 +1199,57 @@ On confirmation, write all files.
 
 ---
 
-## Step 12 — Copy `.env.example` to `.env.local`
+## Step 12 — Connect Supabase and Finalize Environment
 
-```bash
-cp .env.example .env.local
-```
+### When `supabaseMode: "local-cli"`:
 
-Tell the user: "Fill in `.env.local` with your actual Supabase URL and keys before running the app."
+1. Check Docker is running: `docker info` — if it fails, warn and fall back to deferred behavior
+2. Run `supabase start` (if not already running)
+3. Run `supabase status` to capture the API URL, anon key, and service role key
+4. Write `.env.local` with the captured values:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL={url from supabase status}
+   NEXT_PUBLIC_SUPABASE_ANON_KEY={anon key from supabase status}
+   SUPABASE_SERVICE_ROLE_KEY={service role key from supabase status}
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   APP_ENV=local
+   ```
+5. Apply the baseline migration: `supabase db push`
+6. Generate types: `supabase gen types typescript --local > src/types/database.ts`
+7. Print MCP instructions:
+   ```
+   Supabase is running locally. MCP is pre-configured in .mcp.json.
+   Add these to your shell profile:
+     export SUPABASE_MCP_URL="{url from supabase status}"
+     export SUPABASE_MCP_ANON_KEY="{anon key from supabase status}"
+   ```
+
+### When `supabaseMode: "remote"`:
+
+1. Write `.env.local` with the values collected in Step 2.5:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL={user-provided URL}
+   NEXT_PUBLIC_SUPABASE_ANON_KEY={user-provided anon key}
+   SUPABASE_SERVICE_ROLE_KEY={user-provided service role key}
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   APP_ENV=local
+   ```
+2. Apply the baseline migration: `supabase db push --db-url "{user-provided connection string}"`
+   — if this fails (network, auth), warn and continue. The migration can be applied later.
+3. Generate types: `supabase gen types typescript --db-url "{user-provided connection string}" > src/types/database.ts`
+   — if this fails, fall back to the Step 8b stub behavior.
+4. Print MCP instructions:
+   ```
+   MCP is pre-configured in .mcp.json. Add these to your shell profile:
+     export SUPABASE_MCP_URL="{user-provided URL}"
+     export SUPABASE_MCP_ANON_KEY="{user-provided anon key}"
+   ```
+
+### When `supabaseMode: "deferred"`:
+
+1. Copy `.env.example` to `.env.local`
+2. Tell the user: "Fill in `.env.local` with your Supabase URL and keys when ready."
+3. Types remain stubbed from Step 8b
 
 ---
 
