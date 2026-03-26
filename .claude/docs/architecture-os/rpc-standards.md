@@ -191,7 +191,7 @@ CREATE FUNCTION get_project_summary(
 )
 ```
 
-### Always include `p_tenant_id` as the first parameter
+### Multi-tenant projects: Always include `p_tenant_id` as the first parameter
 
 Every RPC that touches tenant-scoped data must accept `tenant_id` explicitly and validate membership internally — never trust the caller to pass a valid tenant.
 
@@ -216,6 +216,31 @@ BEGIN
   END IF;
 
   -- Business logic here
+  ...
+END;
+$$;
+```
+
+### Single-tenant projects: Use `auth.uid()` for authorization
+
+Without tenants, RPCs validate access using the authenticated user's identity and role.
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_project_summary(
+  p_project_id UUID
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY INVOKER
+STABLE
+AS $$
+BEGIN
+  -- Validate user is authenticated
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Access denied' USING ERRCODE = '42501';
+  END IF;
+
+  -- Business logic here — RLS handles row-level access
   ...
 END;
 $$;
@@ -368,7 +393,9 @@ if (error) {
 
 ## 7. Function Template
 
-Every new RPC starts from this template. Fill in the blanks.
+Every new RPC starts from one of these templates based on `project-config.json`.
+
+### Multi-tenant template
 
 ```sql
 -- ============================================================
@@ -383,7 +410,7 @@ CREATE OR REPLACE FUNCTION public.{function_name}(
 )
 RETURNS {return_type}
 LANGUAGE plpgsql
-SECURITY INVOKER   -- change to SECURITY DEFINER only if justified (see standards)
+SECURITY INVOKER
 {STABLE|VOLATILE}  -- STABLE for reads, VOLATILE for writes
 AS $$
 DECLARE
@@ -399,9 +426,6 @@ BEGIN
   END IF;
 
   -- 2. Validate inputs
-  -- IF p_some_param IS NULL THEN
-  --   RAISE EXCEPTION 'Invalid input: param cannot be null' USING ERRCODE = '22023';
-  -- END IF;
 
   -- 3. Business logic
   RETURN QUERY
@@ -412,7 +436,36 @@ BEGIN
 END;
 $$;
 
--- Grant execute to authenticated users
+GRANT EXECUTE ON FUNCTION public.{function_name} TO authenticated;
+```
+
+### Single-tenant template
+
+```sql
+CREATE OR REPLACE FUNCTION public.{function_name}(
+  -- parameters (no p_tenant_id)
+)
+RETURNS {return_type}
+LANGUAGE plpgsql
+SECURITY INVOKER
+{STABLE|VOLATILE}
+AS $$
+BEGIN
+  -- 1. Validate authenticated
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Access denied' USING ERRCODE = '42501';
+  END IF;
+
+  -- 2. Validate inputs
+
+  -- 3. Business logic — RLS handles row-level access
+  RETURN QUERY
+  SELECT ...
+  FROM ...;
+
+END;
+$$;
+
 GRANT EXECUTE ON FUNCTION public.{function_name} TO authenticated;
 ```
 
@@ -462,8 +515,8 @@ When writing any new RPC, verify:
 
 - [ ] Follows naming convention: `{verb}_{subject}_{qualifier?}`
 - [ ] Parameters prefixed with `p_`
-- [ ] `p_tenant_id` is first parameter (if tenant-scoped)
-- [ ] Tenant membership validated at the start
+- [ ] `p_tenant_id` is first parameter (multi-tenant projects, if tenant-scoped)
+- [ ] Tenant membership or auth validated at the start
 - [ ] Uses `SECURITY INVOKER` (unless justified exception)
 - [ ] `SECURITY DEFINER` functions have `SET search_path = ''`
 - [ ] Correct volatility declared (`STABLE` or `VOLATILE`)

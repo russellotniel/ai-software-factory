@@ -1,5 +1,8 @@
 # /design:import
 
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+
 Import a design into the factory. Accepts three sources:
 
 1. **Figma** — read a frame via Figma MCP (requires Figma MCP configured)
@@ -102,6 +105,8 @@ Tell the user:
 - **If design system is already documented:** run `/foundation:shape-spec` to spec your first feature using this design"
 
 ```
-Next command: /design:system        (if first import — document design tokens)
-         OR: /foundation:shape-spec  (if design system already documented)
+COMMAND_COMPLETE: design:import
+STATUS: success
+FILES_CREATED: .claude/docs/design-os/screens/{feature-name}.md
+NEXT_COMMAND: /design:system (if first import) OR /foundation:shape-spec (if design system documented)
 ```

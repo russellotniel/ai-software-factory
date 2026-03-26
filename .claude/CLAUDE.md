@@ -23,11 +23,18 @@ Every command enforces those standards.
 - Runtime: Node.js 20.9+
 - Runtime env: next-runtime-env (build-once, deploy-anywhere)
 
+### Project Config
+
+- Read `.claude/project-config.json` for this project's architectural choices
+- Multi-tenancy, auth model, and regulated status are set during `/foundation:init`
+- All commands and standards adapt based on these choices
+
 ### Database
 
 - All tables in `public` schema (audit tables in `audit` schema)
 - RLS enabled on every table — no exceptions, in the same migration
-- Every table: id (UUID), tenant_id, created_at, updated_at, created_by, updated_by
+- Every table: id (UUID), created_at, updated_at, created_by, updated_by
+- **When multi-tenant:** add tenant_id to every business table
 - RPCs for joins/aggregations/business logic; direct queries for simple single-table ops
 - SECURITY INVOKER on all RPCs; SECURITY DEFINER only in `private` schema
 
@@ -37,11 +44,12 @@ Every command enforces those standards.
 - OWASP Top 10 compliance on every project
 - Never commit secrets — Kubernetes Secrets + GitHub Actions Environments
 
-### Multi-Tenancy
+### Multi-Tenancy (when enabled)
 
 - Organisation-based; tenant_id on every business table
 - active_tenant_id on profiles — no session variables
 - RLS policies use `(SELECT private.get_active_tenant_id())`
+- When multi-tenancy is disabled: use role-based RLS with `auth.uid()` instead
 
 ### Implementation
 
@@ -89,12 +97,14 @@ Key documents:
 
 ```
 ── Setup (run once per project) ─────────────────────────
-/foundation:init        → initialize project (new or existing), writes product-mission.md stub
-/foundation:discover    → complete product-mission.md + document all foundation standards
-/design:import          → import Figma or mockup into .claude/docs/design-os/screens/ (optional)
+/foundation:init        → configure project, generate auth + migration + dashboard
+/foundation:discover    → document product: users, use cases, standards
+/foundation:plan        → plan all features, create backlog in project-state.md
+/design:import          → import Figma or mockup (optional)
 /design:system          → document design tokens (optional)
 
-── Per feature (repeat) ─────────────────────────────────
+── Per feature (one session each) ──────────────────────
+/foundation:status      → see what's next in the backlog
 /foundation:shape-spec  → spec the feature
 /architecture:new-feature → schema migration + RPC + API contract
 /implementation:new-feature → Server Action + Zod schema + component
@@ -105,6 +115,11 @@ Key documents:
 /deployment:k8s-config  → generate Kubernetes manifests for this project
 /deployment:release     → pre-release checklist + production deploy gate
 ```
+
+For detailed step-by-step workflows (new feature, bug fix, deployment),
+see `.claude/docs/workflows.md`.
+
+Quick reference: `/foundation:status` → see what's next
 
 Start every new project with:
 
@@ -118,10 +133,13 @@ Start every new project with:
 
 | Command                        | Purpose                                                               |
 | ------------------------------ | --------------------------------------------------------------------- |
-| `/foundation:init`             | Initialize project — scaffolds files + writes product-mission.md stub |
-| `/foundation:discover`         | Complete product-mission.md stub + document all foundation standards  |
+| `/foundation:init`             | Configure project — generate auth, migration, dashboard based on choices |
+| `/foundation:discover`         | Document product — users, use cases, standards confirmation           |
+| `/foundation:plan`             | Plan all features, create backlog in project-state.md                 |
+| `/foundation:status`           | Show project state, suggest next feature to build                     |
 | `/foundation:shape-spec`       | Spec a feature — acceptance criteria, data shape, UI ref              |
 | `/foundation:inject-standards` | Load relevant standards for current task                              |
+| `/foundation:validate`         | Check project health — verify files, config, consistency              |
 | `/design:import`               | Import Figma or image mockup into .claude/docs/design-os/screens/     |
 | `/design:system`               | Document or update the design system tokens                           |
 | `/architecture:new-feature`    | Schema migration, RPC, API contract                                   |
@@ -140,7 +158,7 @@ Start every new project with:
 
 1. Never create a table without RLS in the same migration
 2. Never use SECURITY DEFINER outside the `private` schema
-3. Never store tenant context in session variables
+3. Never store tenant context in session variables (multi-tenant projects only)
 4. Never put service_role keys in client-side code
 5. Always use `safeParse()` — never `parse()`
 6. Always return `ActionResult<T>` — never throw from Server Actions

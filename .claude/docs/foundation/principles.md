@@ -59,15 +59,24 @@ Testing is not optional. Every project ships with a full test suite.
 
 ---
 
-## 5. Multi-Tenancy by Default
+## 5. Multi-Tenancy (When Enabled)
 
-Every project is built multi-tenant capable from day one, even if it launches single-tenant.
+Multi-tenancy is opt-in — configured during `/foundation:init` and stored in `project-config.json`.
+
+### When multi-tenant (`multiTenant: true`)
 
 - `tenant_id` on every business table
 - RLS policies enforce tenant isolation on every table
 - Active tenant context via `active_tenant_id` on profiles
 - Users can belong to multiple tenants (organisation-based model)
-- Restricting to single-tenant is a constraint, not the default
+- Restricting to single-tenant is a constraint applied via unique index
+
+### When single-tenant (`multiTenant: false`)
+
+- No `tenant_id` column on tables
+- RLS policies use role-based access with `auth.uid()` and `private.get_user_role()`
+- No tenants or tenant_members tables
+- No onboarding flow — users go straight to the dashboard after signup
 
 ---
 

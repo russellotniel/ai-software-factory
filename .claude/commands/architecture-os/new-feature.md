@@ -3,8 +3,13 @@
 Guide through designing a new feature at the architecture level.
 Output: migration file, optional RPC functions, and an API contract entry.
 
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+- Feature spec should exist (run `/foundation:shape-spec`)
+
 Read before starting:
 
+- `.claude/project-config.json` — multi-tenant, auth model
 - `.claude/docs/architecture-os/schema-conventions.md`
 - `.claude/docs/architecture-os/rpc-standards.md`
 - `.claude/docs/architecture-os/api-contracts.md`
@@ -14,7 +19,7 @@ Read before starting:
 
 ## Step 1 — Feature Context
 
-Read `.claude/docs/foundation/product-mission.md` before asking anything.
+Read `.claude/project-config.json` before asking anything.
 This tells you whether the project is multi-tenant and what the feature domain is.
 
 Ask:
@@ -24,8 +29,8 @@ Ask:
 - What tables will this feature need?
 - Does any existing table need new columns?
 
-Note: Multi-tenancy is applied automatically based on `product-mission.md` —
-do not ask the user. If the project is multi-tenant, `tenant_id` is required
+Note: Multi-tenancy is applied automatically based on `project-config.json` —
+do not ask the user. If `multiTenant: true`, `tenant_id` is required
 on every new table. Audit logging is always enabled on business-critical tables
 per `audit-trail.md` — do not ask the user, apply it automatically.
 
@@ -96,6 +101,17 @@ On confirmation:
 
 ---
 
+## Step 6 — Update Project State
+
+Read `.claude/docs/project-state.md`.
+
+- **Schema Snapshot:** Add new tables and key relationships created by this migration
+- **Backlog:** If the feature is listed, keep its status as `🔲 Pending` (implementation hasn't happened yet)
+
+Write the updated `project-state.md`.
+
+---
+
 ## ✅ What's Next
 
 Tell the user:
@@ -103,5 +119,9 @@ Tell the user:
 "Migration generated. Run `/implementation:new-feature` to scaffold the Server Action, Zod schema, and component for this feature."
 
 ```
-Next command: /implementation:new-feature
+COMMAND_COMPLETE: architecture:new-feature
+STATUS: success
+FILES_CREATED: supabase/migrations/{timestamp}_{name}.sql
+FILES_MODIFIED: .claude/docs/project-state.md, .claude/docs/architecture-os/api-contracts.md
+NEXT_COMMAND: /implementation:new-feature
 ```

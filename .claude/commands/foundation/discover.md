@@ -1,29 +1,32 @@
 # /foundation:discover
 
-Document the project's foundation standards through a structured conversation.
-Run this at the start of every new project, or when onboarding AI Software
-Factory onto an existing one.
+Document the project's product context through a structured conversation.
+Run this after `/foundation:init` to complete the foundation docs.
 
-Output: completes product-mission.md stub (written by /foundation:init) + populates all other foundation docs + design-os stubs.
+Output: completed product-mission.md + updated foundation docs + design-os stubs.
 
----
-
-## Step 1 — Introduction
-
-Tell the user:
-"I'm going to ask a series of questions to document your project's foundation.
-This will populate your foundation and design-os documents, ensuring every AI
-agent and team member starts from the same source of truth."
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init` first)
+- `product-mission.md` stub exists with architectural choices filled in
 
 ---
 
-## Step 2 — Project Identity
+## Step 1 — Read Config and Confirm
 
-Read `.claude/docs/foundation/product-mission.md` — it was written by `/foundation:init`
-and already contains the project name and init mode. Do not ask for these again.
+Read `.claude/project-config.json` and `.claude/docs/foundation/product-mission.md`.
 
-Confirm to the user: "I can see this project is named **{name}** and was initialized as a
-{New / Existing} project. Let's complete the rest of the foundation."
+Confirm to the user:
+"I can see this project is named **{projectName}**. It's configured as a
+{multi-tenant/single-tenant} project using {Supabase Auth/Keycloak}
+{, with {regulationType} compliance requirements (if regulated)}.
+Let's document what you're building."
+
+Do NOT ask about multi-tenancy, auth model, or regulated status — these are
+already decided and stored in `project-config.json`.
+
+---
+
+## Step 2 — Product Identity
 
 Ask:
 
@@ -32,20 +35,26 @@ Ask:
 
 ---
 
-## Step 3 — Technical Decisions
+## Step 3 — Use Cases and Scope
 
 Ask:
 
-- Does this project connect to Active Directory or LDAP?
-  (Determines Keycloak vs Supabase Auth only)
-- Is this a multi-tenant application?
-- Are there regulated industry requirements? (healthcare, finance, pharma)
-- What environments will this run in? (AKS / OCP / vanilla Kubernetes)
-- What ingress controller does the cluster use?
+- What are the 3–5 key things a user should be able to do?
+- What is explicitly out of scope for this project?
 
 ---
 
-## Step 4 — Standards Discovery
+## Step 4 — Environment and Infrastructure
+
+Ask:
+
+- What environments will this run in? (AKS / OCP / vanilla Kubernetes)
+- What ingress controller does the cluster use?
+- Are there any external integrations? (Stripe, SendGrid, Slack, etc.)
+
+---
+
+## Step 5 — Standards Discovery
 
 Read the following before asking anything:
 
@@ -61,11 +70,10 @@ Only ask:
 - Are there any standards in these docs that do NOT apply to this project?
   (Deviations require justification — record them in `tech-standards.md`)
 - Are there any project-specific standards or constraints beyond the baseline?
-- Any compliance requirements beyond the baseline? (healthcare, pharma, finance, etc.)
 
 ---
 
-## Step 5 — Design Context
+## Step 6 — Design Context
 
 Ask:
 
@@ -78,28 +86,24 @@ Ask:
 
 ---
 
-## Step 6 — Complete Documents
-
-`product-mission.md` was already created as a stub by `/foundation:init`.
-Extend it — fill every section that is still marked "_To be completed_" or "_To be determined_".
-Do not overwrite the **Name**, **Init mode**, or stub header.
+## Step 7 — Complete Documents
 
 ### .claude/docs/foundation/product-mission.md
 
-Fill every remaining section using the conversation answers:
-
+Fill every section still marked "_To be completed_":
 - One-line description, status (set to "Active development")
 - Primary and secondary users
 - Problem statement
 - Key use cases (3–5 concrete actions)
 - Out of scope
-- Technical context: multi-tenant (yes/no), auth path, regulated (yes/no + which), integrations
+- Integrations
+
+Do not overwrite the **Name** or **Technical Context** fields already set by init.
 
 ### .claude/docs/foundation/tech-standards.md
 
 Confirm or update:
-
-- Auth decision: Supabase Auth or Keycloak + Supabase
+- Auth decision path for this project
 - Any project-specific deviations from defaults (requires justification)
 
 ### .claude/docs/foundation/auth-model.md
@@ -112,29 +116,27 @@ Note any regulated requirements beyond the baseline.
 
 ### .claude/docs/design-os/product-vision.md
 
-Populate from design context gathered in Step 5:
-
+Populate:
 - Product summary
 - User personas (from Step 2)
 - Core user journeys
 - Feature areas (map to src/features/ domains)
 
+### Update `.claude/project-config.json`
+
+Set `status` to `"active"`.
+
 ---
 
-## Step 7 — Confirm and Write
+## Step 8 — Confirm and Write
 
 Show a summary of what will be written.
 Ask the user to confirm.
 
 On confirmation:
-
 - Write all generated documents
+- Update project-config.json status
 - Remind: commit these files before starting development
-
-After writing, suggest next steps:
-
-- "If you have Figma or mockups, run /design:import next"
-- "Otherwise, run /foundation:shape-spec to spec your first feature"
 
 ---
 
@@ -142,12 +144,12 @@ After writing, suggest next steps:
 
 Tell the user:
 
-"Foundation documented. Choose your next step:
-
-- **If you have a Figma file or mockup images:** run `/design:import` to import your design into `.claude/docs/design-os/screens/`
-- **If you have no design yet:** run `/foundation:shape-spec` to spec your first feature and start building"
+"Foundation documented. Run `/foundation:plan` next to plan your features and create the backlog."
 
 ```
-Next command: /design:import   (if you have a design)
-         OR: /foundation:shape-spec  (if no design yet)
+COMMAND_COMPLETE: foundation:discover
+STATUS: success
+FILES_MODIFIED: [list]
+NEXT_COMMAND: foundation:plan
+CONFIG_UPDATED: .claude/project-config.json (status: active)
 ```

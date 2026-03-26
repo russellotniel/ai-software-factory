@@ -3,8 +3,12 @@
 Document or update the design system for this project. Sets the visual
 language that all feature implementations will follow.
 
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+
 Read before starting:
 
+- `.claude/project-config.json` — project context
 - `.claude/docs/design-os/design-system.md` — existing decisions (if any)
 - `.claude/docs/foundation/tech-standards.md` — Tailwind 4 + Shadcn confirmed
 
@@ -74,5 +78,8 @@ Tell the user:
 "Design system documented. Run `/foundation:shape-spec` to spec your first (or next) feature."
 
 ```
-Next command: /foundation:shape-spec
+COMMAND_COMPLETE: design:system
+STATUS: success
+FILES_MODIFIED: .claude/docs/design-os/design-system.md
+NEXT_COMMAND: /foundation:shape-spec
 ```

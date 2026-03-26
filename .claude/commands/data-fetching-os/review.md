@@ -2,8 +2,12 @@
 
 Audit data fetching patterns against caching and server/client standards.
 
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+
 Read before starting:
 
+- `.claude/project-config.json` — project context
 - `.claude/docs/data-fetching-os/caching-strategy.md`
 - `.claude/docs/data-fetching-os/server-vs-client.md`
 
@@ -55,5 +59,7 @@ Tell the user:
 "Review complete. Fix any issues found, then return to whatever you were working on."
 
 ```
-Next command: back to your current task
+COMMAND_COMPLETE: data-fetching:review
+STATUS: success
+NEXT_COMMAND: back to current task
 ```

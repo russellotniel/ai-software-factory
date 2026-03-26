@@ -34,7 +34,7 @@ CREATE SCHEMA IF NOT EXISTS audit;
 -- Single audit table for the entire project
 CREATE TABLE audit.audit_logs (
   id              BIGSERIAL PRIMARY KEY,
-  tenant_id       UUID,                          -- NULL for global/system operations
+  tenant_id       UUID,                          -- NULL for single-tenant projects and global/system operations
   table_name      TEXT NOT NULL,
   record_id       UUID NOT NULL,                 -- PK of the changed row
   operation       TEXT NOT NULL,                 -- INSERT | UPDATE | DELETE

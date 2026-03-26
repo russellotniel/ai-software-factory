@@ -50,6 +50,8 @@ tenantId, CreatedBy, active, deletedAt, fname
 
 Every table in the `public` schema must include these columns unless explicitly justified otherwise.
 
+### Multi-tenant projects (`project-config.json: multiTenant: true`)
+
 ```sql
 CREATE TABLE public.example_table (
   -- Identity
@@ -71,12 +73,34 @@ CREATE TABLE public.example_table (
 );
 ```
 
+### Single-tenant projects (`project-config.json: multiTenant: false`)
+
+```sql
+CREATE TABLE public.example_table (
+  -- Identity
+  id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+
+  -- No tenant_id — single-tenant project
+
+  -- Timestamps
+  created_at      TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at      TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+
+  -- Ownership
+  created_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  updated_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+
+  -- Soft delete (for business-critical tables — see Section 5)
+  deleted_at      TIMESTAMPTZ DEFAULT NULL
+);
+```
+
 ### Column rules
 
 | Column       | Required                    | Notes                                                        |
 | ------------ | --------------------------- | ------------------------------------------------------------ |
 | `id`         | ✅ Always                   | UUID, never serial/integer                                   |
-| `tenant_id`  | ✅ Most tables              | Omit only for global tables: `tenants`, `subscription_plans` |
+| `tenant_id`  | ✅ Multi-tenant only        | Omit for single-tenant projects and global tables            |
 | `created_at` | ✅ Always                   | Auto-set, never manually assigned                            |
 | `updated_at` | ✅ Always                   | Auto-maintained by trigger (see Section 7)                   |
 | `created_by` | ✅ Always                   | Nullable — system operations may not have a user             |
@@ -177,7 +201,7 @@ Indexes are not optional. Every table must follow these indexing rules.
 ### Mandatory indexes
 
 ```sql
--- 1. tenant_id — always indexed, used in every RLS policy
+-- 1. tenant_id — always indexed (multi-tenant projects only)
 CREATE INDEX idx_{table}_tenant_id ON public.{table}(tenant_id);
 
 -- 2. Foreign key columns — always indexed
@@ -194,14 +218,19 @@ CREATE INDEX idx_{table}_created_at ON public.{table}(created_at);
 ### Composite indexes — for common query patterns
 
 ```sql
--- Tenant + soft delete (most common query pattern)
+-- Multi-tenant: Tenant + soft delete (most common query pattern)
 CREATE INDEX idx_{table}_tenant_active
   ON public.{table}(tenant_id)
   WHERE deleted_at IS NULL;
 
--- Tenant + sort (for paginated lists)
+-- Multi-tenant: Tenant + sort (for paginated lists)
 CREATE INDEX idx_{table}_tenant_created
   ON public.{table}(tenant_id, created_at DESC);
+
+-- Single-tenant: Soft delete + sort
+CREATE INDEX idx_{table}_active_created
+  ON public.{table}(created_at DESC)
+  WHERE deleted_at IS NULL;
 ```
 
 ### Index naming convention
@@ -219,7 +248,7 @@ idx_projects_tenant_created   -- composite
 
 ### Rules
 
-- **Never skip indexing `tenant_id`** — RLS policies filter on this for every single query
+- **Never skip indexing `tenant_id`** (multi-tenant projects) — RLS policies filter on this for every single query
 - **Index all FK columns** — PostgreSQL does not auto-index foreign keys
 - **Use partial indexes** for `deleted_at IS NULL` — smaller, faster than full column index
 - **Don't over-index** — each index slows down writes. Only index columns used in WHERE, JOIN, or ORDER BY
@@ -303,7 +332,7 @@ tenant_id UUID REFERENCES public.tenants(id),
 - **Test in staging first** — never run untested migrations directly in production
 - **Include RLS policies in the same migration as the table** — never create a table without RLS
 
-### Migration structure
+### Migration structure — multi-tenant projects
 
 ```sql
 -- Migration: 20240315120000_create_projects_table.sql
@@ -326,7 +355,7 @@ CREATE TABLE public.projects (
 -- 2. Enable RLS immediately
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
--- 3. RLS policies
+-- 3. RLS policies (tenant-scoped)
 CREATE POLICY "tenant_isolation_select" ON public.projects
   FOR SELECT USING (
     tenant_id = (SELECT private.get_active_tenant_id())
@@ -363,7 +392,60 @@ CREATE TRIGGER audit_projects
   FOR EACH ROW EXECUTE FUNCTION audit.log_changes();
 ```
 
-This migration structure is the **template for every new table**. No exceptions.
+### Migration structure — single-tenant projects
+
+```sql
+-- Migration: 20240315120000_create_projects_table.sql
+-- Description: Creates the projects table with standard columns, RLS, indexes
+-- Rollback: DROP TABLE public.projects;
+
+-- 1. Create table (no tenant_id)
+CREATE TABLE public.projects (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name        TEXT NOT NULL,
+  description TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at  TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  created_by  UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  updated_by  UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  deleted_at  TIMESTAMPTZ DEFAULT NULL
+);
+
+-- 2. Enable RLS immediately
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+
+-- 3. RLS policies (role-based)
+CREATE POLICY "authenticated_select" ON public.projects
+  FOR SELECT TO authenticated USING (deleted_at IS NULL);
+
+CREATE POLICY "authenticated_insert" ON public.projects
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+CREATE POLICY "owner_or_admin_update" ON public.projects
+  FOR UPDATE TO authenticated USING (
+    created_by = auth.uid()
+    OR (SELECT private.get_user_role()) IN ('admin', 'superadmin')
+  );
+
+-- 4. Indexes
+CREATE INDEX idx_projects_created_by ON public.projects(created_by);
+CREATE INDEX idx_projects_deleted_at ON public.projects(deleted_at)
+  WHERE deleted_at IS NULL;
+CREATE INDEX idx_projects_active_created ON public.projects(created_at DESC)
+  WHERE deleted_at IS NULL;
+
+-- 5. updated_at trigger
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON public.projects
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- 6. Audit trigger
+CREATE TRIGGER audit_projects
+  AFTER INSERT OR UPDATE OR DELETE ON public.projects
+  FOR EACH ROW EXECUTE FUNCTION audit.log_changes();
+```
+
+Use the migration template that matches your project's `multiTenant` setting in `project-config.json`. No exceptions.
 
 ---
 
@@ -377,6 +459,8 @@ Some tables are global by nature and do not have a `tenant_id`.
 | `public.profiles`           | Bridges auth.users — user exists before tenant assignment |
 | `public.subscription_plans` | Platform-wide config                                      |
 | `audit.audit_logs`          | Cross-tenant by design                                    |
+
+**Note:** `tenants` and `tenant_members` tables only exist when `multiTenant: true` in `project-config.json`. Single-tenant projects have only `profiles` and `subscription_plans` as global tables.
 
 These tables still follow all other conventions — standard columns, indexes, RLS, migrations — but their RLS policies are role-based rather than tenant-based.
 
@@ -400,13 +484,13 @@ When creating any new table, verify:
 - [ ] Table name is plural snake_case
 - [ ] All columns are snake_case
 - [ ] `id` is UUID with `gen_random_uuid()`
-- [ ] `tenant_id` present (unless global table)
+- [ ] `tenant_id` present (if multi-tenant, unless global table)
 - [ ] `created_at`, `updated_at` present
 - [ ] `created_by`, `updated_by` present
 - [ ] `deleted_at` present if business-critical data
 - [ ] RLS enabled immediately in same migration
 - [ ] RLS policies cover SELECT, INSERT, UPDATE (and DELETE if needed)
-- [ ] `idx_{table}_tenant_id` index created
+- [ ] `idx_{table}_tenant_id` index created (if multi-tenant)
 - [ ] FK columns indexed
 - [ ] Partial index on `deleted_at IS NULL` if soft-deletable
 - [ ] `set_updated_at` trigger attached

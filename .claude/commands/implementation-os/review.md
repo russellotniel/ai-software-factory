@@ -2,7 +2,13 @@
 
 Review existing implementation code against AI Software Factory standards.
 
-Read `.claude/docs/implementation-os/standards.md` before starting.
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+
+Read before starting:
+
+- `.claude/project-config.json` — project context (multi-tenant, auth model)
+- `.claude/docs/implementation-os/standards.md`
 
 ---
 
@@ -65,6 +71,7 @@ Tell the user:
 - **If you ran this as a standalone audit:** you're done"
 
 ```
-Next command: /qa:new-tests        (if continuing a feature)
-         OR: back to your current task
+COMMAND_COMPLETE: implementation:review
+STATUS: success
+NEXT_COMMAND: /qa:new-tests (if continuing a feature) OR back to current task
 ```

@@ -6,7 +6,14 @@ through the deploy gate.
 This command does not push tags or deploy. Semantic-release handles tagging
 automatically. This command ensures the human verifies the right things first.
 
-Read `.claude/docs/deployment-os/release-process.md` before starting.
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+- Kubernetes manifests should exist (run `/deployment:k8s-config`)
+
+Read before starting:
+
+- `.claude/project-config.json` — project context
+- `.claude/docs/deployment-os/release-process.md`
 
 ---
 
@@ -92,5 +99,7 @@ Tell the user:
 - **If this was a hotfix:** make sure the hotfix PR to `dev` is also merged"
 
 ```
-Next command: /foundation:shape-spec   (to start the next feature)
+COMMAND_COMPLETE: deployment:release
+STATUS: success
+NEXT_COMMAND: /foundation:status (to start next feature) OR done
 ```

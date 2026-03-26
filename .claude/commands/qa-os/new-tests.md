@@ -3,15 +3,21 @@
 Generate test scaffolding for a feature: unit tests for schemas and actions,
 component tests for forms, and E2E specs for user flows.
 
-Read `.claude/docs/qa-os/strategy.md` before starting.
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+- Feature code should exist in `src/features/{domain}/` (run `/implementation:new-feature`)
+
+Read before starting:
+
+- `.claude/project-config.json` — to determine multi-tenant (tenant isolation tests)
+- `.claude/docs/qa-os/strategy.md`
 
 ---
 
 ## Step 1 — Feature Context
 
-Read `.claude/docs/foundation/product-mission.md` before asking anything.
-This tells you whether the project is multi-tenant — if it is, tenant isolation
-tests are always included, do not ask the user.
+Read `.claude/project-config.json` before asking anything.
+If `multiTenant` is `true`, tenant isolation tests are always included — do not ask the user.
 
 Ask:
 
@@ -92,7 +98,7 @@ If the feature has a form component:
 - Success state is visible
 - Data appears correctly in subsequent view
 
-### Tenant isolation (always include for multi-tenant projects — never skip)
+### Tenant isolation (when `multiTenant: true` in project-config.json — always include, never skip)
 
 - Tenant A creates data
 - Tenant B cannot see or access that data
@@ -130,5 +136,8 @@ Tell the user:
 "Tests scaffolded. Run `/qa:fix` to run the test suite and fix any failures."
 
 ```
-Next command: /qa:fix
+COMMAND_COMPLETE: qa:new-tests
+STATUS: success
+FILES_CREATED: src/features/{domain}/schemas.test.ts, actions.test.ts, _components/*.test.tsx, e2e/{domain}.spec.ts
+NEXT_COMMAND: /qa:fix
 ```

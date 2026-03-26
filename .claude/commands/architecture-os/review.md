@@ -2,8 +2,12 @@
 
 Review existing schema and RPC code against AI Software Factory standards.
 
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+
 Read before starting:
 
+- `.claude/project-config.json` — to determine multi-tenant vs single-tenant
 - `.claude/docs/architecture-os/schema-conventions.md`
 - `.claude/docs/architecture-os/rpc-standards.md`
 - `.claude/docs/architecture-os/audit-trail.md`
@@ -24,9 +28,11 @@ For each file, check:
 
 ### Schema checks
 
-- [ ] All tables have: id (UUID), tenant_id, created_at, updated_at, created_by, updated_by
+- [ ] All tables have: id (UUID), created_at, updated_at, created_by, updated_by
+- [ ] **When multi-tenant:** all business tables have tenant_id
 - [ ] RLS enabled on every table in the same migration that creates it
-- [ ] RLS policies use `(SELECT private.get_active_tenant_id())` pattern
+- [ ] **When multi-tenant:** RLS policies use `(SELECT private.get_active_tenant_id())` pattern
+- [ ] **When single-tenant:** RLS policies use `auth.uid()` for access control
 - [ ] No SECURITY DEFINER functions in the `public` schema
 - [ ] Audit trigger on all business-critical tables
 - [ ] Table names are plural snake_case
@@ -36,7 +42,8 @@ For each file, check:
 
 - [ ] SECURITY INVOKER by default
 - [ ] SECURITY DEFINER only in `private` schema with `SET search_path = ''`
-- [ ] Tenant membership validated at start of every RPC
+- [ ] **When multi-tenant:** tenant membership validated at start of every RPC
+- [ ] **When single-tenant:** auth.uid() validated at start of every RPC
 - [ ] No raw string interpolation in dynamic SQL
 - [ ] Consistent return shapes
 
@@ -65,6 +72,7 @@ Tell the user:
 - **If you ran this as a standalone audit:** you're done"
 
 ```
-Next command: /implementation:new-feature  (if continuing a feature)
-         OR: back to your current task
+COMMAND_COMPLETE: architecture:review
+STATUS: success
+NEXT_COMMAND: /implementation:new-feature (if continuing a feature) OR back to current task
 ```

@@ -51,6 +51,9 @@ Things explicitly not in this product (prevents scope creep in AI-generated feat
 
 ## Technical Context
 
+> These values are set in `.claude/project-config.json` during `/foundation:init`.
+> Commands read `project-config.json` as the source of truth — this section is for human reference.
+
 **Multi-tenant:** [Yes / No] — [brief note on tenancy model if yes]
 
 **Auth:** [Supabase Auth / Keycloak + Supabase] — [why]

@@ -37,9 +37,11 @@ Does this project connect to AD / LDAP?
 
 ## User Management — Always in Supabase
 
-Regardless of auth path, the following tables always exist.
+Regardless of auth path, the `profiles` table always exists. Tenant tables depend on `project-config.json: multiTenant`.
 
-### profiles table
+### profiles table (always)
+
+**Multi-tenant projects:**
 
 ```sql
 CREATE TABLE public.profiles (
@@ -54,7 +56,22 @@ CREATE TABLE public.profiles (
 );
 ```
 
-### tenants table (multi-tenant projects)
+**Single-tenant projects:**
+
+```sql
+CREATE TABLE public.profiles (
+  id                UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE,
+  full_name         TEXT,
+  avatar_url        TEXT,
+  global_role       app_role NOT NULL DEFAULT 'user',
+  -- No active_tenant_id — single-tenant project
+  created_at        TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at        TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  PRIMARY KEY (id)
+);
+```
+
+### tenants table (multi-tenant projects only)
 
 ```sql
 CREATE TABLE public.tenants (
@@ -66,7 +83,7 @@ CREATE TABLE public.tenants (
 );
 ```
 
-### tenant_members table (multi-tenant projects)
+### tenant_members table (multi-tenant projects only)
 
 ```sql
 CREATE TABLE public.tenant_members (
@@ -105,7 +122,7 @@ Regular users are constrained to their tenant(s) via RLS.
 
 ---
 
-## Multi-Tenancy Model
+## Multi-Tenancy Model (when `multiTenant: true`)
 
 ### Pattern: RLS with shared schema
 
@@ -157,6 +174,26 @@ are callable by anyone via `supabase.rpc()`. The `private` schema is not
 exposed via PostgREST.
 All must include `SET search_path = ''`.
 
+### Always present (both single-tenant and multi-tenant)
+
+```sql
+-- Get global role for current user
+CREATE OR REPLACE FUNCTION private.get_user_role()
+RETURNS TEXT
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = ''
+STABLE
+AS $$
+  SELECT global_role::TEXT
+  FROM public.profiles
+  WHERE id = auth.uid()
+$$;
+GRANT EXECUTE ON FUNCTION private.get_user_role() TO authenticated;
+```
+
+### Multi-tenant only
+
 ```sql
 -- Get active tenant for current user
 CREATE OR REPLACE FUNCTION private.get_active_tenant_id()
@@ -171,20 +208,6 @@ AS $$
   WHERE id = auth.uid()
 $$;
 GRANT EXECUTE ON FUNCTION private.get_active_tenant_id() TO authenticated;
-
--- Get global role for current user
-CREATE OR REPLACE FUNCTION private.get_user_role()
-RETURNS TEXT
-LANGUAGE SQL
-SECURITY DEFINER
-SET search_path = ''
-STABLE
-AS $$
-  SELECT global_role::TEXT
-  FROM public.profiles
-  WHERE id = auth.uid()
-$$;
-GRANT EXECUTE ON FUNCTION private.get_user_role() TO authenticated;
 
 -- Get all tenants for current user
 CREATE OR REPLACE FUNCTION private.get_user_tenants()
@@ -205,7 +228,7 @@ GRANT EXECUTE ON FUNCTION private.get_user_tenants() TO authenticated;
 
 ## Standard RLS Patterns
 
-### Tenant isolation (most tables)
+### Multi-tenant: Tenant isolation (most tables)
 
 ```sql
 -- Wrap in (SELECT ...) so Postgres caches the result within the query plan
@@ -216,7 +239,20 @@ FOR ALL USING (
 );
 ```
 
-### Role-based access (admin-only operations)
+### Single-tenant: Authenticated access
+
+```sql
+CREATE POLICY "authenticated_read" ON public.{table}
+FOR SELECT TO authenticated USING (deleted_at IS NULL);
+
+CREATE POLICY "owner_or_admin_write" ON public.{table}
+FOR UPDATE TO authenticated USING (
+  created_by = auth.uid()
+  OR (SELECT private.get_user_role()) IN ('admin', 'superadmin')
+);
+```
+
+### Role-based access (admin-only operations — both models)
 
 ```sql
 CREATE POLICY "admin_only" ON public.{table}
@@ -225,7 +261,7 @@ FOR DELETE USING (
 );
 ```
 
-### Superadmin bypass (platform management)
+### Superadmin bypass (platform management — both models)
 
 ```sql
 CREATE POLICY "superadmin_all" ON public.{table}

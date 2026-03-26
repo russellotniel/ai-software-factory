@@ -1,0 +1,232 @@
+{
+  "$schema": "0.1.0",
+  "description": "Machine-readable index of all AI Software Factory commands",
+  "commands": [
+    {
+      "id": "foundation:init",
+      "name": "Initialize Project",
+      "path": ".claude/commands/foundation/init.md",
+      "phase": "setup",
+      "preconditions": [],
+      "postconditions": [
+        ".claude/project-config.json exists",
+        ".claude/docs/project-state.md exists",
+        ".claude/docs/foundation/product-mission.md stub exists"
+      ],
+      "next": ["foundation:discover"]
+    },
+    {
+      "id": "foundation:discover",
+      "name": "Document Product",
+      "path": ".claude/commands/foundation/discover.md",
+      "phase": "setup",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [
+        ".claude/docs/foundation/product-mission.md completed",
+        "project-config.json status = active"
+      ],
+      "next": ["foundation:plan"]
+    },
+    {
+      "id": "foundation:plan",
+      "name": "Plan Feature Backlog",
+      "path": ".claude/commands/foundation/plan.md",
+      "phase": "setup",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        ".claude/docs/foundation/product-mission.md completed",
+        "project-config.json status = active"
+      ],
+      "postconditions": [".claude/docs/project-state.md has backlog"],
+      "next": ["foundation:shape-spec"]
+    },
+    {
+      "id": "foundation:status",
+      "name": "Show Project Status",
+      "path": ".claude/commands/foundation/status.md",
+      "phase": "any",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [],
+      "next": ["foundation:shape-spec"],
+      "readOnly": true
+    },
+    {
+      "id": "foundation:shape-spec",
+      "name": "Spec a Feature",
+      "path": ".claude/commands/foundation/shape-spec.md",
+      "phase": "feature",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        ".claude/docs/project-state.md exists"
+      ],
+      "postconditions": [
+        ".claude/docs/specs/{feature}.md created",
+        "project-state.md backlog updated with spec link"
+      ],
+      "next": ["architecture:new-feature", "implementation:new-feature"]
+    },
+    {
+      "id": "foundation:inject-standards",
+      "name": "Load Relevant Standards",
+      "path": ".claude/commands/foundation/inject-standards.md",
+      "phase": "any",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [],
+      "next": [],
+      "readOnly": true
+    },
+    {
+      "id": "foundation:validate",
+      "name": "Validate Project Health",
+      "path": ".claude/commands/foundation/validate.md",
+      "phase": "any",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [],
+      "next": [],
+      "readOnly": true
+    },
+    {
+      "id": "architecture:new-feature",
+      "name": "Design Feature Schema",
+      "path": ".claude/commands/architecture-os/new-feature.md",
+      "phase": "feature",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        "feature spec exists"
+      ],
+      "postconditions": [
+        "supabase/migrations/{timestamp}_{name}.sql created",
+        "project-state.md schema snapshot updated"
+      ],
+      "next": ["implementation:new-feature"]
+    },
+    {
+      "id": "architecture:review",
+      "name": "Audit Schema & RPC",
+      "path": ".claude/commands/architecture-os/review.md",
+      "phase": "any",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [],
+      "next": []
+    },
+    {
+      "id": "implementation:new-feature",
+      "name": "Scaffold Feature Code",
+      "path": ".claude/commands/implementation-os/new-feature.md",
+      "phase": "feature",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        "migration exists for feature"
+      ],
+      "postconditions": [
+        "src/features/{domain}/ scaffolded",
+        "project-state.md feature marked Done",
+        "project-state.md established patterns updated"
+      ],
+      "next": ["qa:new-tests"]
+    },
+    {
+      "id": "implementation:review",
+      "name": "Audit Implementation Code",
+      "path": ".claude/commands/implementation-os/review.md",
+      "phase": "any",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [],
+      "next": []
+    },
+    {
+      "id": "data-fetching:review",
+      "name": "Audit Data Fetching Patterns",
+      "path": ".claude/commands/data-fetching-os/review.md",
+      "phase": "any",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [],
+      "next": []
+    },
+    {
+      "id": "qa:new-tests",
+      "name": "Generate Test Scaffolding",
+      "path": ".claude/commands/qa-os/new-tests.md",
+      "phase": "feature",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        "feature code exists in src/features/{domain}/"
+      ],
+      "postconditions": ["test files created"],
+      "next": ["qa:fix"]
+    },
+    {
+      "id": "qa:fix",
+      "name": "Run Tests and Fix",
+      "path": ".claude/commands/qa-os/fix.md",
+      "phase": "feature",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        "tests exist"
+      ],
+      "postconditions": ["all tests passing"],
+      "next": ["foundation:status", "deployment:k8s-config"]
+    },
+    {
+      "id": "design:import",
+      "name": "Import Design",
+      "path": ".claude/commands/design-os/import.md",
+      "phase": "setup",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [".claude/docs/design-os/screens/{feature}.md created"],
+      "next": ["design:system", "foundation:shape-spec"]
+    },
+    {
+      "id": "design:system",
+      "name": "Document Design System",
+      "path": ".claude/commands/design-os/system.md",
+      "phase": "setup",
+      "preconditions": [".claude/project-config.json exists"],
+      "postconditions": [".claude/docs/design-os/design-system.md updated"],
+      "next": ["foundation:shape-spec"]
+    },
+    {
+      "id": "deployment:k8s-config",
+      "name": "Generate K8s Manifests",
+      "path": ".claude/commands/deployment-os/k8s-config.md",
+      "phase": "shipping",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        "project-config.json status = active"
+      ],
+      "postconditions": ["k8s/{environment}/ manifests created"],
+      "next": ["deployment:release"]
+    },
+    {
+      "id": "deployment:release",
+      "name": "Production Release",
+      "path": ".claude/commands/deployment-os/release.md",
+      "phase": "shipping",
+      "preconditions": [
+        ".claude/project-config.json exists",
+        "k8s manifests exist"
+      ],
+      "postconditions": ["production deploy verified"],
+      "next": ["foundation:status"]
+    }
+  ],
+  "workflows": {
+    "new-project": [
+      "foundation:init",
+      "foundation:discover",
+      "foundation:plan"
+    ],
+    "feature": [
+      "foundation:status",
+      "foundation:shape-spec",
+      "architecture:new-feature",
+      "implementation:new-feature",
+      "qa:new-tests",
+      "qa:fix"
+    ],
+    "shipping": [
+      "deployment:k8s-config",
+      "deployment:release"
+    ]
+  }
+}

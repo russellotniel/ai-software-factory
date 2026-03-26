@@ -5,8 +5,14 @@ characteristics. This command asks a structured set of questions and produces
 deployment.yaml, service.yaml, configmap.yaml, ingress.yaml, and optionally
 hpa.yaml — sized correctly for this project, not from a generic template.
 
-Read `.claude/docs/deployment-os/k8s-sizing.md` before starting. The sizing guide contains
-the formulas and worked examples that inform the values you will generate.
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+- Project should be in `"active"` status
+
+Read before starting:
+
+- `.claude/project-config.json` — use `projectName` as default app name
+- `.claude/docs/deployment-os/k8s-sizing.md` — sizing formulas and worked examples
 
 ---
 
@@ -199,5 +205,8 @@ Tell the user:
 "Kubernetes manifests generated. Run `/deployment:release` to walk through the pre-release checklist and production deploy gate."
 
 ```
-Next command: /deployment:release
+COMMAND_COMPLETE: deployment:k8s-config
+STATUS: success
+FILES_CREATED: k8s/{environment}/deployment.yaml, service.yaml, configmap.yaml, ingress.yaml [, hpa.yaml]
+NEXT_COMMAND: /deployment:release
 ```

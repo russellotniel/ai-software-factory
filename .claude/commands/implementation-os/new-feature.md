@@ -3,9 +3,13 @@
 Scaffold the implementation layer for a feature: Server Action, Zod schema,
 component structure, and TanStack Query hook if needed.
 
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+- Migration should exist for this feature (run `/architecture:new-feature`)
+
 Read before starting:
 
-- `.claude/docs/foundation/product-mission.md` — project context
+- `.claude/project-config.json` — multi-tenant, auth model
 - `.claude/docs/implementation-os/standards.md`
 - `.claude/docs/architecture-os/api-contracts.md` (find the contract for this feature)
 - `.claude/docs/specs/{feature-name}.md` — if a spec exists for this feature
@@ -107,6 +111,21 @@ Remind the user:
 
 ---
 
+## Step 4 — Update Project State
+
+Read `.claude/docs/project-state.md`.
+
+- **Backlog:** Mark this feature as `✅ Done`
+- **Established Patterns:** If this is the first feature of its kind (first CRUD, first form, first RPC-backed feature), document the pattern established so future features can follow it. Example:
+  ```
+  - CRUD pattern: src/features/{domain}/ with schemas.ts, actions.ts, _components/, hooks/
+  - Form pattern: React Hook Form + Zod resolver + Shadcn Form primitives
+  ```
+
+Write the updated `project-state.md`.
+
+---
+
 ## ✅ What's Next
 
 Tell the user:
@@ -114,5 +133,9 @@ Tell the user:
 "Implementation scaffolded. Run `/qa:new-tests` to generate unit, component, and E2E tests for this feature."
 
 ```
-Next command: /qa:new-tests
+COMMAND_COMPLETE: implementation:new-feature
+STATUS: success
+FILES_CREATED: src/features/{domain}/schemas.ts, actions.ts, _components/, hooks/
+FILES_MODIFIED: .claude/docs/project-state.md
+NEXT_COMMAND: /qa:new-tests
 ```

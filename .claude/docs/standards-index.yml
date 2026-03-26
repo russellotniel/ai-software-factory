@@ -212,3 +212,24 @@ standards:
     keywords: [screen, mockup, figma, layout, ui spec, wireframe, design spec]
     files:
       - .claude/docs/design-os/product-vision.md
+
+  - id: project-config
+    keywords: [config, project config, multi-tenant, auth model, regulated, init]
+    files:
+      - .claude/project-config.json
+      - .claude/project-config.schema.json
+
+  - id: project-state
+    keywords: [backlog, feature, status, progress, project state, plan]
+    files:
+      - .claude/docs/project-state.md
+
+  - id: workflows
+    keywords: [workflow, process, how to, getting started, new feature, bug fix]
+    files:
+      - .claude/docs/workflows.md
+
+  - id: command-manifest
+    keywords: [commands, manifest, command list, openclaw, automation]
+    files:
+      - .claude/command-manifest.json

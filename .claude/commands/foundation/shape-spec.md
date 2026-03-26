@@ -7,9 +7,14 @@ for one feature. It is the contract between planning and building.
 This command enhances Claude Code's plan mode: run it first to surface the
 right questions, then use plan mode to work through the implementation.
 
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+- `.claude/docs/project-state.md` should exist (run `/foundation:plan`)
+
 Read before starting:
 
-- `.claude/docs/foundation/product-mission.md` — project context (including multi-tenancy)
+- `.claude/project-config.json` — multi-tenant, auth model, regulated status
+- `.claude/docs/foundation/product-mission.md` — project context
 - `.claude/docs/architecture-os/schema-conventions.md` — data shape constraints
 - `.claude/docs/specs/_template.md` — output format
 - `.claude/docs/design-os/screens/` — check if a screen spec exists for this feature
@@ -43,7 +48,7 @@ Each criterion must be:
 Ask for each use case from product-mission.md that this feature touches:
 "What does success look like for [use case]?"
 
-If `product-mission.md` says `Multi-tenant: Yes`, always include:
+If `project-config.json` has `multiTenant: true`, always include:
 "Tenant A cannot access Tenant B's data for this feature."
 
 ---
@@ -90,6 +95,17 @@ After saving:
 
 ---
 
+## Step 6 — Update Project State
+
+Read `.claude/docs/project-state.md`. Find this feature in the Backlog table.
+
+- Update its **Spec** column to link to the spec file: `[spec](../specs/{feature-name}.md)`
+- If the feature is not in the backlog, append it as a new row with status `🔲 Pending`
+
+Write the updated `project-state.md`.
+
+---
+
 ## ✅ What's Next
 
 Tell the user:
@@ -100,6 +116,9 @@ Tell the user:
 - **If no schema changes are needed:** run `/implementation:new-feature` to scaffold the code directly"
 
 ```
-Next command: /architecture:new-feature   (if schema changes needed)
-         OR: /implementation:new-feature   (if no schema changes)
+COMMAND_COMPLETE: foundation:shape-spec
+STATUS: success
+FILES_CREATED: .claude/docs/specs/{feature-name}.md
+FILES_MODIFIED: .claude/docs/project-state.md
+NEXT_COMMAND: /architecture:new-feature (if schema changes) OR /implementation:new-feature (if no schema changes)
 ```

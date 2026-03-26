@@ -5,7 +5,13 @@ Use this at the start of any session where you need to make sure the
 right standards are loaded — especially for long implementation sessions
 or when switching between feature areas.
 
-Read `.claude/docs/standards-index.yml` first.
+**Preconditions:**
+- `.claude/project-config.json` must exist (run `/foundation:init`)
+
+Read before starting:
+
+- `.claude/project-config.json` — to adapt standards for multi-tenant vs single-tenant
+- `.claude/docs/standards-index.yml`
 
 ---
 
@@ -45,5 +51,7 @@ Tell the user:
 "Standards loaded. Proceed with your current task."
 
 ```
-Next command: continue with current task
+COMMAND_COMPLETE: foundation:inject-standards
+STATUS: success
+NEXT_COMMAND: continue with current task
 ```
