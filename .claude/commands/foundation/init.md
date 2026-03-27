@@ -1215,7 +1215,8 @@ On confirmation, write all files.
    APP_ENV=local
    ```
 5. Apply the baseline migration: `supabase db push`
-6. Generate types: `supabase gen types typescript --local > src/types/database.ts`
+6. Generate types: `supabase gen types typescript --local 2>/dev/null > src/types/database.ts`
+   — The `2>/dev/null` suppresses stderr log lines (e.g. "Connecting to db") that would pollute the types file.
 7. Print MCP instructions:
    ```
    Supabase is running locally. MCP is pre-configured in .mcp.json.
@@ -1236,7 +1237,7 @@ On confirmation, write all files.
    ```
 2. Apply the baseline migration: `supabase db push --db-url "{user-provided connection string}"`
    — if this fails (network, auth), warn and continue. The migration can be applied later.
-3. Generate types: `supabase gen types typescript --db-url "{user-provided connection string}" > src/types/database.ts`
+3. Generate types: `supabase gen types typescript --db-url "{user-provided connection string}" 2>/dev/null > src/types/database.ts`
    — if this fails, fall back to the Step 8b stub behavior.
 4. Print MCP instructions:
    ```

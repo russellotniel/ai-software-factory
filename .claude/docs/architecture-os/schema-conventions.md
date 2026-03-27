@@ -182,14 +182,48 @@ WHERE id = '[record_id]';
 
 ### RLS and soft deletes
 
-RLS policies on soft-deletable tables must always include the `deleted_at IS NULL` check:
+> **Important:** Do NOT put `deleted_at IS NULL` in the SELECT RLS policy.
+> PostgreSQL enforces the SELECT policy on the *resulting* row after an UPDATE.
+> If the SELECT policy requires `deleted_at IS NULL`, then any UPDATE that sets
+> `deleted_at` (i.e., a soft delete) will be rejected with
+> "new row violates row-level security policy".
+
+Instead, filter `deleted_at IS NULL` in **application queries** (Supabase `.is("deleted_at", null)`).
 
 ```sql
+-- ✅ Correct: SELECT policy does NOT filter deleted_at
+-- Multi-tenant:
 CREATE POLICY "tenant_isolation" ON public.projects
-FOR SELECT USING (
-  tenant_id = (SELECT private.get_active_tenant_id())
-  AND deleted_at IS NULL
-);
+  FOR SELECT USING (
+    tenant_id = (SELECT private.get_active_tenant_id())
+  );
+
+-- Single-tenant:
+CREATE POLICY "authenticated_select" ON public.projects
+  FOR SELECT TO authenticated USING (true);
+
+-- ✅ UPDATE policy needs explicit WITH CHECK (true) for soft delete
+CREATE POLICY "owner_or_admin_update" ON public.projects
+  FOR UPDATE TO authenticated
+  USING (
+    created_by = auth.uid()
+    OR (SELECT private.get_user_role()) IN ('admin', 'superadmin')
+  )
+  WITH CHECK (true);
+
+-- ❌ Wrong: This blocks soft delete operations
+CREATE POLICY "bad_select" ON public.projects
+  FOR SELECT USING (deleted_at IS NULL);
+```
+
+In application code, always filter soft-deleted rows:
+
+```typescript
+// ✅ Filter in application query
+const { data } = await supabase
+  .from("projects")
+  .select("id, name, ...")
+  .is("deleted_at", null);
 ```
 
 ---
@@ -356,10 +390,11 @@ CREATE TABLE public.projects (
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS policies (tenant-scoped)
+-- Note: deleted_at filtering is done at the application layer, not in RLS.
+-- See "RLS and soft deletes" in Section 5 for why.
 CREATE POLICY "tenant_isolation_select" ON public.projects
   FOR SELECT USING (
     tenant_id = (SELECT private.get_active_tenant_id())
-    AND deleted_at IS NULL
   );
 
 CREATE POLICY "tenant_isolation_insert" ON public.projects
@@ -368,10 +403,11 @@ CREATE POLICY "tenant_isolation_insert" ON public.projects
   );
 
 CREATE POLICY "tenant_isolation_update" ON public.projects
-  FOR UPDATE USING (
+  FOR UPDATE
+  USING (
     tenant_id = (SELECT private.get_active_tenant_id())
-    AND deleted_at IS NULL
-  );
+  )
+  WITH CHECK (true);
 
 -- 4. Indexes
 CREATE INDEX idx_projects_tenant_id ON public.projects(tenant_id);
@@ -415,17 +451,21 @@ CREATE TABLE public.projects (
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS policies (role-based)
+-- Note: deleted_at filtering is done at the application layer, not in RLS.
+-- See "RLS and soft deletes" in Section 5 for why.
 CREATE POLICY "authenticated_select" ON public.projects
-  FOR SELECT TO authenticated USING (deleted_at IS NULL);
+  FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "authenticated_insert" ON public.projects
   FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE POLICY "owner_or_admin_update" ON public.projects
-  FOR UPDATE TO authenticated USING (
+  FOR UPDATE TO authenticated
+  USING (
     created_by = auth.uid()
     OR (SELECT private.get_user_role()) IN ('admin', 'superadmin')
-  );
+  )
+  WITH CHECK (true);
 
 -- 4. Indexes
 CREATE INDEX idx_projects_created_by ON public.projects(created_by);
