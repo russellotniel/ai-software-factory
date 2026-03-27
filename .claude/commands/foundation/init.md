@@ -143,6 +143,19 @@ export default async function Home() {
 
 ---
 
+## Step 4b — Install Required Shadcn Components
+
+Install the Shadcn components needed by the generated auth pages and dashboard:
+
+```bash
+npx shadcn@latest add card input label textarea separator badge --yes
+```
+
+These supplement the `button` component already in the template.
+If any fail to install (network issues), continue — the component files can be added later.
+
+---
+
 ## Step 5 — Generate Auth Files
 
 ### Always generate:
@@ -193,19 +206,22 @@ export default function AuthLayout({
 #### `src/app/(auth)/login/page.tsx`
 
 ```typescript
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "./_components/login-form";
 
 export default function LoginPage() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Sign in</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+    <Card>
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Sign in</CardTitle>
+        <CardDescription>
           Enter your email to sign in to your account
-        </p>
-      </div>
-      <LoginForm />
-    </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <LoginForm />
+      </CardContent>
+    </Card>
   );
 }
 ```
@@ -219,6 +235,8 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -250,41 +268,35 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="you@example.com"
         />
       </div>
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium">
-          Password
-        </label>
-        <input
+        <Label htmlFor="password">Password</Label>
+        <Input
           id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
       </div>
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Signing in..." : "Sign in"}
       </Button>
-      <p className="text-center text-sm text-zinc-500">
+      <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <a href="/signup" className="font-medium underline">
+        <a href="/signup" className="font-medium text-foreground underline">
           Sign up
         </a>
       </p>
@@ -296,19 +308,22 @@ export function LoginForm() {
 #### `src/app/(auth)/signup/page.tsx`
 
 ```typescript
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignupForm } from "./_components/signup-form";
 
 export default function SignupPage() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Create an account</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+    <Card>
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Create an account</CardTitle>
+        <CardDescription>
           Enter your details to get started
-        </p>
-      </div>
-      <SignupForm />
-    </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SignupForm />
+      </CardContent>
+    </Card>
   );
 }
 ```
@@ -322,6 +337,8 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -357,55 +374,46 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="fullName" className="text-sm font-medium">
-          Full name
-        </label>
-        <input
+        <Label htmlFor="fullName">Full name</Label>
+        <Input
           id="fullName"
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
       </div>
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="you@example.com"
         />
       </div>
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium">
-          Password
-        </label>
-        <input
+        <Label htmlFor="password">Password</Label>
+        <Input
           id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={8}
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
       </div>
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Creating account..." : "Create account"}
       </Button>
-      <p className="text-center text-sm text-zinc-500">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <a href="/login" className="font-medium underline">
+        <a href="/login" className="font-medium text-foreground underline">
           Sign in
         </a>
       </p>
@@ -858,6 +866,95 @@ CREATE TRIGGER audit_profiles AFTER INSERT OR UPDATE OR DELETE ON public.profile
 
 ### Always generate:
 
+#### `src/app/dashboard/_components/DashboardShell.tsx`
+
+```typescript
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+type DashboardShellProps = {
+  user: { id: string; email: string };
+  children: React.ReactNode;
+};
+
+const navItems = [
+  { label: "Dashboard", href: "/dashboard" },
+];
+
+export function DashboardShell({ user, children }: DashboardShellProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      <aside className="flex w-60 flex-col border-r border-border bg-muted/30">
+        <div className="flex h-14 items-center px-5">
+          <Link href="/dashboard" className="text-base font-bold tracking-tight">
+            {/* Project name */}
+          </Link>
+        </div>
+        <Separator />
+        <nav className="flex-1 space-y-1 px-3 py-4">
+          {navItems.map((item) => {
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="border-t border-border p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-medium text-accent-foreground">
+              {user.email.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="truncate text-sm font-medium">{user.email}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className="mt-3 w-full justify-start text-muted-foreground hover:text-foreground"
+          >
+            Sign out
+          </Button>
+        </div>
+      </aside>
+      <div className="flex flex-1 flex-col">
+        <main className="flex-1 overflow-y-auto px-8 py-8">{children}</main>
+      </div>
+    </div>
+  );
+}
+```
+
 #### `src/app/dashboard/layout.tsx`
 
 Uses `connection()` to opt into dynamic rendering (required for auth checks under `cacheComponents: true`).
@@ -867,6 +964,7 @@ When `multiTenant: true`:
 ```typescript
 import { requireAuth } from "@/lib/auth/server";
 import { connection } from "next/server";
+import { DashboardShell } from "./_components/DashboardShell";
 
 export default async function DashboardLayout({
   children,
@@ -876,17 +974,7 @@ export default async function DashboardLayout({
   await connection();
   const { user, tenantId } = await requireAuth();
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">{/* Project name */}</h1>
-          <span className="text-sm text-zinc-500">{user.email}</span>
-        </div>
-      </header>
-      <main className="flex-1 p-6">{children}</main>
-    </div>
-  );
+  return <DashboardShell user={user}>{children}</DashboardShell>;
 }
 ```
 
@@ -895,6 +983,7 @@ When `multiTenant: false`:
 ```typescript
 import { requireAuth } from "@/lib/auth/server";
 import { connection } from "next/server";
+import { DashboardShell } from "./_components/DashboardShell";
 
 export default async function DashboardLayout({
   children,
@@ -904,17 +993,7 @@ export default async function DashboardLayout({
   await connection();
   const { user } = await requireAuth();
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">{/* Project name */}</h1>
-          <span className="text-sm text-zinc-500">{user.email}</span>
-        </div>
-      </header>
-      <main className="flex-1 p-6">{children}</main>
-    </div>
-  );
+  return <DashboardShell user={user}>{children}</DashboardShell>;
 }
 ```
 
@@ -941,19 +1020,22 @@ export default function DashboardPage() {
 #### `src/app/(auth)/onboarding/page.tsx`
 
 ```typescript
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OnboardingForm } from "./_components/onboarding-form";
 
 export default function OnboardingPage() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Create your organisation</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+    <Card>
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Create your organisation</CardTitle>
+        <CardDescription>
           Set up your organisation to get started
-        </p>
-      </div>
-      <OnboardingForm />
-    </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <OnboardingForm />
+      </CardContent>
+    </Card>
   );
 }
 ```
@@ -967,6 +1049,8 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function OnboardingForm() {
   const [name, setName] = useState("");
@@ -1033,21 +1117,18 @@ export function OnboardingForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="name" className="text-sm font-medium">
-          Organisation name
-        </label>
-        <input
+        <Label htmlFor="name">Organisation name</Label>
+        <Input
           id="name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="Acme Inc."
         />
       </div>
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Creating..." : "Create organisation"}
@@ -1082,6 +1163,35 @@ Add `app_role` enum.
 
 Skip this step. Types will be generated from the live database in Step 12
 via `supabase gen types typescript`.
+
+---
+
+## Step 8c — Populate Design System
+
+Write `.claude/docs/design-os/design-system.md` with sensible defaults based on the
+template's existing `globals.css` tokens. These can be refined later with `/design:system`.
+
+Fill in the placeholder sections:
+
+- **Color Tokens:** Reference the oklch values from `globals.css` `:root` block.
+  Use CSS variable names (--primary, --secondary, --accent, etc.).
+- **Typography:** Font is Geist Sans (`--font-geist-sans`). Default type scale:
+  page title `text-2xl font-bold`, section title `text-lg font-semibold`,
+  body `text-sm`, caption `text-xs text-muted-foreground`.
+- **Shadcn Component Decisions:**
+  | Component | Decision |
+  |-----------|----------|
+  | Button | Default variant for primary actions, Destructive for danger |
+  | Card | Default — used for auth forms, content sections, data display |
+  | Input | Always use Shadcn Input — never raw `<input>` |
+  | Label | Always pair with Input |
+  | Badge | Default + Secondary + Outline — for status indicators |
+  | Separator | Default — used in sidebar and section dividers |
+- **Application Shell:** Sidebar (240px) + content area. Navigation links in sidebar.
+  User email and sign-out in sidebar footer.
+- **Spacing:** Page padding `px-8 py-8`, section gap `space-y-4` or `space-y-8`,
+  card padding from Shadcn defaults.
+- **Border Radius:** Uses `--radius: 0.625rem` from globals.css.
 
 ---
 
@@ -1263,8 +1373,8 @@ Tell the user:
 ```
 COMMAND_COMPLETE: foundation:init
 STATUS: success
-FILES_CREATED: [list of created files]
-FILES_MODIFIED: [list of modified files]
+FILES_CREATED: [list of created files — include src/app/dashboard/_components/DashboardShell.tsx]
+FILES_MODIFIED: [list of modified files — include .claude/docs/design-os/design-system.md]
 NEXT_COMMAND: foundation:discover
 CONFIG_UPDATED: .claude/project-config.json
 ```
