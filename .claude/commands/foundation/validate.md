@@ -63,13 +63,27 @@ Based on `project-config.json`, verify init generated the expected files:
 
 ## Step 4 — Check Feature Files
 
-If `project-state.md` exists with features marked ✅ Done:
+If `project-state.md` exists with features at stage `implementation` or later:
 
-For each completed feature, verify:
+For each feature, verify:
 - [ ] Spec exists: `.claude/docs/specs/{feature-name}.md`
-- [ ] Migration exists: `supabase/migrations/*_{feature-name}.sql`
+- [ ] Migration exists: `supabase/migrations/*_{feature-name}.sql` (if feature required schema changes)
 - [ ] Feature code exists: `src/features/{domain}/`
 - [ ] Tests exist alongside feature code
+
+### Traceability Check
+
+For each feature that has a spec file at `.claude/docs/specs/{feature-name}.md`:
+
+1. Search for `// @spec: {feature-name}` in `src/features/` and `src/app/`
+2. Search for `// @spec: {feature-name}` in test files (`*.test.ts`, `*.test.tsx`, `*.spec.ts`)
+3. Report:
+   - ✅ `{feature-name}`: code files ({count}), test files ({count})
+   - ⚠️ `{feature-name}`: code files found but no test files have @spec tag
+   - ⚠️ `{feature-name}`: no @spec tags found (feature predates traceability — consider adding tags via `/implementation:review`)
+
+Note: Features that predate the traceability enhancement show ⚠️ warnings,
+not ❌ errors. This is expected and not a blocking issue.
 
 ---
 

@@ -61,7 +61,8 @@
       ],
       "postconditions": [
         ".claude/docs/specs/{feature}.md created",
-        "project-state.md backlog updated with spec link"
+        "project-state.md backlog updated with spec link",
+        "project-state.md feature stage set to spec"
       ],
       "next": ["architecture:new-feature", "implementation:new-feature"]
     },
@@ -96,7 +97,8 @@
       ],
       "postconditions": [
         "supabase/migrations/{timestamp}_{name}.sql created",
-        "project-state.md schema snapshot updated"
+        "project-state.md schema snapshot updated",
+        "project-state.md feature stage set to architecture"
       ],
       "next": ["implementation:new-feature"]
     },
@@ -106,7 +108,7 @@
       "path": ".claude/commands/architecture-os/review.md",
       "phase": "any",
       "preconditions": [".claude/project-config.json exists"],
-      "postconditions": [],
+      "postconditions": ["project-state.md feature stage set to reviewed (if feature-specific review with no issues)"],
       "next": []
     },
     {
@@ -119,8 +121,8 @@
         "migration exists for feature"
       ],
       "postconditions": [
-        "src/features/{domain}/ scaffolded",
-        "project-state.md feature marked Done",
+        "src/features/{domain}/ scaffolded with @spec traceability comments",
+        "project-state.md feature stage set to implementation",
         "project-state.md established patterns updated"
       ],
       "next": ["qa:new-tests"]
@@ -131,7 +133,7 @@
       "path": ".claude/commands/implementation-os/review.md",
       "phase": "any",
       "preconditions": [".claude/project-config.json exists"],
-      "postconditions": [],
+      "postconditions": ["project-state.md feature stage set to reviewed (if feature-specific review with no issues)"],
       "next": []
     },
     {
@@ -152,7 +154,7 @@
         ".claude/project-config.json exists",
         "feature code exists in src/features/{domain}/"
       ],
-      "postconditions": ["test files created"],
+      "postconditions": ["test files created with @spec traceability comments", "project-state.md feature stage set to tested"],
       "next": ["qa:fix"]
     },
     {

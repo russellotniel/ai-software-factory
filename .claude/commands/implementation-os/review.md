@@ -17,6 +17,30 @@ Read before starting:
 Ask: "Which file or directory should I review?"
 Accept: a file path, a feature directory, or "all features" for `src/features/`.
 
+### Risk Zone Awareness
+
+Read `.claude/project-config.json` and check `riskZones`. If configured, apply
+zone-specific review standards based on file path matching:
+
+**Zone 1 (Critical) — additional checks beyond standard:**
+- [ ] No dynamic SQL construction or string interpolation in queries
+- [ ] Auth checks cannot be bypassed by parameter manipulation
+- [ ] Input validation covers boundary conditions (empty, max length, special chars)
+- [ ] Error messages do not leak internal state, stack traces, or query details
+- [ ] All database writes go through Server Actions (never client-side)
+
+**Zone 3 (Presentational) — lighter review:**
+- [ ] No business logic in presentational components (logic belongs in actions.ts or lib/)
+- [ ] No direct Supabase calls in components
+- [ ] Accessibility basics: labels, alt text, keyboard navigation
+- [ ] Components are presentational (no side effects in render)
+
+Report the zone for each file reviewed in the output:
+```
+✅ src/lib/auth/server.ts [Zone 1 — Critical]
+❌ src/features/tasks/_components/TaskForm.tsx [Zone 3 — Presentational]
+```
+
 For each file, check:
 
 ### Server Actions
@@ -58,6 +82,19 @@ For each file, check:
 ```
 
 End with a summary and offer to apply fixes.
+
+---
+
+## Update Project State (if reviewing a specific feature)
+
+If this review was run for a specific feature (not a general audit):
+
+Read `.claude/docs/project-state.md`.
+- If all review checks pass with no ❌ issues: update the feature's **Stage** column to `reviewed ←`
+- In the **Feature Timeline** section, set the `reviewed` column to today's date
+- If issues were found: do not update the stage — the feature stays at its current stage until issues are resolved and re-reviewed
+
+Write the updated `project-state.md`.
 
 ---
 

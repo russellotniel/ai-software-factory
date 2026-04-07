@@ -106,7 +106,8 @@ On confirmation:
 Read `.claude/docs/project-state.md`.
 
 - **Schema Snapshot:** Add new tables and key relationships created by this migration
-- **Backlog:** If the feature is listed, keep its status as `🔲 Pending` (implementation hasn't happened yet)
+- **Backlog:** Update the feature's **Stage** column to `architecture ←`
+- **Feature Timeline:** Set the `architecture` column to today's date
 
 Write the updated `project-state.md`.
 

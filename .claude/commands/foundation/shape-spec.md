@@ -100,7 +100,9 @@ After saving:
 Read `.claude/docs/project-state.md`. Find this feature in the Backlog table.
 
 - Update its **Spec** column to link to the spec file: `[spec](../specs/{feature-name}.md)`
-- If the feature is not in the backlog, append it as a new row with status `🔲 Pending`
+- Update its **Stage** column to `spec ←`
+- If the feature is not in the backlog, append it as a new row with stage `spec ←`
+- In the **Feature Timeline** section (collapsible), add or update the row for this feature: set the `spec` column to today's date (YYYY-MM-DD format, month-day only in the table e.g. `04-06`)
 
 Write the updated `project-state.md`.
 

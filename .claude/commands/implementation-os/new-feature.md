@@ -14,7 +14,6 @@ Read before starting:
 - `.claude/docs/architecture-os/api-contracts.md` (find the contract for this feature)
 - `.claude/docs/specs/{feature-name}.md` — if a spec exists for this feature
 - `.claude/docs/design-os/screens/{feature-name}.md` — if a screen spec exists
-- `.claude/docs/design-os/design-system.md` — component decisions, color tokens, typography
 
 **If a screen spec or Figma frame exists, read it before writing any component code.**
 The design spec is the source of truth for what the UI should look like.
@@ -49,9 +48,20 @@ src/features/{domain}/
     use{FeatureName}.ts       ← if client data fetching needed
 ```
 
+### Traceability
+
+Add a `// @spec: {feature-name}` comment in every generated file to link it
+back to the spec. The `{feature-name}` must match the spec filename (without
+`.md`) from `.claude/docs/specs/{feature-name}.md`.
+
+- In `schemas.ts` and utility files: add as the first line
+- In `actions.ts`: add after the `'use server'` directive
+- In components: add after the `'use client'` directive (if present)
+
 ### schemas.ts
 
 ```typescript
+// @spec: {feature-name}
 import { z } from 'zod';
 
 export const {featureName}Schema = z.object({
@@ -65,6 +75,7 @@ export type {FeatureName}Input = z.infer<typeof {featureName}Schema>;
 
 ```typescript
 'use server';
+// @spec: {feature-name}
 
 import { requireAuth } from '@/lib/auth/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -92,102 +103,10 @@ Rules:
 - Input validated with `safeParse()` before any database call
 - Return `ActionResult<T>` — never throw, never return raw errors
 
-### Component (form-based)
+### Component
 
-When the feature needs a form, generate `{FeatureName}Form.tsx` using Shadcn components:
-
-```typescript
-'use client';
-
-import { useState, useTransition } from 'react';
-import { {featureName}Action } from '../actions';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-
-export function {FeatureName}Form() {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  // ... field state with useState
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    startTransition(async () => {
-      const result = await {featureName}Action({ /* fields */ });
-      if (!result.success) {
-        setError(result.error.message);
-      } else {
-        // reset form
-      }
-    });
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{Feature Title}</CardTitle>
-        <CardDescription>{Brief description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fieldName">Field Label</Label>
-            <Input id="fieldName" placeholder="..." />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Saving...' : 'Save'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-```
-
-### Component (display / list)
-
-When the feature displays data, use Card + Badge for list items:
-
-```typescript
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-
-export function {FeatureName}Card({ item }: { item: {ItemType} }) {
-  return (
-    <Card>
-      <CardContent className="flex items-start justify-between gap-4 py-4">
-        <div className="flex-1 space-y-2">
-          <h3 className="font-medium">{item.title}</h3>
-          {item.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {item.description}
-            </p>
-          )}
-          <div className="flex gap-2">
-            <Badge variant="secondary">{item.status}</Badge>
-          </div>
-        </div>
-        <div className="flex gap-1.5">
-          <Button variant="ghost" size="sm">Action</Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-```
-
-### Component rules
-
-- Always use Shadcn `Input`, `Textarea`, `Label` — never raw HTML form elements
-- Wrap content sections in `Card` with `CardHeader`/`CardContent`
-- Use `Badge` for status indicators with appropriate variants
-- Use semantic color tokens (`text-destructive`, `text-muted-foreground`) — never hardcode zinc/red/gray classes
-- Reference `.claude/docs/design-os/design-system.md` for project-specific component decisions
+- React Hook Form + Zod resolver for forms
+- Shadcn Form primitives
 - Never call Server Actions from `useEffect`
 
 ---
@@ -195,14 +114,6 @@ export function {FeatureName}Card({ item }: { item: {ItemType} }) {
 ## Step 3 — Confirm and Write
 
 Show the generated files. Ask: "Should I write these to the repo?"
-
-Before writing, check if the generated components use Shadcn components not yet
-installed (check `src/components/ui/`). If any are missing, install them first:
-
-```bash
-npx shadcn@latest add {component-name} --yes
-```
-
 On confirmation, write to `src/features/{domain}/`.
 
 Remind the user:
@@ -216,7 +127,8 @@ Remind the user:
 
 Read `.claude/docs/project-state.md`.
 
-- **Backlog:** Mark this feature as `✅ Done`
+- **Backlog:** Update the feature's **Stage** column to `implementation ←`
+- **Feature Timeline:** Set the `implementation` column to today's date
 - **Established Patterns:** If this is the first feature of its kind (first CRUD, first form, first RPC-backed feature), document the pattern established so future features can follow it. Example:
   ```
   - CRUD pattern: src/features/{domain}/ with schemas.ts, actions.ts, _components/, hooks/
