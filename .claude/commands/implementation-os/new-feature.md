@@ -29,7 +29,14 @@ Ask:
   This becomes `src/features/{domain}/`
 - Is this a new domain or does the directory already exist?
 - What does the primary action do? (e.g. "create a project", "invite a member")
+- **Is this a write action (mutation) or a read-only display?**
+  - Write → scaffold Server Action + form/button component
+  - Read-only → scaffold Server Component page + typed RPC call (no Server Action)
 - Does it require a form (user input) or a triggered action (button, delete)?
+- **Does the API contract reference an RPC or a direct table query?**
+  Check `.claude/docs/architecture-os/api-contracts.md` for this feature.
+  - Direct query → use `supabase.from('table').select()`
+  - RPC → use `supabase.rpc('function_name', params)` with typed return interface
 
 ---
 
@@ -102,6 +109,89 @@ Rules:
 - `requireAuth()` is always the first call
 - Input validated with `safeParse()` before any database call
 - Return `ActionResult<T>` — never throw, never return raw errors
+
+### RPC-backed actions (when the feature uses an RPC instead of direct queries)
+
+When the API contract specifies an RPC, the action calls `supabase.rpc()` instead
+of `supabase.from().select()`. Generate a typed return interface matching the RPC's
+`json_build_object` or `RETURNS TABLE` structure.
+
+```typescript
+'use server';
+// @spec: {feature-name}
+
+import { requireAuth } from '@/lib/auth/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import type { ActionResult } from '@/types/actions';
+import { logger } from '@/lib/logger';
+
+// Type matching the RPC's return shape
+export type {FeatureName}Result = {
+  // fields from RETURNS TABLE or json_build_object
+};
+
+export async function {featureName}Action(
+  input: {FeatureName}Input
+): Promise<ActionResult<{FeatureName}Result>> {
+  const { user } = await requireAuth();
+
+  // ... validation ...
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc('{rpc_function_name}', {
+    p_param: parsed.data.value,
+  });
+
+  if (error) {
+    logger.error("{featureName}Action: RPC failed", {
+      action: "{featureName}Action",
+      userId: user.id,
+      errorCode: error.code,
+      error: error.message,
+    });
+    return { success: false, error: { code: "DATABASE_ERROR", message: "Failed to load data" } };
+  }
+
+  return { success: true, data: data as {FeatureName}Result };
+}
+```
+
+### Read-only Server Component pattern (no Server Action needed)
+
+For features that only display data (dashboards, reports, summaries), skip the
+Server Action and call the RPC directly in the Server Component page:
+
+```typescript
+// @spec: {feature-name}
+// app/(dashboard)/{feature}/page.tsx — Server Component
+import { requireAuth } from '@/lib/auth/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { connection } from 'next/server';
+
+// Type matching the RPC's return shape
+type {FeatureName}Data = {
+  // fields from RETURNS TABLE or json_build_object
+};
+
+export default async function {FeatureName}Page() {
+  const { user } = await requireAuth();
+  await connection();
+  const supabase = await createSupabaseServerClient();
+
+  const { data } = await supabase.rpc('{rpc_function_name}', {
+    p_param: value,
+  });
+
+  return <{FeatureName}View data={(data as {FeatureName}Data) ?? defaultValue} />;
+}
+```
+
+For read-only features, generate:
+- The page Server Component with RPC call (above)
+- A typed interface for the RPC return shape
+- A presentational client component if interactivity is needed, or a server
+  component if it's pure display
+- No `actions.ts` or `schemas.ts` (no mutations)
 
 ### Component
 
