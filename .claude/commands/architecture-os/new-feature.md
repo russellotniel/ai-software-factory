@@ -101,6 +101,36 @@ On confirmation:
 
 ---
 
+## Step 5.5 — Detect Breaking Schema Changes
+
+If the migration renames columns, drops columns, or drops/renames tables,
+scan the codebase for references to the old names:
+
+- Search `src/` for the old column or table name (e.g. `category_id` if renamed
+  to `allocation_id`)
+- Search `.claude/docs/specs/` and `.claude/docs/architecture-os/api-contracts.md`
+
+If matches are found, display them:
+
+```
+⚠️ This migration renames/drops schema elements. The following files
+   reference the old names and need updating:
+
+   Old name: category_id → New name: allocation_id
+   - src/features/expenses/actions.ts (lines 42, 67)
+   - src/features/expenses/schemas.ts (line 8)
+   - src/features/expenses/_components/ExpenseForm.tsx (line 31)
+
+   Fix these files before running /implementation:new-feature.
+```
+
+If no matches are found, proceed silently.
+
+This step prevents stale code from surviving schema changes — the migration
+runs but the application layer still references old column/table names.
+
+---
+
 ## Step 6 — Update Project State
 
 Read `.claude/docs/project-state.md`.
