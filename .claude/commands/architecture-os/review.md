@@ -62,6 +62,19 @@ End with a summary count. Offer to generate fix migrations for any issues.
 
 ---
 
+## Update Project State (if reviewing a specific feature)
+
+If this review was run for a specific feature (not a general audit):
+
+Read `.claude/docs/project-state.md`.
+- If all review checks pass with no ❌ issues: update the feature's **Stage** column to `reviewed ←`
+- In the **Feature Timeline** section, set the `reviewed` column to today's date
+- If issues were found: do not update the stage — the feature stays at its current stage until issues are resolved and re-reviewed
+
+Write the updated `project-state.md`.
+
+---
+
 ## ✅ What's Next
 
 Tell the user:

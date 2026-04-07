@@ -27,22 +27,27 @@ Project: {projectName}
 Type: {multi-tenant / single-tenant} | Auth: {Supabase Auth / Keycloak}
 Status: {project-config status}
 
-Features:
-  ✅ Auth (baseline)
-  ✅ {completed feature}
-  🔲 {next pending feature} ← next
-  🔲 {pending feature}
-  🔲 {pending feature}
+Feature Pipeline:
+  Auth (baseline)        [spec → arch → impl → tested → reviewed → shipped] ✓
+  Tasks (CRUD)           [spec → arch → impl → tested → reviewed → shipped] ✓
+  New Feature            [spec → arch → impl ←                            ]
+  Another Feature        [                                                 ]
+
+  Legend: ← = current stage, ✓ = shipped
 
 Schema: {list of current tables}
 ```
+
+For each feature in the backlog, render a pipeline showing completed stages
+and the current stage marked with `←`. Features with stage `shipped` show `✓`.
+Features with no stage yet (stage `—`) show an empty pipeline.
 
 ---
 
 ## Step 3 — Suggest Next Action
 
 Identify the next feature to build:
-- First pending item in the backlog whose dependencies are all ✅ Done
+- First item in the backlog whose stage is not `shipped` and whose dependencies are all `shipped`
 
 Tell the user:
 

@@ -44,6 +44,13 @@ Every command enforces those standards.
 - OWASP Top 10 compliance on every project
 - Never commit secrets — Kubernetes Secrets + GitHub Actions Environments
 
+### Governance
+
+- **Feature maturity pipeline:** `spec → architecture → implementation → tested → reviewed → shipped` — tracked in `project-state.md` with timestamps
+- **Traceability:** every generated file includes `// @spec: {feature-name}` linking back to its spec. `/foundation:validate` checks for missing links
+- **Risk zones:** code classified as Critical (Zone 1), Standard (Zone 2), or Presentational (Zone 3) via `riskZones` in `project-config.json`. Test strategies and review depth scale with zone
+- **Governance gates:** `/deployment:release` runs 5 automated checks (spec coverage, test coverage, review status, migration security, Zone 1 coverage) before the manual pre-release checklist. Advisory by default, blocking when `regulated: true`
+
 ### Multi-Tenancy (when enabled)
 
 - Organisation-based; tenant_id on every business table

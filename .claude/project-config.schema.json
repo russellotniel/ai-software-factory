@@ -56,6 +56,41 @@
       "type": "string",
       "enum": ["initializing", "discovering", "active", "archived"],
       "description": "Project lifecycle status. initializing: init completed. discovering: discover in progress. active: ready for feature development. archived: no longer active."
+    },
+    "supabaseMode": {
+      "type": "string",
+      "enum": ["local-cli", "cloud"],
+      "description": "How Supabase is configured. local-cli: local development via Supabase CLI. cloud: hosted Supabase project."
+    },
+    "riskZones": {
+      "type": "object",
+      "description": "Path-to-risk-zone mappings for governance. Zone 1 (critical) gets strictest governance. Zone 3 (presentational) gets lightest. Optional — defaults applied when absent.",
+      "properties": {
+        "critical": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Zone 1: auth, migrations, data-writing server actions. Gets property tests, strict review, mandatory spec.",
+          "default": ["src/lib/auth/*", "supabase/migrations/*"]
+        },
+        "standard": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Zone 2: feature logic, server actions, libraries. Gets unit + integration tests, standard review.",
+          "default": ["src/features/*/actions.ts", "src/features/*/lib/*", "src/lib/*"]
+        },
+        "presentational": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Zone 3: UI components, pages, layouts. Gets smoke tests, visual review.",
+          "default": ["src/components/*", "src/features/*/_components/*", "src/app/**/page.tsx"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "governanceMode": {
+      "type": "string",
+      "enum": ["blocking", "advisory"],
+      "description": "How governance gates behave in /deployment:release. 'blocking' prevents release with failing gates. 'advisory' shows warnings but allows proceeding. Defaults to 'blocking' when regulated is true, 'advisory' otherwise."
     }
   },
   "additionalProperties": false
