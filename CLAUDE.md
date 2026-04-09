@@ -47,12 +47,12 @@ Senior agents (Adolescent+) are responsible for nurturing junior agents — not 
 Claude must load context in this exact order before any substantive work:
 
 1. `CLAUDE.md` (this file)
-2. `foundation/human-intent-os/` — values, philosophy, decision rules
-3. `foundation/agent-foundation-os/` — runtime behavior, task lifecycle
-4. `foundation/role-definition-os/[active-role]/` — role-specific rules
-5. `foundation/design-os/` — relevant design artifacts
-6. `foundation/build-os/` — relevant implementation standards
-7. `foundation/feedback-os/` — reflection and learning rules
+2. `.gunawan/foundation/human-intent-os/` — values, philosophy, decision rules
+3. `.gunawan/foundation/agent-foundation-os/` — runtime behavior, task lifecycle
+4. `.gunawan/foundation/role-definition-os/[active-role]/` — role-specific rules
+5. `.gunawan/foundation/design-os/` — relevant design artifacts
+6. `.gunawan/foundation/build-os/` — relevant implementation standards
+7. `.gunawan/foundation/feedback-os/` — reflection and learning rules
 8. Current project specs and codebase context
 9. The current user request
 
@@ -146,17 +146,13 @@ The gate checks:
 Claude must never modify these without explicit human approval and escalation:
 
 - `CLAUDE.md` (this file)
-- `foundation/**` (all foundation layers)
+- `.gunawan/**` (all Gunawan foundation files)
 - `.env*` (all environment variable files)
 - `supabase/migrations/**` (existing migrations — new ones are additive only)
 - `.github/workflows/**`
 - `k8s/**`
 - `.claude/settings.json`
 - Any file containing auth, secrets, or security controls
-
-Hooks enforcing this policy:
-- `.claude/hooks/verify-foundation.ps1` — blocks writes when foundation is incomplete
-- `.claude/hooks/protect-critical-files.ps1` — escalates on protected file edits
 
 ---
 
@@ -180,16 +176,17 @@ Use `standards-index.yml` to find which document covers a topic.
 Run `/foundation:inject-standards` to auto-load relevant standards.
 
 Key documents:
-- `foundation/human-intent-os/mission.md` — why this AI company exists
-- `foundation/agent-foundation-os/task-lifecycle.md` — how every task must proceed
-- `foundation/role-definition-os/role-map.md` — who does what
-- `foundation/product-mission.md` — what this specific project is
-- `foundation/tech-standards.md` — technology decisions
-- `architecture-os/schema-conventions.md` — database standards
-- `architecture-os/rpc-standards.md` — RPC patterns
-- `deployment-os/release-process.md` — branching and release
-- `design-os/design-system.md` — visual design tokens
-- `design-os/screens/` — per-feature screen specs
+- `.gunawan/foundation/human-intent-os/mission.md` — why this AI company exists
+- `.gunawan/foundation/agent-foundation-os/task-lifecycle.md` — how every task must proceed
+- `.gunawan/foundation/role-definition-os/role-map.md` — who does what
+- `docs/product-mission.md` — what this specific project is
+- `.gunawan/foundation/tech-standards.md` — technology decisions
+- `.gunawan/architecture-os/schema-conventions.md` — database standards
+- `.gunawan/architecture-os/rpc-standards.md` — RPC patterns
+- `.gunawan/deployment-os/release-process.md` — branching and release
+- `.gunawan/design-os/design-system.md` — visual design tokens
+- `.gunawan/design-os/screens/` — per-feature screen specs
+- `.gunawan/standards-index.yml` — topic → document index
 
 ---
 

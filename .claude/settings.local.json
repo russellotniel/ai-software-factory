@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p .gunawan/foundation)",
+      "Bash(mkdir -p .gunawan/architecture-os)",
+      "Bash(mkdir -p .gunawan/implementation-os)",
+      "Bash(mkdir -p .gunawan/data-fetching-os)",
+      "Bash(mkdir -p .gunawan/qa-os)",
+      "Bash(cp -r foundation/human-intent-os .gunawan/foundation/human-intent-os)",
+      "Bash(cp -r foundation/agent-foundation-os .gunawan/foundation/agent-foundation-os)",
+      "Bash(cp -r foundation/role-definition-os .gunawan/foundation/role-definition-os)",
+      "Bash(cp -r foundation/design-os .gunawan/foundation/design-os)",
+      "Bash(cp -r foundation/feedback-os .gunawan/foundation/feedback-os)",
+      "Bash(cp architecture-os/*.md .gunawan/architecture-os/)",
+      "Bash(cp implementation-os/*.md .gunawan/implementation-os/)",
+      "Bash(cp data-fetching-os/*.md .gunawan/data-fetching-os/)",
+      "Bash(cp qa-os/*.md .gunawan/qa-os/)",
+      "Bash(cp deployment-os/*.md .gunawan/deployment-os/)",
+      "Bash(rm CLAUDE.md.backup)",
+      "Bash(rm README.md)",
+      "Bash(rm setup.sh)",
+      "Bash(mv foundation/auth-model.md docs/)",
+      "Bash(mv foundation/compliance-standards.md docs/)",
+      "Bash(mv foundation/mcp-setup.md docs/)",
+      "Bash(mv foundation/principles.md docs/)",
+      "Bash(mv foundation/product-mission.md docs/)",
+      "Bash(ls -la \"D:/1. Iannn/2. Work/11. Shannon/ai-software-factory/docs/\"*.pdf)",
+      "Bash(mv auth-model.md knowledge/reference/)",
+      "Bash(mv compliance-standards.md knowledge/reference/)",
+      "Bash(mv mcp-setup.md knowledge/reference/)",
+      "Bash(mv principles.md knowledge/reference/)",
+      "Bash(mv product-mission.md knowledge/reference/)"
+    ]
+  }
+}

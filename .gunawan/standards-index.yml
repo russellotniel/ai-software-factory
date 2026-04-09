@@ -1,0 +1,341 @@
+# Gunawan Standards Index
+#
+# Maps topics and keywords to the documents that define the relevant standards.
+# All paths are relative to the project root (i.e., .gunawan/ prefix is included).
+# Used by /foundation:inject-standards to auto-load relevant context.
+# Update this file whenever a new standards document is added.
+
+standards:
+
+  # ── Tech Stack ───────────────────────────────────────────────────────────────
+
+  - id: tech-stack
+    keywords: [nextjs, next.js, supabase, tailwind, typescript, node, stack, versions, env]
+    files:
+      - .gunawan/foundation/tech-standards.md
+
+  # ── Architecture OS ──────────────────────────────────────────────────────────
+
+  - id: schema
+    keywords: [table, migration, schema, postgres, column, index, rls, row level security, tenant_id]
+    files:
+      - .gunawan/architecture-os/schema-conventions.md
+
+  - id: rpc
+    keywords: [rpc, function, stored procedure, security definer, security invoker, plpgsql]
+    files:
+      - .gunawan/architecture-os/rpc-standards.md
+
+  - id: api-contracts
+    keywords: [api, route handler, server action, endpoint, contract, input, output]
+    files:
+      - .gunawan/architecture-os/api-contracts.md
+
+  - id: audit
+    keywords: [audit, audit trail, audit log, log changes, who changed, history]
+    files:
+      - .gunawan/architecture-os/audit-trail.md
+
+  - id: system-design
+    keywords: [architecture, system design, adr, decision, proxy, middleware]
+    files:
+      - .gunawan/architecture-os/system-design.md
+
+  # ── Implementation OS ────────────────────────────────────────────────────────
+
+  - id: implementation
+    keywords: [server action, zod, validation, safeParse, ActionResult, requireAuth, component, form, react hook form]
+    files:
+      - .gunawan/implementation-os/standards.md
+
+  # ── Data Fetching OS ─────────────────────────────────────────────────────────
+
+  - id: caching
+    keywords: [cache, caching, use cache, cacheLife, cacheTag, revalidateTag, unstable_cache]
+    files:
+      - .gunawan/data-fetching-os/caching-strategy.md
+
+  - id: data-fetching
+    keywords: [server component, client component, tanstack query, useQuery, hydration, realtime, fetch]
+    files:
+      - .gunawan/data-fetching-os/server-vs-client.md
+
+  # ── QA OS ────────────────────────────────────────────────────────────────────
+
+  - id: testing
+    keywords: [test, vitest, playwright, e2e, unit, component, coverage, tenant isolation]
+    files:
+      - .gunawan/qa-os/strategy.md
+
+  # ── Deployment OS ────────────────────────────────────────────────────────────
+
+  - id: ci-cd
+    keywords: [github actions, workflow, ci, cd, pipeline, docker, build, deploy, semantic-release]
+    files:
+      - .gunawan/deployment-os/ci-cd.md
+
+  - id: environments
+    keywords: [environment, env, staging, production, configmap, next-runtime-env, NEXT_PUBLIC]
+    files:
+      - .gunawan/deployment-os/environments.md
+
+  - id: release
+    keywords: [release, version, tag, hotfix, branching, squash, merge, conventional commits]
+    files:
+      - .gunawan/deployment-os/release-process.md
+
+  - id: kubernetes
+    keywords: [kubernetes, k8s, deployment, pod, resource, cpu, memory, hpa, ingress, manifest]
+    files:
+      - .gunawan/deployment-os/k8s-sizing.md
+
+  # ── Design OS ────────────────────────────────────────────────────────────────
+
+  - id: design-system
+    keywords: [design, color, typography, shadcn, tailwind tokens, components, ui]
+    files:
+      - .gunawan/design-os/design-system.md
+
+  - id: screens
+    keywords: [screen, mockup, figma, layout, ui spec, wireframe, design spec]
+    files:
+      - .gunawan/design-os/product-vision.md
+
+  # ── Foundation Layer 1 — Human Intent OS ────────────────────────────────────
+
+  - id: mission
+    keywords: [mission, why, purpose, values, qualities, non-negotiable]
+    files:
+      - .gunawan/foundation/human-intent-os/mission.md
+
+  - id: philosophy
+    keywords: [yagni, dry, kiss, solid, design pattern, philosophy, explicit, spec before code]
+    files:
+      - .gunawan/foundation/human-intent-os/philosophy.md
+
+  - id: engineering-principles
+    keywords: [naming, naming convention, guard clause, negative space, retry, readability, modularity]
+    files:
+      - .gunawan/foundation/human-intent-os/engineering-principles.md
+
+  - id: design-principles
+    keywords: [ux, ui, cognitive load, visual consistency, accessibility, wcag, skeleton, loading state]
+    files:
+      - .gunawan/foundation/human-intent-os/design-principles.md
+
+  - id: decision-framework
+    keywords: [tradeoff, priority, correctness, simplicity, optimisation, decision]
+    files:
+      - .gunawan/foundation/human-intent-os/decision-framework.md
+
+  - id: risk-policy
+    keywords: [hard stop, prohibited, never, data safety, pii, secret, credential, agent permission]
+    files:
+      - .gunawan/foundation/human-intent-os/risk-policy.md
+
+  - id: collaboration-rules
+    keywords: [handoff, collaboration, standup, developer role, team, maturity handoff]
+    files:
+      - .gunawan/foundation/human-intent-os/collaboration-rules.md
+
+  - id: quality-definition
+    keywords: [done, definition of done, complete, ship, quality, acceptance]
+    files:
+      - .gunawan/foundation/human-intent-os/quality-definition.md
+
+  - id: ethics-safety
+    keywords: [ethics, harmful, malware, license, gdpr, pdpa, dark pattern, discrimination]
+    files:
+      - .gunawan/foundation/human-intent-os/ethics-and-safety.md
+
+  - id: glossary
+    keywords: [glossary, definition, term, vocabulary, agent, foundation, tenant, platform, handoff, maturity]
+    files:
+      - .gunawan/foundation/human-intent-os/glossary.md
+
+  # ── Foundation Layer 2 — Agent Foundation OS ────────────────────────────────
+
+  - id: runtime-model
+    keywords: [agent identity, thinker, builder, reviewer, non-sovereign, agent categories]
+    files:
+      - .gunawan/foundation/agent-foundation-os/runtime-model.md
+
+  - id: task-lifecycle
+    keywords: [task lifecycle, intake, classification, plan, execute, reflect, stages]
+    files:
+      - .gunawan/foundation/agent-foundation-os/task-lifecycle.md
+
+  - id: context-ingestion
+    keywords: [context loading, context order, layers, ingestion, conflict resolution]
+    files:
+      - .gunawan/foundation/agent-foundation-os/context-ingestion.md
+
+  - id: memory-policy
+    keywords: [memory, working memory, project memory, organizational memory, knowledge]
+    files:
+      - .gunawan/foundation/agent-foundation-os/memory-policy.md
+
+  - id: communication-protocol
+    keywords: [communication, message structure, inter-agent, protocol]
+    files:
+      - .gunawan/foundation/agent-foundation-os/communication-protocol.md
+
+  - id: handoff-contract
+    keywords: [handoff, contract, transfer, context, goal, constraints, assumptions, acceptance criteria]
+    files:
+      - .gunawan/foundation/agent-foundation-os/handoff-contract.md
+
+  - id: reflection-loop
+    keywords: [reflection, reflect, lesson, post-task, log, what went well, what failed]
+    files:
+      - .gunawan/foundation/agent-foundation-os/reflection-loop.md
+
+  - id: escalation-policy
+    keywords: [escalation, blocked, escalate, stop, high risk, override]
+    files:
+      - .gunawan/foundation/agent-foundation-os/escalation-policy.md
+
+  - id: output-contracts
+    keywords: [output, deliverable, artifact, what to produce, role output]
+    files:
+      - .gunawan/foundation/agent-foundation-os/output-contracts.md
+
+  - id: review-checklist
+    keywords: [checklist, self-review, pre-handoff, review, verify]
+    files:
+      - .gunawan/foundation/agent-foundation-os/review-checklist.md
+
+  - id: orchestration-rules
+    keywords: [orchestration, pipeline, guided, delegated, review-first, standup, multi-agent]
+    files:
+      - .gunawan/foundation/agent-foundation-os/orchestration-rules.md
+
+  - id: tool-usage-policy
+    keywords: [tool, read tool, write tool, execute, dangerous, mcp, tier]
+    files:
+      - .gunawan/foundation/agent-foundation-os/tool-usage-policy.md
+
+  # ── Foundation Layer 3 — Role Definition OS ─────────────────────────────────
+
+  - id: role-map
+    keywords: [roles, role map, active roles, register role, new role]
+    files:
+      - .gunawan/foundation/role-definition-os/role-map.md
+
+  - id: collaboration-map
+    keywords: [pipeline, workflow, who hands off to whom, feedback loop, role pipeline]
+    files:
+      - .gunawan/foundation/role-definition-os/collaboration-map.md
+
+  - id: role-selection-policy
+    keywords: [which role, select role, role selection, declare role]
+    files:
+      - .gunawan/foundation/role-definition-os/role-selection-policy.md
+
+  - id: role-product-strategist
+    keywords: [product strategist, prd, discovery, user story, scope, product definition]
+    files:
+      - .gunawan/foundation/role-definition-os/product-strategist/role.md
+      - .gunawan/foundation/role-definition-os/product-strategist/responsibilities.md
+      - .gunawan/foundation/role-definition-os/product-strategist/boundaries.md
+      - .gunawan/foundation/role-definition-os/product-strategist/checklist.md
+
+  - id: role-system-architect
+    keywords: [system architect, architecture, adr, domain model, api contract, data model]
+    files:
+      - .gunawan/foundation/role-definition-os/system-architect/role.md
+      - .gunawan/foundation/role-definition-os/system-architect/responsibilities.md
+      - .gunawan/foundation/role-definition-os/system-architect/boundaries.md
+      - .gunawan/foundation/role-definition-os/system-architect/checklist.md
+
+  - id: role-software-engineer
+    keywords: [software engineer, implementation, code, tests, server action, pr]
+    files:
+      - .gunawan/foundation/role-definition-os/software-engineer/role.md
+      - .gunawan/foundation/role-definition-os/software-engineer/responsibilities.md
+      - .gunawan/foundation/role-definition-os/software-engineer/boundaries.md
+      - .gunawan/foundation/role-definition-os/software-engineer/checklist.md
+
+  - id: role-qa-reviewer
+    keywords: [qa reviewer, review, verdict, pass, fail, defect, regression]
+    files:
+      - .gunawan/foundation/role-definition-os/qa-reviewer/role.md
+      - .gunawan/foundation/role-definition-os/qa-reviewer/responsibilities.md
+      - .gunawan/foundation/role-definition-os/qa-reviewer/boundaries.md
+      - .gunawan/foundation/role-definition-os/qa-reviewer/checklist.md
+
+  - id: role-devops-platform
+    keywords: [devops, ci/cd, deployment, kubernetes, release, pipeline, infra]
+    files:
+      - .gunawan/foundation/role-definition-os/devops-platform/role.md
+      - .gunawan/foundation/role-definition-os/devops-platform/responsibilities.md
+      - .gunawan/foundation/role-definition-os/devops-platform/boundaries.md
+      - .gunawan/foundation/role-definition-os/devops-platform/checklist.md
+
+  # ── Foundation Layer 4 — Design OS ──────────────────────────────────────────
+
+  - id: design-pipeline
+    keywords: [discovery, product definition, domain model, user flows, system context,
+               architecture blueprint, integration map, data model, api contracts,
+               technical risk, implementation readiness]
+    files:
+      - .gunawan/foundation/design-os/discovery.md
+      - .gunawan/foundation/design-os/product-definition.md
+      - .gunawan/foundation/design-os/domain-model.md
+      - .gunawan/foundation/design-os/user-flows.md
+      - .gunawan/foundation/design-os/system-context.md
+      - .gunawan/foundation/design-os/architecture-blueprint.md
+      - .gunawan/foundation/design-os/integration-map.md
+      - .gunawan/foundation/design-os/data-model.md
+      - .gunawan/foundation/design-os/api-contracts.md
+      - .gunawan/foundation/design-os/technical-risk-assessment.md
+      - .gunawan/foundation/design-os/implementation-readiness.md
+
+  # ── Foundation Layer 5 — Build OS ───────────────────────────────────────────
+
+  - id: build-os-index
+    keywords: [build os, coding standards, where to find, implementation standards, build index]
+    files:
+      - .gunawan/foundation/build-os/index.md
+
+  # ── Foundation Layer 6 — Feedback OS ────────────────────────────────────────
+
+  - id: task-reflection
+    keywords: [reflection, reflect, post-task, outcome, what went well, what failed, root cause]
+    files:
+      - .gunawan/foundation/feedback-os/task-reflection.md
+
+  - id: failure-analysis
+    keywords: [failure, failure analysis, postmortem, root cause, category, fix]
+    files:
+      - .gunawan/foundation/feedback-os/failure-analysis.md
+
+  - id: learning-database
+    keywords: [learning, knowledge, lessons, patterns, anti-patterns, institutional knowledge]
+    files:
+      - .gunawan/foundation/feedback-os/learning-database.md
+
+  - id: knowledge-library
+    keywords: [knowledge library, best practice, reusable, blueprint, caching pattern, auth pattern]
+    files:
+      - .gunawan/foundation/feedback-os/knowledge-library.md
+
+  - id: agent-performance
+    keywords: [performance, metrics, rework rate, defect, promotion, maturity criteria]
+    files:
+      - .gunawan/foundation/feedback-os/agent-performance.md
+
+  - id: improvement-proposals
+    keywords: [proposal, improve, suggest, change, foundation update, queue]
+    files:
+      - .gunawan/foundation/feedback-os/improvement-proposals.md
+
+  - id: scaling-policy
+    keywords: [scaling, scale, grow, stage, workforce, specialisation, new role]
+    files:
+      - .gunawan/foundation/feedback-os/scaling-policy.md
+
+  - id: governance-model
+    keywords: [governance, authority, control, who decides, anti-drift, standup governance]
+    files:
+      - .gunawan/foundation/feedback-os/governance-model.md
