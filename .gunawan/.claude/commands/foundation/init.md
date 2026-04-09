@@ -7,6 +7,216 @@ Initialize the AI Software Factory for a project. Handles two scenarios:
 
 Both paths end at the same place: a fully wired project ready for `/foundation:discover`.
 
+**Prerequisites (manual — must be done before running this command):**
+1. `.gunawan/` copied to project root
+2. `.gunawan/.claude/commands/` copied to `.claude/commands/` so this command is discoverable
+
+Everything else is handled by this command.
+
+---
+
+## Step 0 — Deploy Gunawan Tooling (always runs first, automatically)
+
+Deploy the remaining Claude Code tooling from `.gunawan/` and scaffold all project-level
+Claude files. Run each block, show the commands before executing.
+
+### Skills and hooks
+
+```bash
+# Only copy if not already present
+[ ! -d .claude/skills ] && cp -r .gunawan/.claude/skills .claude/skills
+[ ! -d .claude/hooks ]  && cp -r .gunawan/.claude/hooks  .claude/hooks
+chmod +x .claude/hooks/*.sh
+```
+
+### MCP config
+
+```bash
+[ ! -f .mcp.json ] && cp .gunawan/.mcp.json .mcp.json
+```
+
+Tell the user: "Set these env vars in your shell profile before using MCP servers:
+- `SUPABASE_MCP_URL` + `SUPABASE_MCP_ANON_KEY` — Supabase (required)
+- `FIGMA_ACCESS_TOKEN` — Figma (only if using Figma designs)
+- `SENTRY_MCP_AUTH_TOKEN` + `SENTRY_ORG` — Sentry (only if using Sentry)"
+
+### Register hooks in settings.json
+
+If `.claude/settings.json` does not exist or has no `hooks` key, write it:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/verify-foundation.sh" },
+          { "type": "command", "command": "bash .claude/hooks/protect-critical-files.sh" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+If `.claude/settings.json` already exists, merge the `hooks` key without overwriting other keys.
+
+### Permission allowlist
+
+If `.claude/settings.local.json` does not exist, create it:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(git:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run:*)",
+      "Bash(npx:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:nextjs.org)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:tailwindcss.com)",
+      "WebFetch(domain:shadcn.com)"
+    ]
+  }
+}
+```
+
+### Agent manifests
+
+Ask: "What is the project name?" — used in `_preamble.md` and throughout agent manifests.
+
+Create `.claude/agents/` with these files if they do not exist:
+
+**`_preamble.md`** — injected into every sub-agent spawn:
+
+```markdown
+# [PROJECT NAME] — Agent Preamble
+
+You are a deployed Gunawan agent for the [PROJECT NAME] project.
+
+## Project
+- Stack: Next.js (App Router) + TypeScript + Supabase + Tailwind + shadcn/ui
+- Absolute path: [ABSOLUTE_PATH]
+- Foundation: [ABSOLUTE_PATH]/.gunawan/
+
+## Non-Negotiables
+| Rule | Detail |
+|------|--------|
+| No useEffect + fetch | TanStack Query or Server Component fetch only |
+| No parse() | Always safeParse() — never throw on unknown input |
+| No service_role key in client | Supabase anon key only on the client |
+| No secrets in app bundle | Third-party keys go through Route Handlers in app/api/ |
+| No direct push to main/dev | PRs only — conventional commit titles |
+| Normalize all errors | AppError.from(error, context) always |
+| 'use client' only at leaves | Never at page or layout level without a reason |
+| All pages: Suspense + error.tsx | Loading / empty / error states are required |
+| No new libraries without approval | Stop and surface the need — do not add |
+
+## Decision Priority
+1. Security and data integrity — 2. Correctness — 3. Simplicity — 4. Performance — 5. DX
+
+## Protected Files
+CLAUDE.md, .gunawan/**, .env*, supabase/migrations/**, .github/workflows/**,
+next.config.ts, src/middleware.ts, src/lib/env.ts
+
+## Session State
+Active role: .claude/roles/active.md
+Role context: .claude/roles/[role-name].md
+```
+
+Generate `architect.md`, `builder.md`, `reviewer.md`, `explorer.md`, `devops.md` from the
+role definitions in `.gunawan/foundation/role-definition-os/[role]/role.md` and
+`responsibilities.md`. Each manifest declares: role identity, what it owns, what it must
+not do, and its required output format.
+
+### Role state files
+
+Create `.claude/roles/` with these files if they do not exist:
+
+**`active.md`:**
+```
+# Active Role
+
+role: product-strategist
+maturity: 0
+last-session: [today's date]
+```
+
+**Each role file** (`product-strategist.md`, `system-architect.md`, `software-engineer.md`,
+`qa-reviewer.md`, `devops-platform.md`):
+
+```markdown
+# [Role Name] — Session State
+
+last-session: [today's date]
+maturity: 0
+
+## Active Task
+None
+
+## Accumulated Context
+[empty — will be populated during sessions]
+
+## Key Decisions Made
+[empty]
+
+## Open Questions
+[empty]
+
+## Lessons Learned
+[empty]
+```
+
+### Knowledge base
+
+```bash
+mkdir -p docs/knowledge/architecture-decisions
+mkdir -p docs/knowledge/patterns
+mkdir -p docs/knowledge/anti-patterns
+mkdir -p docs/knowledge/reflections
+mkdir -p docs/plan
+mkdir -p docs/implementation
+```
+
+If `docs/knowledge/README.md` does not exist, create a starter version with:
+- Project name and one-line description (ask the user)
+- Current date as "last updated"
+- Empty ADR index, patterns, anti-patterns sections
+- "What's next" pointing to `/foundation:discover`
+
+### CLAUDE.md
+
+If a `CLAUDE.md` does not exist at the project root, generate it now using the template
+in `.gunawan/CLAUDE.md` as the governance reference, with these project-level sections:
+
+1. Session Resume
+2. Foundation Reference (pointing to `.gunawan/` paths)
+3. Claude Code Orchestrator Model (with correct absolute paths for this project)
+4. Auto-Save Behavior
+5. Auto-Role-Switch Behavior
+6. Commands
+7. Architecture (fill after `/foundation:discover`)
+8. Non-Negotiables (project overrides from Gunawan defaults)
+9. Protected Files
+10. Knowledge Base
+
+If `CLAUDE.md` already exists, do not overwrite it. Report that it was found and skipped.
+
+---
+
+Confirm to the user: "Gunawan tooling deployed. All Claude files are ready."
+Show a summary of what was created vs what was skipped (already existed).
+
 ---
 
 ## Step 1 — Detect Mode
