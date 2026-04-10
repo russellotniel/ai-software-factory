@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Last Updated:** 2026-03-19
-**Scope:** Weeknd Core — Expo (React Native) + Supabase
+**Scope:** Expo (React Native) + Supabase
 
 ---
 
@@ -635,7 +635,7 @@ measure(label, fn)                  // sync perf measurement
 | Validation library | Zod v4 | Type inference, reusable across hooks and API response parsing |
 | Error type | `AppError` class extending `Error` | Normalises all errors; carries code, debugMessage, context, cause |
 | Auth state storage | AsyncStorage (native) / localStorage (web) | Supabase recommended storage adapter for React Native |
-| Styling | StyleSheet.create only (no NativeWind) | Project-level override — NativeWind not used in Weeknd Core |
+| Styling | NativeWind or StyleSheet.create | NativeWind preferred; StyleSheet.create for custom/performance-sensitive cases |
 | QueryClient defaults | staleTime 5min, gcTime 10min, refetchOnWindowFocus false | Standard for mobile app with moderate freshness requirements |
 | Photo resolution | useEffect + setState (known tech debt) | Temporary workaround for second-pass photo URL resolution — to be migrated to TanStack Query |
 | Google Maps pagination | Type-batch pagination (not cursor-based) | Google Places v1 does not expose a stable cursor for nearby search |

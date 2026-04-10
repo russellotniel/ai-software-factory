@@ -47,14 +47,15 @@ Senior agents (Adolescent+) are responsible for nurturing junior agents — not 
 Claude must load context in this exact order before any substantive work:
 
 1. `CLAUDE.md` (this file)
-2. `foundation/human-intent-os/` — values, philosophy, decision rules
-3. `foundation/agent-foundation-os/` — runtime behavior, task lifecycle
-4. `foundation/role-definition-os/[active-role]/` — role-specific rules
-5. `foundation/design-os/` — relevant design artifacts
-6. `foundation/build-os/` — relevant implementation standards
-7. `foundation/feedback-os/` — reflection and learning rules
-8. Current project specs and codebase context
-9. The current user request
+2. `.gunawan/foundation/human-intent-os/` — values, philosophy, decision rules
+3. `.gunawan/foundation/agent-foundation-os/` — runtime behavior, task lifecycle
+4. `.gunawan/foundation/role-definition-os/[active-role]/` — role-specific rules
+5. `.gunawan/foundation/design-os/` — relevant design artifacts
+6. `.gunawan/foundation/build-os/` — relevant implementation standards
+7. `.gunawan/foundation/feedback-os/` — reflection and learning rules
+8. `docs/knowledge/README.md` — current project state, ADRs, guardrails
+9. Current project specs and codebase context
+10. The current user request
 
 If required context from layers 1–4 is missing, Claude must not improvise high-risk decisions. Claude must stop and report which layer is missing.
 
@@ -148,7 +149,7 @@ The gate checks:
 Claude must never modify these without explicit human approval and escalation:
 
 - `CLAUDE.md` (this file)
-- `foundation/**` (all foundation layers)
+- `.gunawan/**` (all Gunawan foundation files)
 - `.env*` (all environment variable files)
 - `supabase/migrations/**` (existing migrations — new ones are additive only)
 - `.github/workflows/**`
@@ -157,8 +158,8 @@ Claude must never modify these without explicit human approval and escalation:
 - Any file containing auth, secrets, or security controls
 
 Hooks enforcing this policy:
-- `.claude/hooks/verify-foundation.ps1` — blocks writes when foundation is incomplete
-- `.claude/hooks/protect-critical-files.ps1` — escalates on protected file edits
+- `.claude/hooks/verify-foundation.sh` — blocks writes when foundation is incomplete
+- `.claude/hooks/protect-critical-files.sh` — escalates on protected file edits
 
 ---
 
@@ -178,20 +179,20 @@ Claude must never:
 
 ## Finding Standards
 
-Use `standards-index.yml` to find which document covers a topic.
+Use `.gunawan/standards-index.yml` to find which document covers a topic.
 Run `/foundation:inject-standards` to auto-load relevant standards.
 
 Key documents:
-- `foundation/human-intent-os/mission.md` — why this AI company exists
-- `foundation/agent-foundation-os/task-lifecycle.md` — how every task must proceed
-- `foundation/role-definition-os/role-map.md` — who does what
-- `foundation/product-mission.md` — what this specific project is
-- `foundation/tech-standards.md` — technology decisions
-- `architecture-os/schema-conventions.md` — database standards
-- `architecture-os/rpc-standards.md` — RPC patterns
-- `deployment-os/release-process.md` — branching and release
-- `design-os/design-system.md` — visual design tokens
-- `design-os/screens/` — per-feature screen specs
+- `.gunawan/foundation/human-intent-os/mission.md` — why this AI company exists
+- `.gunawan/foundation/agent-foundation-os/task-lifecycle.md` — how every task must proceed
+- `.gunawan/foundation/role-definition-os/role-map.md` — who does what
+- `docs/knowledge/reference/product-mission.md` — what this specific project is
+- `.gunawan/foundation/tech-standards.md` — technology decisions
+- `.gunawan/architecture-os/schema-conventions.md` — database standards
+- `.gunawan/architecture-os/rpc-standards.md` — RPC patterns
+- `.gunawan/deployment-os/release-process.md` — branching and release
+- `.gunawan/design-os/design-system.md` — visual design tokens
+- `.gunawan/design-os/screens/` — per-feature screen specs
 
 ---
 
@@ -210,7 +211,7 @@ Key documents:
 ── Per feature (repeat) ─────────────────────────────────
 /foundation:shape-spec  → spec the feature
 /architecture:new-feature → schema migration + RPC + API contract
-/implementation:new-feature → Server Action + Zod schema + component
+/implementation:new-feature → TanStack Query hook + Zod schema + component
 /qa:new-tests           → unit + component + E2E test scaffold
 /qa:fix                 → run tests, fix failures, re-run until green
 

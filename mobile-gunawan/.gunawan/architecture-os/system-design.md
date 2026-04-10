@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Last Updated:** 2026-03-09
-**Scope:** Weeknd Expo (React Native) + Supabase project
+**Scope:** Expo (React Native) + Supabase
 
 ---
 

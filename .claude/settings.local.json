@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(rm -rf architecture-os data-fetching-os deployment-os design-os foundation implementation-os qa-os specs)",
+      "Bash(rm -f standards-index.yml README.md setup.sh CLAUDE.md.backup)"
+    ]
+  }
+}
