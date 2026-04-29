@@ -14,13 +14,21 @@ import {
   type SubmitRegistrationInput,
 } from './schemas';
 
+// Maps the RPC's raised exception messages to user-facing strings.
+// Keep messages free of internal detail per error-message-leakage standard.
+const RPC_ERROR_MESSAGES: Record<string, string> = {
+  invalid_nik_format: 'NIK must be exactly 16 digits.',
+  invalid_kk_format: 'KK must be exactly 16 digits.',
+  profile_missing_region:
+    'Your account is missing a region. Complete onboarding before submitting a registration.',
+  unauthenticated: 'You must be signed in to submit a registration.',
+};
+
 export async function submitRegistrationAction(
   input: SubmitRegistrationInput
 ): Promise<ActionResult<{ registrationId: string }>> {
-  // 1. Authenticate
   const { user } = await requireAuth();
 
-  // 2. Validate
   const parsed = submitRegistrationSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -33,7 +41,6 @@ export async function submitRegistrationAction(
     };
   }
 
-  // 3. Execute via the canonical RPC — handles encryption + region derivation
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc('submit_registration', {
     p_nik: parsed.data.nik,
@@ -47,12 +54,36 @@ export async function submitRegistrationAction(
       action: 'submitRegistrationAction',
       userId: user.id,
       errorCode: error.code,
+      errorMessage: error.message,
       // Do NOT log NIK/KK — they are PII (NFR-01).
     });
 
-    // Map known error codes from the RPC to client-friendly errors.
-    if (error.code === '22023') {
-      // RPC raised invalid_nik_format / invalid_kk_format / profile_missing_region
+    // Authentication failure (PostgreSQL 'insufficient_privilege')
+    if (error.code === '42501' || error.message === 'unauthenticated') {
+      return {
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: RPC_ERROR_MESSAGES.unauthenticated },
+      };
+    }
+
+    // Validation failures raised by the RPC body — distinguish by message.
+    // Codes 22023 (invalid_parameter_value) for NIK/KK; the same family is
+    // used for missing region. Map the message body to a user-facing string.
+    if (error.code === '22023' || error.message in RPC_ERROR_MESSAGES) {
+      const friendly = RPC_ERROR_MESSAGES[error.message];
+      if (friendly) {
+        // Profile-missing-region is a workflow problem, not a per-field error.
+        // Use FORBIDDEN so the UI can route the user to onboarding rather
+        // than re-rendering field errors.
+        const code =
+          error.message === 'profile_missing_region'
+            ? 'FORBIDDEN'
+            : 'VALIDATION_ERROR';
+        return {
+          success: false,
+          error: { code, message: friendly },
+        };
+      }
       return {
         success: false,
         error: {
@@ -61,12 +92,7 @@ export async function submitRegistrationAction(
         },
       };
     }
-    if (error.code === '42501') {
-      return {
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required.' },
-      };
-    }
+
     return {
       success: false,
       error: {
