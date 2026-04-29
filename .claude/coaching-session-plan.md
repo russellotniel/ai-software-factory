@@ -265,15 +265,23 @@ Done when: live feature plan exists, prompts ready, demo timed under 15 min.
 | Phase | Status | Last commit |
 |-------|--------|-------------|
 | 1. Architecture (ADRs) | ✅ done | b8c805a |
-| 2. /foundation:urs:draft | 🟡 next | — |
-| 3. /foundation:urs | ⏳ pending | — |
+| 2. /foundation:urs:draft | ✅ done | 2bc1ce0 |
+| 3. /foundation:urs | 🟡 next | — |
 | 4. shape-spec --from-urs | ⏳ pending | — |
 | 5. Pre-bake demo | ⏳ pending | — |
 | 6. Live feature + dry-run | ⏳ pending | — |
 
-**Next action:** Start Phase 2. Read existing command files first
-(`plan.md`, `discover.md`) to match the style. Write
-`.claude/commands/foundation/urs-draft.md`.
+**Next action:** Start Phase 3. Write `.claude/commands/foundation/urs.md`.
+This is the compile/lock command that turns `urs/main.md` into:
+- `urs/main.tex` (compiled from latex_template/main.tex)
+- `urs/index.json` (machine-readable, downstream contract)
+- updates to `.claude/docs/project-state.md` (engineering ledger seeding/reconciliation)
+- updates to `.claude/project-config.json#riskZones` (C/I/D → Zone 1/2/3 mapping)
+
+Also stamps `@urs:` traceability tags into appropriate places — verify the
+existing `@spec:` convention first by reading
+`.claude/commands/architecture-os/new-feature.md` and one of the implementation
+commands.
 
 ## Open questions
 
