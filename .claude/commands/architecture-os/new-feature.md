@@ -14,6 +14,9 @@ Read before starting:
 - `.claude/docs/architecture-os/rpc-standards.md`
 - `.claude/docs/architecture-os/api-contracts.md`
 - `.claude/docs/architecture-os/audit-trail.md`
+- `.claude/docs/specs/{feature-name}.md` — read the spec front-matter; if it
+  contains a `urs:` field, propagate that ID through the artifacts generated
+  by this command (see "Traceability" below).
 
 ---
 
@@ -53,6 +56,22 @@ For column additions to existing tables, confirm:
 Generate the migration file using the template from schema-conventions.md.
 Migration filename: `YYYYMMDDHHMMSS_{feature_name}.sql`
 Ask for confirmation before finalising.
+
+### Traceability
+
+The first lines of the migration are SQL comments stamping the feature and,
+when applicable, the URS reference:
+
+```sql
+-- @spec: {feature-name}
+-- @urs: {FR-XX}        -- only if the spec front-matter has urs: FR-XX
+-- @risk_zone: {1|2|3}  -- only if the spec front-matter has risk_zone
+
+-- migration body follows
+```
+
+The same `@urs:` reference is added to the API contract entry generated in
+Step 4 (one comment line preceding the contract block).
 
 ---
 

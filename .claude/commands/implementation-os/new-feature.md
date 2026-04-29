@@ -57,18 +57,33 @@ src/features/{domain}/
 
 ### Traceability
 
-Add a `// @spec: {feature-name}` comment in every generated file to link it
-back to the spec. The `{feature-name}` must match the spec filename (without
-`.md`) from `.claude/docs/specs/{feature-name}.md`.
+Read the spec front-matter at `.claude/docs/specs/{feature-name}.md`. If it
+contains `urs: FR-XX`, propagate the URS reference through every generated
+file alongside the existing `@spec` tag.
 
-- In `schemas.ts` and utility files: add as the first line
+Stamp these comments in every generated file:
+
+- `// @spec: {feature-name}
+// @urs: {FR-XX}        ← only if spec front-matter has urs:` — always
+- `// @urs: {FR-XX}` — only when the spec front-matter has a non-null `urs:` value
+- `// @risk_zone: {1|2|3}` — only when the spec front-matter has a non-null
+  `risk_zone:` value
+
+Placement:
+
+- In `schemas.ts` and utility files: add as the first lines
 - In `actions.ts`: add after the `'use server'` directive
 - In components: add after the `'use client'` directive (if present)
+- In Server Components (read-only pattern): add as the first lines
+
+This enables `grep -r "FR-XX"` to surface every artifact tied to the
+requirement: spec, migration, API contract, schemas, action, component, test.
 
 ### schemas.ts
 
 ```typescript
 // @spec: {feature-name}
+// @urs: {FR-XX}        ← only if spec front-matter has urs:
 import { z } from 'zod';
 
 export const {featureName}Schema = z.object({
@@ -83,6 +98,7 @@ export type {FeatureName}Input = z.infer<typeof {featureName}Schema>;
 ```typescript
 'use server';
 // @spec: {feature-name}
+// @urs: {FR-XX}        ← only if spec front-matter has urs:
 
 import { requireAuth } from '@/lib/auth/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -119,6 +135,7 @@ of `supabase.from().select()`. Generate a typed return interface matching the RP
 ```typescript
 'use server';
 // @spec: {feature-name}
+// @urs: {FR-XX}        ← only if spec front-matter has urs:
 
 import { requireAuth } from '@/lib/auth/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -163,6 +180,7 @@ Server Action and call the RPC directly in the Server Component page:
 
 ```typescript
 // @spec: {feature-name}
+// @urs: {FR-XX}        ← only if spec front-matter has urs:
 // app/(dashboard)/{feature}/page.tsx — Server Component
 import { requireAuth } from '@/lib/auth/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';

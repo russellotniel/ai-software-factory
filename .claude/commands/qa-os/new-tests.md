@@ -30,14 +30,25 @@ Ask:
 
 ## Step 1.5 — Determine Risk Zone
 
-Read `.claude/project-config.json` and check the `riskZones` configuration.
-If `riskZones` is not configured, use these defaults:
-- **Critical (Zone 1):** `src/lib/auth/*`, `supabase/migrations/*`
-- **Standard (Zone 2):** `src/features/*/actions.ts`, `src/features/*/lib/*`, `src/lib/*`
-- **Presentational (Zone 3):** `src/components/*`, `src/features/*/_components/*`, `src/app/**/page.tsx`
+The risk zone for a feature can come from two sources, in priority order:
 
-Match the feature's file paths against the zone patterns. A feature typically spans
-multiple zones — its actions.ts may be Zone 2 while its _components/ are Zone 3.
+1. **URS-derived (preferred):** if the spec front-matter at
+   `.claude/docs/specs/{feature-name}.md` has `risk_zone: 1|2|3`, use that.
+   This is set automatically when the spec was created via
+   `/foundation:shape-spec --from-urs FR-XX`, and it reflects the URS rank
+   (C → 1, I → 2, D → 3).
+2. **Path-based fallback:** if the spec has no `risk_zone`, check
+   `.claude/project-config.json#riskZones` (file glob patterns). If not
+   configured, use these defaults:
+   - **Critical (Zone 1):** `src/lib/auth/*`, `supabase/migrations/*`
+   - **Standard (Zone 2):** `src/features/*/actions.ts`, `src/features/*/lib/*`, `src/lib/*`
+   - **Presentational (Zone 3):** `src/components/*`, `src/features/*/_components/*`, `src/app/**/page.tsx`
+
+A feature typically spans multiple zones — its actions.ts may be Zone 2 while
+its _components/ are Zone 3. The feature-level `risk_zone` from the spec is the
+**floor**: if the URS marks the requirement as Zone 1, every file in the
+feature is treated as at least Zone 1, even if path-based fallback would have
+placed it lower.
 
 Apply zone-appropriate test strategies:
 
@@ -63,8 +74,25 @@ Apply zone-appropriate test strategies:
 
 ### Traceability
 
-Add a `// @spec: {feature-name}` comment as the first line in every test file.
-The `{feature-name}` must match the spec filename from `.claude/docs/specs/`.
+Read the spec front-matter at `.claude/docs/specs/{feature-name}.md`.
+
+Stamp these comments as the first lines in every test file:
+
+- `// @spec: {feature-name}
+// @urs: {FR-XX}        ← only if spec front-matter has urs:` — always
+- `// @urs: {FR-XX}` — only when the spec front-matter has a non-null `urs:` value
+- `// @risk_zone: {1|2|3}` — only when the spec front-matter has a non-null `risk_zone:` value
+
+Additionally, when the spec has a URS reference, **include the URS ID in the
+top-level `describe()` block name** so test output makes the requirement
+visible:
+
+```typescript
+describe('FR-03 — {featureName}Action: approve registration', () => { ... });
+```
+
+This means `grep -r "FR-03"` finds the test file, the test description, and
+the test runner output ties failures back to the URS requirement.
 
 ### schemas.test.ts
 
@@ -76,6 +104,7 @@ Test every Zod schema:
 
 ```typescript
 // @spec: {feature-name}
+// @urs: {FR-XX}        ← only if spec front-matter has urs:
 import { describe, it, expect } from 'vitest';
 import { {featureName}Schema } from './schemas';
 
