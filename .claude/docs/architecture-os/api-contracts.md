@@ -1,5 +1,11 @@
 # API Contracts
 
+<!--
+NOTE: This document is global standards.
+Per-feature contract entries follow at the bottom under "Project Contracts".
+-->
+
+
 **Status:** Active  
 **Last Updated:** 2026-03-08  
 **Scope:** All Next.js + Supabase projects
@@ -765,3 +771,27 @@ logger.info("calling OpenAI", {
 | debug level                 | Suppressed in production                                  | Avoid verbose noise and accidental PII in prod logs                                                            |
 | PII in logs                 | Strictly prohibited                                       | Health and genomic data projects have regulatory exposure; UUIDs only for user/tenant identity                 |
 | Log infrastructure          | Deferred to Deployment OS                                 | Code-level standard is here; routing and retention live in deployment-os/environments.md                       |
+
+---
+
+## Project Contracts
+
+Per-feature contract entries appended by `/architecture:new-feature`.
+
+### submit_registration (FR-01)
+
+<!-- @urs: FR-01, FR-02, NFR-01, UR-01 -->
+
+| Aspect             | Value                                                                                  |
+|--------------------|----------------------------------------------------------------------------------------|
+| Layer              | Server Action wrapping `supabase.rpc('submit_registration', ...)`                      |
+| Action name        | `submitRegistrationAction`                                                             |
+| Domain             | `src/features/registrations/`                                                          |
+| Auth requirement   | `requireAuth()` — Customer role; rejected if unauthenticated                           |
+| Input schema       | `submitRegistrationSchema` (Zod): `{ nik: string(16-digit), kk: string(16-digit), selfieUrl: string(url), phone: string(E.164 ID) }` |
+| RPC                | `public.submit_registration(p_nik text, p_kk text, p_selfie_url text, p_phone text) returns uuid` |
+| Success            | `{ success: true, data: { registrationId: string } }`                                  |
+| Errors             | `VALIDATION` (Zod fail), `INVALID_NIK`, `INVALID_KK`, `MISSING_REGION` (profile incomplete), `DATABASE_ERROR` |
+| Side effects       | Inserts encrypted row into `public.registrations` with `status='pending'`              |
+| Cross-feature deps | None on entry; downstream FR-04/05/06 consume the pending row                          |
+
