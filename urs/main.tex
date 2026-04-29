@@ -1,0 +1,415 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage[table]{xcolor}
+\usepackage{float}
+
+% Page geometry
+\geometry{
+a4paper,
+left=2.5cm,
+right=2.5cm,
+top=2.5cm,
+bottom=2.5cm
+}
+
+% Section formatting
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% Cover Page
+\begin{titlepage}
+\centering
+\vspace{1cm}
+{\Huge\bfseries USER REQUIREMENT\par}
+\vspace{0.5cm}
+{\Huge\bfseries SPECIFICATION\par}
+\vspace{0.5cm}
+{\Huge\bfseries (URS)\par}
+\vfill
+
+{\Large\bfseries SIM Registration Portal\par}
+\vspace{0.5cm}
+{\Large\bfseries XLSmart Telecommunication Group\par}
+\vspace{1cm}
+\begin{flushleft}
+\textbf{Document No :} \underline{SIMREG-URS-001\hspace{2cm}}
+\vspace{0.5cm}
+\textbf{Version :} \underline{0.1 (Draft)\hspace{4cm}}
+\vspace{0.5cm}
+\textbf{Effective Date :} \underline{TBA\hspace{4.5cm}}
+\end{flushleft}
+\end{titlepage}
+
+\newpage
+
+% Change History Document
+\section*{CHANGE HISTORY DOCUMENT}
+\addcontentsline{toc}{section}{CHANGE HISTORY DOCUMENT}
+
+\begin{longtable}{|p{3cm}|p{4cm}|p{3cm}|p{3cm}|}
+\hline
+\textbf{Revision} & \textbf{Changes} & \textbf{Compiled by} & \textbf{Date} \\
+\hline
+0.1 & Create New Document — initial draft generated from product brief & SIMREG SA Team & 2026-04-29 \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Agreement
+\section*{AGREEMENT}
+\addcontentsline{toc}{section}{AGREEMENT}
+
+\textbf{Approval of this User Requirements Specification (URS) must be recognized and approved by all functional departments listed below.}
+
+\vspace{0.5cm}
+
+\begin{longtable}{|p{4cm}|p{5cm}|p{4cm}|}
+\hline
+\textbf{Company/Division} & \textbf{Name} & \textbf{Sign and Date} \\
+\hline
+\textbf{Prepared by} & & \\
+\hline
+\textbf{Reviewed by} & & \\
+\hline
+\textbf{Approved by} & & \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Project Detail
+\section*{PROJECT DETAIL}
+\addcontentsline{toc}{section}{PROJECT DETAIL}
+
+\begin{longtable}{|p{5cm}|c|p{7cm}|}
+\hline
+\textbf{Project Name} & \textbf{:} & SIM Registration Portal \\
+\hline
+\textbf{Project Code} & \textbf{:} & SIMREG \\
+\hline
+\textbf{Project Coordinator} & \textbf{:} & TBA \\
+\hline
+\hline
+\textbf{Team A} & \textbf{:} & XLSmart Solution Architecture \\
+(Process Owner) & & \\
+\hline
+\textbf{Team B} & \textbf{:} & XLSmart IT Delivery \\
+(Technical Integration) & & \\
+\hline
+\textbf{Regulatory Driver} & \textbf{:} & Kominfo PP No. 28/2017 \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Table of Contents
+\tableofcontents
+
+\newpage
+
+% Introduction
+\section{INTRODUCTION}
+
+\subsection{Project Overview}
+The SIM Registration Portal is XLSmart's customer-and-dealer-facing tool for prepaid SIM card registration in Indonesia. It replaces the existing spreadsheet-and-WhatsApp dealer workflow with a regulated, auditable system that complies with Kominfo Peraturan Pemerintah No. 28/2017.
+
+\subsection{Objective}
+Provide a compliant, auditable registration flow that validates NIK and KK data, enforces role separation between customer, dealer, admin, and auditor, and produces an immutable audit trail acceptable to Kominfo.
+
+\subsection{Project Scope}
+\begin{itemize}
+\item Customer-facing self-service registration with NIK, KK, and selfie capture.
+\item Dealer-facing approval queue, scoped to assigned region.
+\item Admin-facing read-only dashboard with cross-regional reporting.
+\item Auditor-facing read-only audit log access.
+\item Encryption at rest for NIK and KK; immutable audit log retained 5 years.
+\item Deferred to later releases: Dukcapil API integration, SAP billing integration, SMS / WhatsApp notification, multi-language UI.
+\end{itemize}
+
+\subsection{System Description}
+A single Next.js + Supabase web application deployed in XLSmart's existing Kubernetes infrastructure. Supabase Auth for identity. Object storage for selfie images with a 30-day retention lifecycle rule. Role-based access control enforced through RLS policies and validated at the Server Action layer.
+
+\newpage
+
+% User Matrix
+\subsection{User Matrix}
+
+\newcolumntype{P}[1]{>{\centering\arraybackslash\hspace{0pt}}m{#1}}
+
+{
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{|P{2.5cm}|P{6cm}|P{1cm}|P{1cm}|P{1cm}|P{1cm}|}
+\hline
+\multirow{2}{*}{\textbf{Module}} & \multirow{2}{*}{\textbf{Feature}} & \multicolumn{4}{c|}{\textbf{Role}} \\
+\cline{3-6}
+& & \rotatebox{90}{\textbf{Customer}} & \rotatebox{90}{\textbf{Dealer}} & \rotatebox{90}{\textbf{Admin}} & \rotatebox{90}{\textbf{Auditor}} \\
+\hline
+\endfirsthead
+\hline
+\multirow{2}{*}{\textbf{Module}} & \multirow{2}{*}{\textbf{Feature}} & \multicolumn{4}{c|}{\textbf{Role}} \\
+\cline{3-6}
+& & \rotatebox{90}{\textbf{Customer}} & \rotatebox{90}{\textbf{Dealer}} & \rotatebox{90}{\textbf{Admin}} & \rotatebox{90}{\textbf{Auditor}} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+\multirow{2}{*}{\textbf{Registration}}
+& Submit registration & v & & v & \\
+\cline{2-6}
+& View own status & v & & v & \\
+\hline
+\multirow{2}{*}{\textbf{Approval}}
+& Review queue (regional) & & v & v & \\
+\cline{2-6}
+& Approve / reject & & v & & \\
+\hline
+\multirow{2}{*}{\textbf{Reporting}}
+& Cross-regional dashboard & & & v & \\
+\cline{2-6}
+& Export CSV (masked PII) & & & v & \\
+\hline
+\textbf{Audit}
+& View audit log & & & & v \\
+\hline
+
+\end{longtable}
+}
+
+\newpage
+
+% Process Flow
+\section{PROCESS FLOW}
+
+\subsection{Alur Navigasi Keseluruhan}
+
+Process flow diagrams will be added in a subsequent revision once the SA team finalises the screen flow with the dealer cohort. The textual description of each flow is captured in the requirements section below.
+
+\subsection{Flow Authentication}
+
+Authentication is handled via Supabase Auth. Customers sign up with email + password and complete profile capture before submitting their first registration. Dealers and Admins are provisioned by XLSmart IT and assigned roles via the Supabase Auth user metadata. Auditors are provisioned read-only.
+
+\subsection{Flow Registration Submission}
+
+Customer enters NIK, KK, captures selfie, enters target phone number, submits. System validates NIK format (16 digits, Dukcapil schema), persists encrypted record, places it in the dealer queue for the customer's region.
+
+\subsection{Flow Dealer Approval}
+
+Dealer logs in, sees only their region's queue, opens a registration, reviews NIK / KK / selfie / phone, then approves (SIM is activated, audit log entry written) or rejects with a mandatory free-text reason (audit log entry written, customer notified).
+
+\newpage
+
+% Requirements
+\section{REQUIREMENTS}
+
+\textbf{Rank legend:}
+
+\begin{itemize}
+\item \textbf{C (Critical)}: regulatory or core-flow requirement; failure breaks the product or the audit posture.
+\item \textbf{I (Important)}: business-significant; failure degrades the product but does not break compliance.
+\item \textbf{D (Desired)}: nice-to-have; failure is acceptable in v1.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\subsection{Persyaratan Fungsional Sistem}
+
+\begin{longtable}{|p{2cm}|p{2.5cm}|p{8cm}|p{1cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+\multicolumn{4}{|c|}{\cellcolor{gray!25}\textbf{Registration}} \\*
+\hline
+FR-01 & Functional & \textbf{Submit registration}: Customer can submit a SIM registration with NIK, KK, selfie image, and target phone number. & C \\
+\hline
+FR-02 & Functional & \textbf{Validate NIK format}: System rejects submissions where NIK is not 16 digits or fails Dukcapil format checks before persisting the row. & C \\
+\hline
+FR-03 & Functional & \textbf{View own status}: Customer can view the current state of their own registration (pending, approved, rejected with reason). & C \\
+\hline
+
+\multicolumn{4}{|c|}{\cellcolor{gray!25}\textbf{Approval}} \\*
+\hline
+FR-04 & Functional & \textbf{Regional review queue}: Dealer can view pending registrations only within their assigned region; other regions are not visible. & C \\
+\hline
+FR-05 & Functional & \textbf{Approve registration}: Dealer can approve a valid registration; on approval the SIM is activated and an audit log entry is written. & C \\
+\hline
+FR-06 & Functional & \textbf{Reject registration}: Dealer can reject a registration with a mandatory reason; customer is notified and can resubmit. & C \\
+\hline
+
+\multicolumn{4}{|c|}{\cellcolor{gray!25}\textbf{Reporting}} \\*
+\hline
+FR-07 & Functional & \textbf{Cross-regional dashboard}: Admin can view a read-only dashboard with registration counts and rejection breakdowns across all regions. & I \\
+\hline
+FR-08 & Functional & \textbf{CSV export}: Admin can export the registration registry as a CSV with PII fields masked. & I \\
+\hline
+
+\multicolumn{4}{|c|}{\cellcolor{gray!25}\textbf{Audit}} \\*
+\hline
+FR-09 & Functional & \textbf{View audit log}: Auditor can view the append-only audit log; sees only hashed identifiers and the full action trail. & C \\
+\hline
+
+\end{longtable}
+
+
+\subsection{Persyaratan Non-Fungsional}
+
+\begin{longtable}{|p{2cm}|p{2.5cm}|p{8cm}|p{1cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+NFR-01 & Security & \textbf{NIK and KK encryption}: NIK and KK fields are encrypted at rest using AES-256; deterministic encryption is acceptable for exact-match search. & C \\
+\hline
+
+NFR-02 & Auditability & \textbf{Append-only audit log}: Every state transition writes to the audit log; rows are never updated or deleted; retention 5 years per regulation. & C \\
+\hline
+
+NFR-03 & Performance & \textbf{Approval latency}: Dealer approval action completes within 2 seconds at p95. & I \\
+\hline
+
+NFR-04 & Availability & \textbf{Business-hours uptime}: System availability is 99.5\% during published business hours. & I \\
+\hline
+
+NFR-05 & Data lifecycle & \textbf{Selfie retention}: Selfie images in object storage are deleted 30 days after the registration is finalized (approved or rejected). & I \\
+\hline
+
+\end{longtable}
+
+
+\subsection{Persyaratan Peran Pengguna}
+
+\begin{longtable}{|p{2cm}|p{2.5cm}|p{8cm}|p{1cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+UR-01 & User Role & \textbf{Customer}: can submit own registration, view own status, resubmit a rejected registration. Cannot see others' data. & C \\
+\hline
+
+UR-02 & User Role & \textbf{Dealer}: can view and decide registrations within assigned region only. Cannot view other regions or other dealers' decisions. & C \\
+\hline
+
+UR-03 & User Role & \textbf{Admin}: has read-only access to all registrations and reports across all regions. Cannot decide or modify registrations. & I \\
+\hline
+
+UR-04 & User Role & \textbf{Auditor}: has read-only access to the audit log. PII is shown as hashed identifiers only. & C \\
+\hline
+
+\end{longtable}
+
+\subsection{Persyaratan Validasi \& Audit}
+
+\begin{longtable}{|p{2cm}|p{2.5cm}|p{8cm}|p{1cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+VR-01 & Validation & \textbf{Every decision is logged}: every approval and every rejection writes an audit log entry with actor, timestamp, action, registration ID, and reason (rejection only). & C \\
+\hline
+
+VR-02 & Validation & \textbf{Rejection reason required}: rejecting a registration without a non-empty reason is rejected by the API. & C \\
+\hline
+
+VR-03 & Validation & \textbf{No re-decide}: a dealer cannot decide a registration they have already approved or rejected; subsequent attempts are rejected. & C \\
+\hline
+
+VR-04 & Validation & \textbf{PII masking on export}: the CSV export masks NIK to last 4 digits, masks KK to last 4 digits, and replaces phone numbers with hashed identifiers. & I \\
+\hline
+
+\end{longtable}
+
+\newpage
+
+% Related Documents
+\section{RELATED DOCUMENTS}
+
+\begin{longtable}{|p{2cm}|p{11cm}|}
+\hline
+\textbf{No.} & \textbf{Title} \\
+\hline
+001 & Kominfo Peraturan Pemerintah No. 28/2017 — Pendaftaran Kartu Prabayar \\
+\hline
+002 & XLSmart Internal SOP — Dealer Registration Handling v2.3 (2025) \\
+\hline
+003 & Dukcapil NIK Format Reference — 16-digit Schema \\
+\hline
+\end{longtable}
+
+\vspace{1cm}
+
+% Glossary
+\section{GLOSSARY}
+
+\begin{longtable}{|p{3cm}|p{10cm}|}
+\hline
+\textbf{Acronym} & \textbf{Definition} \\
+\hline
+NIK & Nomor Induk Kependudukan --- Indonesian 16-digit national identity number \\
+\hline
+KK & Kartu Keluarga --- Indonesian family card document \\
+\hline
+Kominfo & Kementerian Komunikasi dan Informatika --- Indonesian Ministry of Communications and Informatics \\
+\hline
+Dukcapil & Direktorat Jenderal Kependudukan dan Pencatatan Sipil --- civil registration directorate \\
+\hline
+PII & Personally Identifiable Information \\
+\hline
+KYC & Know Your Customer \\
+\hline
+RLS & Row Level Security (PostgreSQL) \\
+\hline
+SOP & Standard Operating Procedure \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Appendix
+\section*{APPENDIX}
+\addcontentsline{toc}{section}{APPENDIX}
+
+\textit{(Reserved for future revisions: process flow diagrams, screen mockups, regulatory excerpts.)}
+
+\end{document}

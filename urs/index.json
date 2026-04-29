@@ -1,0 +1,257 @@
+{
+  "project": {
+    "name": "SIM Registration Portal",
+    "code": "SIMREG",
+    "version": "0.1",
+    "status": "draft",
+    "effective_date": "TBA"
+  },
+  "compiled_at": "2026-04-29T22:00:00Z",
+  "requirements": [
+    {
+      "id": "FR-01",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Submit registration",
+      "text": "Customer can submit a SIM registration with NIK, KK, selfie image, and target phone number.",
+      "section_anchor": "registration"
+    },
+    {
+      "id": "FR-02",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Validate NIK format",
+      "text": "System rejects submissions where NIK is not 16 digits or fails Dukcapil format checks before persisting the row.",
+      "section_anchor": "registration"
+    },
+    {
+      "id": "FR-03",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "View own status",
+      "text": "Customer can view the current state of their own registration (pending, approved, rejected with reason).",
+      "section_anchor": "registration"
+    },
+    {
+      "id": "FR-04",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Regional review queue",
+      "text": "Dealer can view pending registrations only within their assigned region; other regions are not visible.",
+      "section_anchor": "approval"
+    },
+    {
+      "id": "FR-05",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Approve registration",
+      "text": "Dealer can approve a valid registration; on approval the SIM is activated and an audit log entry is written.",
+      "section_anchor": "approval"
+    },
+    {
+      "id": "FR-06",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Reject registration",
+      "text": "Dealer can reject a registration with a mandatory reason; customer is notified and can resubmit.",
+      "section_anchor": "approval"
+    },
+    {
+      "id": "FR-07",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "I",
+      "risk_zone": 2,
+      "title": "Cross-regional dashboard",
+      "text": "Admin can view a read-only dashboard with registration counts and rejection breakdowns across all regions.",
+      "section_anchor": "reporting"
+    },
+    {
+      "id": "FR-08",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "I",
+      "risk_zone": 2,
+      "title": "CSV export",
+      "text": "Admin can export the registration registry as a CSV with PII fields masked.",
+      "section_anchor": "reporting"
+    },
+    {
+      "id": "FR-09",
+      "class": "FR",
+      "type": "Functional",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "View audit log",
+      "text": "Auditor can view the append-only audit log; sees only hashed identifiers and the full action trail.",
+      "section_anchor": "audit"
+    },
+    {
+      "id": "NFR-01",
+      "class": "NFR",
+      "type": "Security",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "NIK and KK encryption",
+      "text": "NIK and KK fields are encrypted at rest using AES-256; deterministic encryption is acceptable for exact-match search.",
+      "section_anchor": "non-functional"
+    },
+    {
+      "id": "NFR-02",
+      "class": "NFR",
+      "type": "Auditability",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Append-only audit log",
+      "text": "Every state transition writes to the audit log; rows are never updated or deleted; retention 5 years per regulation.",
+      "section_anchor": "non-functional"
+    },
+    {
+      "id": "NFR-03",
+      "class": "NFR",
+      "type": "Performance",
+      "rank": "I",
+      "risk_zone": 2,
+      "title": "Approval latency",
+      "text": "Dealer approval action completes within 2 seconds at p95.",
+      "section_anchor": "non-functional"
+    },
+    {
+      "id": "NFR-04",
+      "class": "NFR",
+      "type": "Availability",
+      "rank": "I",
+      "risk_zone": 2,
+      "title": "Business-hours uptime",
+      "text": "System availability is 99.5% during published business hours.",
+      "section_anchor": "non-functional"
+    },
+    {
+      "id": "NFR-05",
+      "class": "NFR",
+      "type": "Data lifecycle",
+      "rank": "I",
+      "risk_zone": 2,
+      "title": "Selfie retention",
+      "text": "Selfie images in object storage are deleted 30 days after the registration is finalized (approved or rejected).",
+      "section_anchor": "non-functional"
+    },
+    {
+      "id": "UR-01",
+      "class": "UR",
+      "type": "User Role",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Customer",
+      "text": "can submit own registration, view own status, resubmit a rejected registration. Cannot see others' data.",
+      "section_anchor": "user-role"
+    },
+    {
+      "id": "UR-02",
+      "class": "UR",
+      "type": "User Role",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Dealer",
+      "text": "can view and decide registrations within assigned region only. Cannot view other regions or other dealers' decisions.",
+      "section_anchor": "user-role"
+    },
+    {
+      "id": "UR-03",
+      "class": "UR",
+      "type": "User Role",
+      "rank": "I",
+      "risk_zone": 2,
+      "title": "Admin",
+      "text": "has read-only access to all registrations and reports across all regions. Cannot decide or modify registrations.",
+      "section_anchor": "user-role"
+    },
+    {
+      "id": "UR-04",
+      "class": "UR",
+      "type": "User Role",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Auditor",
+      "text": "has read-only access to the audit log. PII is shown as hashed identifiers only.",
+      "section_anchor": "user-role"
+    },
+    {
+      "id": "VR-01",
+      "class": "VR",
+      "type": "Validation",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Every decision is logged",
+      "text": "every approval and every rejection writes an audit log entry with actor, timestamp, action, registration ID, and reason (rejection only).",
+      "section_anchor": "validation"
+    },
+    {
+      "id": "VR-02",
+      "class": "VR",
+      "type": "Validation",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "Rejection reason required",
+      "text": "rejecting a registration without a non-empty reason is rejected by the API.",
+      "section_anchor": "validation"
+    },
+    {
+      "id": "VR-03",
+      "class": "VR",
+      "type": "Validation",
+      "rank": "C",
+      "risk_zone": 1,
+      "title": "No re-decide",
+      "text": "a dealer cannot decide a registration they have already approved or rejected; subsequent attempts are rejected.",
+      "section_anchor": "validation"
+    },
+    {
+      "id": "VR-04",
+      "class": "VR",
+      "type": "Validation",
+      "rank": "I",
+      "risk_zone": 2,
+      "title": "PII masking on export",
+      "text": "the CSV export masks NIK to last 4 digits, masks KK to last 4 digits, and replaces phone numbers with hashed identifiers.",
+      "section_anchor": "validation"
+    }
+  ],
+  "user_matrix": [
+    { "module": "Registration", "feature": "Submit registration", "roles": { "Customer": true, "Dealer": false, "Admin": true, "Auditor": false } },
+    { "module": "Registration", "feature": "View own status", "roles": { "Customer": true, "Dealer": false, "Admin": true, "Auditor": false } },
+    { "module": "Approval", "feature": "Review queue (regional)", "roles": { "Customer": false, "Dealer": true, "Admin": true, "Auditor": false } },
+    { "module": "Approval", "feature": "Approve / reject", "roles": { "Customer": false, "Dealer": true, "Admin": false, "Auditor": false } },
+    { "module": "Reporting", "feature": "Cross-regional dashboard", "roles": { "Customer": false, "Dealer": false, "Admin": true, "Auditor": false } },
+    { "module": "Reporting", "feature": "Export CSV (masked PII)", "roles": { "Customer": false, "Dealer": false, "Admin": true, "Auditor": false } },
+    { "module": "Audit", "feature": "View audit log", "roles": { "Customer": false, "Dealer": false, "Admin": false, "Auditor": true } }
+  ],
+  "roles": ["Customer", "Dealer", "Admin", "Auditor"],
+  "glossary": [
+    { "acronym": "NIK", "definition": "Nomor Induk Kependudukan — Indonesian 16-digit national identity number" },
+    { "acronym": "KK", "definition": "Kartu Keluarga — Indonesian family card document" },
+    { "acronym": "Kominfo", "definition": "Kementerian Komunikasi dan Informatika — Indonesian Ministry of Communications and Informatics" },
+    { "acronym": "Dukcapil", "definition": "Direktorat Jenderal Kependudukan dan Pencatatan Sipil — civil registration directorate" },
+    { "acronym": "PII", "definition": "Personally Identifiable Information" },
+    { "acronym": "KYC", "definition": "Know Your Customer" },
+    { "acronym": "RLS", "definition": "Row Level Security (PostgreSQL)" },
+    { "acronym": "SOP", "definition": "Standard Operating Procedure" }
+  ],
+  "related_documents": [
+    { "number": "001", "title": "Kominfo Peraturan Pemerintah No. 28/2017 — Pendaftaran Kartu Prabayar" },
+    { "number": "002", "title": "XLSmart Internal SOP — Dealer Registration Handling v2.3 (2025)" },
+    { "number": "003", "title": "Dukcapil NIK Format Reference — 16-digit Schema" }
+  ]
+}
