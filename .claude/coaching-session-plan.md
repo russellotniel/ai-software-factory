@@ -266,22 +266,31 @@ Done when: live feature plan exists, prompts ready, demo timed under 15 min.
 |-------|--------|-------------|
 | 1. Architecture (ADRs) | ✅ done | b8c805a |
 | 2. /foundation:urs:draft | ✅ done | 2bc1ce0 |
-| 3. /foundation:urs | 🟡 next | — |
-| 4. shape-spec --from-urs | ⏳ pending | — |
+| 3. /foundation:urs | ✅ done | bde797d |
+| 4. shape-spec --from-urs | 🟡 next | — |
 | 5. Pre-bake demo | ⏳ pending | — |
 | 6. Live feature + dry-run | ⏳ pending | — |
 
-**Next action:** Start Phase 3. Write `.claude/commands/foundation/urs.md`.
-This is the compile/lock command that turns `urs/main.md` into:
-- `urs/main.tex` (compiled from latex_template/main.tex)
-- `urs/index.json` (machine-readable, downstream contract)
-- updates to `.claude/docs/project-state.md` (engineering ledger seeding/reconciliation)
-- updates to `.claude/project-config.json#riskZones` (C/I/D → Zone 1/2/3 mapping)
+**Note discovered in Phase 3:** `project-config.json#riskZones` already exists
+but is **path-based** (file globs), not requirement-based. Different concept.
+Decision: do NOT touch the path-based key. URS-driven zone is per-requirement,
+stored in `urs/index.json` and per-feature in `project-state.md`. The two
+concepts coexist.
 
-Also stamps `@urs:` traceability tags into appropriate places — verify the
-existing `@spec:` convention first by reading
-`.claude/commands/architecture-os/new-feature.md` and one of the implementation
-commands.
+**Note for Phase 5 pre-bake:** existing `project-state.md` schema (from
+plan.md / shape-spec.md / new-feature.md) uses columns `# | Feature | Status |
+Depends On | Spec` plus `Stage` and a `Feature Timeline`. URS reconciliation
+adds `urs_ref` and `risk_zone` columns. Watch for friction during pre-bake —
+may need to reconcile schemas or simplify.
+
+**Next action:** Start Phase 4. Edit `.claude/commands/foundation/shape-spec.md`
+to add a "Step 0 — Optional URS Lookup" or extend Step 1 to accept
+`--from-urs FR-XX` flag, reading `urs/index.json` to seed the spec. Also
+ensure the spec front-matter / template stamps `@urs: FR-XX` alongside `@spec`.
+
+Read first:
+- `.claude/commands/foundation/shape-spec.md` (current)
+- `.claude/docs/specs/_template.md` (spec template — does it have front-matter?)
 
 ## Open questions
 
