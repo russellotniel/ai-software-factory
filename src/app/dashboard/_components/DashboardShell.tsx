@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type DashboardShellProps = {
   user: { id: string; email: string };
@@ -28,16 +29,21 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-60 flex-col border-r border-border bg-muted/30">
-        <div className="flex h-14 items-center px-5">
+      <aside className="flex w-64 flex-col border-r border-border bg-muted/20">
+        <div className="flex h-16 items-center px-6">
           <Link
             href="/dashboard"
-            className="text-base font-bold tracking-tight"
+            className="flex flex-col leading-tight"
           >
-            SIM Registration
+            <span className="text-base font-bold tracking-tight">
+              SIM Registration
+            </span>
+            <span className="text-xs text-muted-foreground">
+              XLSmart Telco · Kominfo-compliant
+            </span>
           </Link>
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
           {navItems.map((item) => {
             const isActive =
               item.href === "/dashboard"
@@ -47,11 +53,12 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={cn(
+                  "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
-                }`}
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground",
+                )}
               >
                 {item.label}
               </Link>
@@ -60,11 +67,14 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         </nav>
         <div className="border-t border-border p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-medium text-accent-foreground">
+            <div className="flex size-9 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
               {user.email.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium">{user.email}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                Customer
+              </p>
             </div>
           </div>
           <Button
@@ -78,7 +88,9 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         </div>
       </aside>
       <div className="flex flex-1 flex-col">
-        <main className="flex-1 overflow-y-auto px-8 py-8">{children}</main>
+        <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-8 py-10">
+          {children}
+        </main>
       </div>
     </div>
   );

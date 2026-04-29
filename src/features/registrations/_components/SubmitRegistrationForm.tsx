@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -58,21 +59,28 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-5"
+      >
         <FormField
           control={form.control}
           name="nik"
           render={({ field }: { field: FieldOf<'nik'> }) => (
             <FormItem>
-              <FormLabel>NIK (16 digits)</FormLabel>
+              <FormLabel>NIK</FormLabel>
               <FormControl>
                 <Input
                   inputMode="numeric"
                   maxLength={16}
                   autoComplete="off"
+                  placeholder="3201230101234567"
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                16-digit national identity number from your KTP.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -83,15 +91,19 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
           name="kk"
           render={({ field }: { field: FieldOf<'kk'> }) => (
             <FormItem>
-              <FormLabel>KK (16 digits)</FormLabel>
+              <FormLabel>KK number</FormLabel>
               <FormControl>
                 <Input
                   inputMode="numeric"
                   maxLength={16}
                   autoComplete="off"
+                  placeholder="3201230101234560"
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                16-digit family card number.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -102,22 +114,29 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
           name="phone"
           render={({ field }: { field: FieldOf<'phone'> }) => (
             <FormItem>
-              <FormLabel>Phone number</FormLabel>
+              <FormLabel>Phone number to activate</FormLabel>
               <FormControl>
                 <Input
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
+                  placeholder="+62 812 3456 7890"
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                The number this SIM will activate under.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
         {serverError && (
-          <p className="text-sm text-destructive" role="alert">
+          <p
+            className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            role="alert"
+          >
             {serverError}
           </p>
         )}
@@ -129,6 +148,12 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
         >
           {form.formState.isSubmitting ? 'Submitting…' : 'Submit registration'}
         </Button>
+
+        <p className="text-xs text-muted-foreground">
+          By submitting you authorise XLSmart to encrypt and store your NIK
+          and KK in compliance with Kominfo PP No. 28/2017. Your data is
+          encrypted at rest and never displayed in plaintext.
+        </p>
       </form>
     </Form>
   );
