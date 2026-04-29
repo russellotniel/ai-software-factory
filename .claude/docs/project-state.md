@@ -14,7 +14,7 @@ Last updated: 2026-04-29 — initialized by /foundation:urs reconciliation.
 
 | #  | Feature ID                | URS Ref | Zone | Maturity     | Depends On | Spec | Last Updated |
 |----|---------------------------|---------|:----:|--------------|------------|------|--------------|
-| 1  | submit-registration       | FR-01   |  1   | 🔲 Pending    | —          | —    | 2026-04-29   |
+| 1  | submit-registration       | FR-01   |  1   | spec ←       | —          | [spec](specs/submit-registration.md) | 2026-04-29   |
 | 2  | validate-nik-format       | FR-02   |  1   | 🔲 Pending    | FR-01      | —    | 2026-04-29   |
 | 3  | view-own-status           | FR-03   |  1   | 🔲 Pending    | FR-01      | —    | 2026-04-29   |
 | 4  | regional-review-queue     | FR-04   |  1   | 🔲 Pending    | FR-01      | —    | 2026-04-29   |
@@ -74,7 +74,7 @@ reference the relevant NFR/UR/VR via `@urs:` tags during release gating.
 
 | Feature ID                | spec  | architecture | implementation | tested | reviewed | shipped |
 |---------------------------|-------|--------------|----------------|--------|----------|---------|
-| submit-registration       | —     | —            | —              | —      | —        | —       |
+| submit-registration       | 04-29 | —            | —              | —      | —        | —       |
 | validate-nik-format       | —     | —            | —              | —      | —        | —       |
 | view-own-status           | —     | —            | —              | —      | —        | —       |
 | regional-review-queue     | —     | —            | —              | —      | —        | —       |
