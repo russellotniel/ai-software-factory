@@ -267,8 +267,8 @@ Done when: live feature plan exists, prompts ready, demo timed under 15 min.
 | 1. Architecture (ADRs) | ✅ done | b8c805a |
 | 2. /foundation:urs:draft | ✅ done | 2bc1ce0 |
 | 3. /foundation:urs | ✅ done | bde797d |
-| 4. shape-spec --from-urs | 🟡 next | — |
-| 5. Pre-bake demo | ⏳ pending | — |
+| 4. shape-spec --from-urs + @urs propagation | ✅ done | 43f08fd, a2027e0 |
+| 5. Pre-bake demo | 🟡 next | — |
 | 6. Live feature + dry-run | ⏳ pending | — |
 
 **Note discovered in Phase 3:** `project-config.json#riskZones` already exists
@@ -283,14 +283,42 @@ Depends On | Spec` plus `Stage` and a `Feature Timeline`. URS reconciliation
 adds `urs_ref` and `risk_zone` columns. Watch for friction during pre-bake —
 may need to reconcile schemas or simplify.
 
-**Next action:** Start Phase 4. Edit `.claude/commands/foundation/shape-spec.md`
-to add a "Step 0 — Optional URS Lookup" or extend Step 1 to accept
-`--from-urs FR-XX` flag, reading `urs/index.json` to seed the spec. Also
-ensure the spec front-matter / template stamps `@urs: FR-XX` alongside `@spec`.
+**Phase 4 actually completed in two commits:**
+- `43f08fd` — shape-spec --from-urs flag + spec template YAML front-matter
+- `a2027e0` — @urs propagation across architecture/implementation/qa commands;
+  qa risk_zone now prefers URS-derived value from spec front-matter
 
-Read first:
-- `.claude/commands/foundation/shape-spec.md` (current)
-- `.claude/docs/specs/_template.md` (spec template — does it have front-matter?)
+**Next action:** Start Phase 5 (pre-bake the SIM Registration Portal demo).
+
+Pre-bake plan:
+1. Decide where the demo project files live in this repo (since we're working
+   directly in the factory, not creating a separate project). Likely `urs/` for
+   the URS artifacts at repo root, and skip the actual Next.js app — the wow
+   moment is the `grep` traceability across SPECS and command outputs, which we
+   can demonstrate without a runnable app.
+2. Write a 1-page brief at `urs/brief.md` describing SIM Registration Portal.
+3. Either run /foundation:urs:draft against it OR hand-author urs/main.md
+   directly using the brief + the URS contents block in this plan.
+4. Run /foundation:urs to compile main.tex + index.json + reconcile project-state.
+5. Run /foundation:shape-spec --from-urs FR-01, FR-03, VR-01 — produce specs.
+6. Run /architecture:new-feature for each — produce migrations + RPCs.
+7. Run /implementation:new-feature for each — produce schemas/actions/components.
+   (May or may not actually write to src/features/ — depends on whether we want
+   a runnable app. Decision: write to `demo/sim-registration/src/features/` so
+   we have artifacts to grep without polluting the factory's own src/.)
+8. Run /qa:new-tests — produce tests.
+9. Run /deployment:release dry-run — produce gate output.
+10. Test the grep moment: grep -r "FR-03" .
+
+**Important friction note:** the factory's existing project-state.md schema
+(plan.md / shape-spec.md / new-feature.md) doesn't have urs_ref or risk_zone
+columns. /foundation:urs is supposed to add them when reconciling. During
+pre-bake, watch for whether this works cleanly or needs a smaller fix.
+
+**Decision for pre-bake:** since this repo has no `.claude/docs/project-state.md`
+yet (it's the factory itself, not a project), the demo will create it from
+scratch via /foundation:urs reconciliation. That actually exercises the
+"create from scratch" code path.
 
 ## Open questions
 
