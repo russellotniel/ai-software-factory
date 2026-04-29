@@ -270,8 +270,8 @@ Done when: live feature plan exists, prompts ready, demo timed under 15 min.
 | 4. shape-spec --from-urs + @urs propagation | ✅ done | 43f08fd, a2027e0 |
 | 5. Pre-bake demo (artifacts) | ✅ done | 1ce44eb |
 | 5b. Path B real build (typecheck + tests + dev server) | ✅ done | 0e62ffc |
-| 5c. Path A — actual Supabase integration | ⏳ tomorrow morning | — |
-| 6. Live feature + dry-run | ⏳ pending | — |
+| 5c. Path A — Supabase + skills installed + design refactor + factory fixes | ✅ done | c2afd93, 6a93088, latest |
+| 6. Live feature + dry-run | ⏳ next | — |
 
 **Phase 5b outcome (committed in 0e62ffc):**
 
