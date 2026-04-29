@@ -1,0 +1,420 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage[table]{xcolor}
+\usepackage{float}
+% Custom font section (optional):
+% Uncomment and adjust this block if your team wants to use a custom font.
+% \usepackage{fontspec}
+% \setmainfont{YourFontName}[
+%   Path=./fonts/,
+%   Extension = .otf,
+%   UprightFont=*-Regular,
+%   BoldFont=*-Bold,
+% ]
+
+% Page geometry
+\geometry{
+a4paper,
+left=2.5cm,
+right=2.5cm,
+top=2.5cm,
+bottom=2.5cm
+}
+
+% Section formatting
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% Cover Page
+\begin{titlepage}
+\centering
+% Include logo if available
+% \includegraphics[width=1.65in]{./media/image1.png}
+\vspace{1cm}
+{\Huge\bfseries USER REQUIREMENT\par}
+\vspace{0.5cm}
+{\Huge\bfseries SPESIFICATION\par}
+\vspace{0.5cm}
+{\Huge\bfseries (URS)\par}
+\vfill
+% \includegraphics[width=0.7\textwidth]{company_logo.png}
+\vfill
+
+{\Large\bfseries Dummy Project\par}
+\vspace{0.5cm}
+{\Large\bfseries Dummy Company Group\par}
+\vspace{1cm}
+\begin{flushleft}
+\textbf{Document No :} \underline{\hspace{5cm}}
+\vspace{0.5cm}
+\textbf{Version :} \underline{\hspace{5cm}}
+\vspace{0.5cm}
+\textbf{Effective Date :} \underline{\hspace{5cm}}
+\end{flushleft}
+\end{titlepage}
+
+\newpage
+
+% Change History Document (Page 2)
+\section*{CHANGE HISTORY DOCUMENT}
+\addcontentsline{toc}{section}{CHANGE HISTORY DOCUMENT}
+
+\begin{longtable}{|p{3cm}|p{4cm}|p{3cm}|p{3cm}|}
+\hline
+\textbf{Revision} & \textbf{Changes} & \textbf{Compiled by} & \textbf{Date} \\
+\hline
+00 & Create New Document & Nama Penyusun 1, Nama Penyusun 2 & TBA \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Agreement (Page 3)
+\section*{AGREEMENT}
+\addcontentsline{toc}{section}{AGREEMENT}
+
+\textbf{Approval of this User Requirements Specification (URS) must be recognized and approved by all functional departments listed below.}
+
+\vspace{0.5cm}
+
+\begin{longtable}{|p{4cm}|p{5cm}|p{4cm}|}
+\hline
+\textbf{Company/Division} & \textbf{Name} & \textbf{Sign and Date} \\
+\hline
+\textbf{Prepared by} & & \\
+\hline
+\textbf{Reviewed by} & & \\
+\hline
+\textbf{Approved by} & & \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Project Detail
+\section*{PROJECT DETAIL}
+\addcontentsline{toc}{section}{PROJECT DETAIL}
+
+\begin{longtable}{|p{5cm}|c|p{7cm}|}
+\hline
+\textbf{Project Name} & \textbf{:} & Dummy Project Template \\
+\hline
+\textbf{Project Coordinator} & \textbf{:} & \\
+\hline
+\hline
+\textbf{Team A} & \textbf{:} & Nama PIC A \\
+(Process Owner) & & \\
+\hline
+\textbf{Team B} & \textbf{:} & Nama PIC B \\
+(Technical Integration) & & \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Table of Contents
+\tableofcontents
+
+\newpage
+
+% Introduction
+\section{INTRODUCTION}
+
+\subsection{Project Overview}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+\subsection{Objective}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+\subsection{Project Scope}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+\subsection{System Description}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+
+\newpage
+
+% User Matrix
+\subsection{User Matrix}
+
+% Define a custom column type 'P'
+% 1. Centers the text
+% 2. \arraybackslash fixes table commands
+% 3. \hspace{0pt} allows the first word in the cell to be hyphenated/wrapped
+% 4. 'm' aligns text in the vertical middle (looks better than 'p' when text wraps)
+\newcolumntype{P}[1]{>{\centering\arraybackslash\hspace{0pt}}m{#1}}
+
+% I reduced the font size slightly (\small) to ensure it fits comfortably on A4
+{
+\small
+\setlength{\tabcolsep}{3pt} % Reduce padding to fit table in width
+\begin{longtable}{|P{2.5cm}|P{6cm}|P{0.8cm}|P{0.8cm}|P{0.8cm}|P{0.8cm}|P{0.8cm}|P{0.8cm}|}
+\hline
+\multirow{2}{*}{\textbf{Modul}} & \multirow{2}{*}{\textbf{Feature}} & \multicolumn{6}{c|}{\textbf{Role}} \\
+\cline{3-8}
+& & \rotatebox{90}{\textbf{SuperAdmin}} & \rotatebox{90}{\textbf{Admin (Dept/IT)}} & \rotatebox{90}{\textbf{Developer}} & \rotatebox{90}{\textbf{PowerUser}} & \rotatebox{90}{\textbf{End User}} & \rotatebox{90}{\textbf{Auditor}} \\
+\hline
+\endfirsthead
+\hline
+\multirow{2}{*}{\textbf{Modul}} & \multirow{2}{*}{\textbf{Feature}} & \multicolumn{6}{c|}{\textbf{Role}} \\
+\cline{3-8}
+& & \rotatebox{90}{\textbf{SuperAdmin}} & \rotatebox{90}{\textbf{Admin (Dept/IT)}} & \rotatebox{90}{\textbf{Developer}} & \rotatebox{90}{\textbf{PowerUser}} & \rotatebox{90}{\textbf{End User}} & \rotatebox{90}{\textbf{Auditor}} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+% Dummy access matrix (template)
+\multirow{1}{*}{\textbf{Module A}}
+& Lorem Feature A & v & v & & & v & \\
+\hline
+\multirow{1}{*}{\textbf{Module B}}
+& Lorem Feature B & v & & v & v & & \\
+\hline
+\multirow{1}{*}{\textbf{Module C}}
+& Lorem Feature C & v & v & v & & & v \\
+\hline
+
+\end{longtable}
+}
+
+
+\newpage
+
+% Process Flow
+\newpage
+\section{PROCESS FLOW}
+
+\subsection{Alur Navigasi Keseluruhan}
+
+\begin{figure}[H]
+\centering
+\caption{Diagram Alur Navigasi Dummy Project}
+\includegraphics[width=0.8\textwidth]{Flow Utama.jpeg}
+\end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+\subsection{Flow Authentication}
+
+\begin{figure}[H]
+\centering
+\caption{Alur Login Aplikasi Dummy Project}
+\includegraphics[width=0.8\textwidth]{Login.jpeg}
+\end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+\subsection{Flow Menu Dashboard}
+
+\begin{figure}[H]
+\centering
+\caption{Alur Modul Menu ``Dashboard''}
+% \includegraphics[width=4.58in]{./media/image4.png}
+\end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+\subsection{Flow Menu AI Chatbot}
+
+\begin{figure}[H]
+\centering
+\caption{Alur Modul Menu ``AI Chatbot''}
+\includegraphics[width=0.8\textwidth]{AI Chatbot.jpeg}
+\end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+\subsection{Flow Menu Source Management}
+
+\begin{figure}[H]
+\centering
+\caption{Alur Modul Menu ``Source Management''}
+\includegraphics[width=0.8\textwidth]{Knowledge Base.jpeg}
+\end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+\subsection{Flow Menu Audit Trail \& Audit Log}
+
+\begin{figure}[H]
+\centering
+\caption{Alur Modul Menu ``Audit Trail \& Audit Log''}
+\includegraphics[width=0.8\textwidth]{Audit Trail-Log.jpeg}
+\end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+\newpage
+
+% Requirements
+\section{REQUIREMENTS}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Bagian ini adalah template ringkas untuk kebutuhan persyaratan.
+
+\begin{itemize}
+\item C (Critical): Lorem ipsum dolor sit amet.
+\item I (Important): Consectetur adipiscing elit.
+\item D (Desired): Sed do eiusmod tempor incididunt.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\subsubsection{Persyaratan Fungsional Sistem}
+
+\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{7cm}|p{1.5cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+% Group: General (Dummy)
+\multicolumn{4}{|c|}{\cellcolor{gray!25}\textbf{General}} \\*
+\hline
+FR-01 & Functional & \textbf{Lorem Requirement A}: Lorem ipsum dolor sit amet, consectetur adipiscing elit. & C \\
+\hline
+FR-02 & Functional & \textbf{Lorem Requirement B}: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. & I \\
+\hline
+
+% Group: Feature (Dummy)
+\multicolumn{4}{|c|}{\cellcolor{gray!25}\textbf{Feature}} \\*
+\hline
+FR-03 & Functional & \textbf{Lorem Requirement C}: Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris. & C \\
+\hline
+FR-04 & Functional & \textbf{Lorem Requirement D}: Duis aute irure dolor in reprehenderit in voluptate velit esse. & D \\
+\hline
+
+\end{longtable}
+
+
+\subsubsection{Persyaratan Non-Fungsional}
+
+\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{7cm}|p{1.5cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+NFR-01 & Performance & \textbf{Lorem Performance}: Lorem ipsum dolor sit amet, consectetur adipiscing elit. & C \\
+\hline
+
+NFR-02 & Security & \textbf{Lorem Security}: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. & I \\
+\hline
+
+NFR-03 & Maintainability & \textbf{Lorem Maintainability}: Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris. & D \\
+\hline
+
+\end{longtable}
+
+
+\subsubsection{Persyaratan Peran Pengguna}
+
+\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{7cm}|p{1.5cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+UR-01 & User Role & \textbf{Lorem Role A}: Lorem ipsum dolor sit amet, consectetur adipiscing elit. & C \\
+\hline
+
+UR-02 & User Role & \textbf{Lorem Role B}: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. & I \\
+\hline
+
+\end{longtable}
+
+\subsubsection{Persyaratan Validasi \& Audit}
+
+\begin{longtable}{|p{2.5cm}|p{2.5cm}|p{7cm}|p{1.5cm}|}
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endfirsthead
+\hline
+\textbf{URS ID} & \textbf{Type} & \textbf{Requirement} & \textbf{Rank} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+VR-01 & Validation & \textbf{Lorem Validation A}: Lorem ipsum dolor sit amet, consectetur adipiscing elit. & C \\
+\hline
+
+VR-02 & Validation & \textbf{Lorem Validation B}: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. & I \\
+\hline
+
+\end{longtable}
+
+\newpage
+
+% Related Documents
+\section{RELATED DOCUMENTS}
+
+\begin{longtable}{|p{3cm}|p{10cm}|}
+\hline
+\textbf{No. Documents} & \textbf{Title} \\
+\hline
+001 & Lorem Ipsum Document A.docx \\
+\hline
+002 & Lorem Ipsum Document B.docx \\
+\hline
+\end{longtable}
+
+\vspace{1cm}
+
+% Glossary
+\section{GLOSSARY}
+
+\begin{longtable}{|p{3cm}|p{10cm}|}
+\hline
+\textbf{Acronym} & \textbf{Definition} \\
+\hline
+ABC & Lorem ipsum dolor sit amet \\
+\hline
+DEF & Consectetur adipiscing elit \\
+\hline
+GHI & Sed do eiusmod tempor incididunt \\
+\hline
+JKL & Ut labore et dolore magna aliqua \\
+\hline
+\end{longtable}
+
+\newpage
+
+% Appendix
+\section*{APPENDIX}
+\addcontentsline{toc}{section}{APPENDIX}
+
+\end{document}

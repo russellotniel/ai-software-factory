@@ -13,23 +13,40 @@
 create extension if not exists pgcrypto;
 create schema if not exists private;
 
+-- Grant USAGE so authenticated can resolve fully-qualified function names.
+-- Schema membership alone doesn't expose tables — those still require their
+-- own grants and RLS. SECURITY DEFINER functions stay safe because the
+-- definer's privileges are used regardless of the caller's permissions.
+grant usage on schema private to authenticated;
+
 -- Encryption helpers — AES-256 deterministic for exact-match search (NFR-01).
--- The key is fetched from a secure source at deployment time. For local dev,
--- it falls back to a placeholder; production deployments MUST inject a real
--- key into private.config('pii_key').
+-- The key is stored in private.config (one-row table). In production, the
+-- key is rotated by replacing the row via a controlled migration; the
+-- private schema is not exposed to PostgREST.
+
+create table if not exists private.config (
+  key  text primary key,
+  value text not null
+);
+
+-- Seed a local-dev key. Production replaces this via secret injection.
+-- The key MUST be 32 bytes for AES-256.
+insert into private.config(key, value)
+values ('pii_key', 'local-dev-aes-256-key-32-bytes!!')
+on conflict (key) do nothing;
 
 create or replace function private.encrypt_pii(p_plain text)
 returns bytea
 language plpgsql
 security definer
-set search_path = private, public, pg_temp
+set search_path = private, public, extensions, pg_temp
 as $$
 declare
   v_key text;
 begin
-  v_key := current_setting('app.pii_key', true);
+  select value into v_key from private.config where key = 'pii_key';
   if v_key is null or v_key = '' then
-    raise exception 'PII encryption key not configured (app.pii_key)';
+    raise exception 'PII encryption key not configured';
   end if;
   return encrypt(p_plain::bytea, v_key::bytea, 'aes');
 end;
@@ -42,14 +59,14 @@ create or replace function private.decrypt_pii(p_cipher bytea)
 returns text
 language plpgsql
 security definer
-set search_path = private, public, pg_temp
+set search_path = private, public, extensions, pg_temp
 as $$
 declare
   v_key text;
 begin
-  v_key := current_setting('app.pii_key', true);
+  select value into v_key from private.config where key = 'pii_key';
   if v_key is null or v_key = '' then
-    raise exception 'PII encryption key not configured (app.pii_key)';
+    raise exception 'PII encryption key not configured';
   end if;
   return convert_from(decrypt(p_cipher, v_key::bytea, 'aes'), 'UTF8');
 end;
@@ -126,7 +143,7 @@ create policy dealer_select_region
     exists (
       select 1 from public.profiles p
       where p.id = auth.uid()
-        and p.role = 'dealer'
+        and p.global_role = 'dealer'
         and p.region_code = registrations.region_code
     )
   );
@@ -140,7 +157,7 @@ create policy admin_select_all
     exists (
       select 1 from public.profiles p
       where p.id = auth.uid()
-        and p.role = 'admin'
+        and p.global_role = 'admin'
     )
   );
 
