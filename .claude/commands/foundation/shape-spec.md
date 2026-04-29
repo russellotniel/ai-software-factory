@@ -7,9 +7,17 @@ for one feature. It is the contract between planning and building.
 This command enhances Claude Code's plan mode: run it first to surface the
 right questions, then use plan mode to work through the implementation.
 
+**Usage:**
+
+- `/foundation:shape-spec` — interactive, no URS reference (manual feature)
+- `/foundation:shape-spec --from-urs FR-XX` — seed the spec from a URS
+  requirement; pre-fills feature name, description, and risk zone from
+  `urs/index.json`
+
 **Preconditions:**
 - `.claude/project-config.json` must exist (run `/foundation:init`)
 - `.claude/docs/project-state.md` should exist (run `/foundation:plan`)
+- If using `--from-urs`: `urs/index.json` must exist (run `/foundation:urs`)
 
 Read before starting:
 
@@ -18,12 +26,38 @@ Read before starting:
 - `.claude/docs/architecture-os/schema-conventions.md` — data shape constraints
 - `.claude/docs/specs/_template.md` — output format
 - `.claude/docs/design-os/screens/` — check if a screen spec exists for this feature
+- If `--from-urs` provided: `urs/index.json` — locate the URS requirement
+
+---
+
+## Step 0 — Optional URS Lookup
+
+If invoked with `--from-urs FR-XX`:
+
+1. Read `urs/index.json`. If it does not exist, abort with: "URS index missing.
+   Run `/foundation:urs` first to compile the URS source."
+2. Find the requirement matching the supplied ID. If not found, abort with the
+   list of valid IDs.
+3. Pre-fill spec context from the URS row:
+   - **Feature title** — from `title` field
+   - **Description seed** — from `text` field
+   - **Risk zone** — from `risk_zone` field (1 | 2 | 3)
+   - **URS reference** — the ID itself (e.g. `FR-03`)
+   - **Type and class** — for traceability
+4. Skip Step 1's first two questions (feature name, what problem) — they come
+   from the URS. Confirm them with the user instead:
+   - "From URS `FR-03`: **Approve registration** — Dealer can approve or reject
+     pending registrations in their region. Risk Zone 1 (Critical). Use this
+     as the spec basis? (y/N)"
+5. Continue with the remaining Step 1 questions and Steps 2–5.
+
+If `--from-urs` not provided, proceed directly to Step 1 with full Q&A.
 
 ---
 
 ## Step 1 — Feature Context
 
-Ask:
+Ask (skip the first two questions if Step 0 already answered them via URS):
 
 - What feature are we speccing? (name it clearly)
 - What problem does this solve for the user?
@@ -82,6 +116,22 @@ Ask:
 Generate the spec using `.claude/docs/specs/_template.md` format.
 Filename: `.claude/docs/specs/{feature-name}.md`
 
+**Stamp traceability into the spec's YAML front-matter:**
+
+- `feature: {feature-slug}` — kebab-case derived from feature name
+- `urs:` — `FR-XX` if Step 0 ran with `--from-urs`, otherwise `null`
+- `risk_zone:` — number from URS, or ask the user to assign manually
+  (1 = Critical, 2 = Standard, 3 = Presentational)
+- `status: draft`
+
+Also stamp the same URS reference and risk zone into the **Overview** section
+fields ("URS reference" and "Risk Zone") so they're visible to humans.
+
+If URS-driven, downstream commands (`/architecture:new-feature`,
+`/implementation:new-feature`, `/qa:new-tests`) will propagate the URS ID into
+generated code and tests as `// @urs: FR-XX` comments — making `grep -r "FR-XX"`
+return every artifact tied to the requirement.
+
 Show the complete spec. Ask: "Should I save this?"
 
 On confirmation, write to `.claude/docs/specs/{feature-name}.md`.
@@ -99,9 +149,12 @@ After saving:
 
 Read `.claude/docs/project-state.md`. Find this feature in the Backlog table.
 
+- If `--from-urs` was used: locate the row by `urs_ref` (it should already exist
+  from `/foundation:urs` reconciliation). Update its `spec_path` and `maturity`
+  fields. Do NOT create a duplicate row.
+- If no `--from-urs`: locate by feature name; if not present, append as new row.
 - Update its **Spec** column to link to the spec file: `[spec](../specs/{feature-name}.md)`
 - Update its **Stage** column to `spec ←`
-- If the feature is not in the backlog, append it as a new row with stage `spec ←`
 - In the **Feature Timeline** section (collapsible), add or update the row for this feature: set the `spec` column to today's date (YYYY-MM-DD format, month-day only in the table e.g. `04-06`)
 
 Write the updated `project-state.md`.
@@ -122,5 +175,7 @@ COMMAND_COMPLETE: foundation:shape-spec
 STATUS: success
 FILES_CREATED: .claude/docs/specs/{feature-name}.md
 FILES_MODIFIED: .claude/docs/project-state.md
+URS_REF: {FR-XX or none}
+RISK_ZONE: {1 | 2 | 3 or none}
 NEXT_COMMAND: /architecture:new-feature (if schema changes) OR /implementation:new-feature (if no schema changes)
 ```
