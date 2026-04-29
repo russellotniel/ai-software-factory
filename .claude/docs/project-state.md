@@ -14,7 +14,7 @@ Last updated: 2026-04-29 — initialized by /foundation:urs reconciliation.
 
 | #  | Feature ID                | URS Ref | Zone | Maturity     | Depends On | Spec | Last Updated |
 |----|---------------------------|---------|:----:|--------------|------------|------|--------------|
-| 1  | submit-registration       | FR-01   |  1   | architecture ← | —        | [spec](specs/submit-registration.md) | 2026-04-29   |
+| 1  | submit-registration       | FR-01   |  1   | implementation ← | —      | [spec](specs/submit-registration.md) | 2026-04-29   |
 | 2  | validate-nik-format       | FR-02   |  1   | 🔲 Pending    | FR-01      | —    | 2026-04-29   |
 | 3  | view-own-status           | FR-03   |  1   | 🔲 Pending    | FR-01      | —    | 2026-04-29   |
 | 4  | regional-review-queue     | FR-04   |  1   | 🔲 Pending    | FR-01      | —    | 2026-04-29   |
@@ -62,7 +62,15 @@ reference the relevant NFR/UR/VR via `@urs:` tags during release gating.
 
 ## Established Patterns
 
-(Empty — first feature establishes the pattern for the rest.)
+Established by FR-01 (submit-registration), to be followed by all subsequent
+registration-domain features:
+
+- **Domain layout:** `src/features/{domain}/{schemas.ts, actions.ts, _components/, hooks/}`
+- **Form pattern:** React Hook Form + Zod resolver + Shadcn `Form`/`FormField` primitives.
+- **Server Action pattern:** `requireAuth()` → `safeParse()` → `supabase.rpc()` → map RPC errors to `ActionResult<T>` codes (`VALIDATION_ERROR`, `UNAUTHORIZED`, `DATABASE_ERROR`).
+- **PII safety:** the action never logs NIK or KK; logger entries include only `userId` and `errorCode`.
+- **State machine:** all status transitions go through RPCs (`submit_registration`, future `decide_registration`); never `UPDATE` rows directly.
+- **Traceability:** every generated file stamps `@spec`, `@urs:`, `@risk_zone:` as the first comments.
 
 ---
 
@@ -89,7 +97,7 @@ reference the relevant NFR/UR/VR via `@urs:` tags during release gating.
 
 | Feature ID                | spec  | architecture | implementation | tested | reviewed | shipped |
 |---------------------------|-------|--------------|----------------|--------|----------|---------|
-| submit-registration       | 04-29 | 04-29        | —              | —      | —        | —       |
+| submit-registration       | 04-29 | 04-29        | 04-29          | —      | —        | —       |
 | validate-nik-format       | —     | —            | —              | —      | —        | —       |
 | view-own-status           | —     | —            | —              | —      | —        | —       |
 | regional-review-queue     | —     | —            | —              | —      | —        | —       |
