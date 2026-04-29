@@ -268,8 +268,47 @@ Done when: live feature plan exists, prompts ready, demo timed under 15 min.
 | 2. /foundation:urs:draft | ✅ done | 2bc1ce0 |
 | 3. /foundation:urs | ✅ done | bde797d |
 | 4. shape-spec --from-urs + @urs propagation | ✅ done | 43f08fd, a2027e0 |
-| 5. Pre-bake demo | ✅ done | up to traceability matrix commit |
-| 6. Live feature + dry-run | 🟡 next | — |
+| 5. Pre-bake demo (artifacts) | ✅ done | 1ce44eb |
+| 5b. Path B real build (typecheck + tests + dev server) | ✅ done | 0e62ffc |
+| 5c. Path A — actual Supabase integration | ⏳ tomorrow morning | — |
+| 6. Live feature + dry-run | ⏳ pending | — |
+
+**Phase 5b outcome (committed in 0e62ffc):**
+
+The SIM Registration Portal is now a real running Next.js application:
+
+- `npm run typecheck` clean
+- `npm test` for FR-01: **15/15 passing** (8 schemas, 7 actions, including
+  fast-check property-based and NFR-01 PII-safety)
+- `npm run dev` boots in <1s
+- `/login` renders the real sign-in form
+- `/register` correctly meta-refreshes to `/login` when unauthenticated
+- `/dashboard` same auth gate
+- Root `/` redirects based on session
+
+What's still not runnable end-to-end (Path A tomorrow):
+- Actual SIM submission requires Supabase running locally
+- Need Docker daemon started + `supabase` CLI installed
+- Then `supabase start` → `supabase db reset` → app flows end-to-end
+
+**Phase 5c plan for tomorrow morning (Path A):**
+
+1. User starts Docker, installs `supabase` CLI (or uses `npx supabase`).
+2. Run `supabase start` (downloads images first time, ~3–5 min).
+3. Run `supabase db reset` to apply both migrations.
+4. Run `supabase gen types typescript --local > src/types/database.ts` to
+   replace the hand-stub.
+5. Sign up a test customer through `/signup`.
+6. Update profile to set `region_code` (via Studio or SQL).
+7. Visit `/register`, submit, verify row in `registrations` with
+   encrypted NIK/KK.
+8. Run E2E tests against the live app: `npm run test:e2e`.
+
+Risk: any of steps 2–4 could hit a friction point. Have ~2 hours buffer
+before the 16:00 coaching session.
+
+**Live feature decision pending. Candidates listed in the conversation
+(FR-03, FR-04, FR-09, FR-08, FR-05). Lean: FR-04.**
 
 **Phase 5 outcome:**
 
