@@ -1,6 +1,7 @@
 ---
 feature: [feature-slug]
-urs: [FR-XX or null]
+urs: [FR-XX or null]                              # primary URS requirement
+urs_cross_cutting: [NFR-01, UR-02, VR-01]         # constraints applied to this feature
 risk_zone: [1 | 2 | 3 or null]
 status: draft
 generated_by: /foundation:shape-spec
@@ -18,7 +19,8 @@ generated_by: /foundation:shape-spec
 **Domain:** [src/features/{domain}]
 **Requested by:** [User story or requirement source]
 **URS reference:** [FR-XX from `urs/main.md` — or "none" if not URS-driven]
-**Risk Zone:** [1 (Critical) | 2 (Standard) | 3 (Presentational) — derived from URS rank or assigned manually]
+**Cross-cutting URS:** [NFR-XX (what), UR-XX (what), VR-XX (what) — list every cross-cutting requirement this feature must satisfy]
+**Risk Zone:** [1 (Critical) | 2 (Standard) | 3 (Presentational) — derived from URS rank of the primary requirement; floored at the highest cross-cutting rank]
 
 One paragraph describing what this feature does and why it exists.
 

@@ -124,6 +124,56 @@ CREATE POLICY "tenant_isolation" ON public.projects
 
 Everything else: `SECURITY INVOKER` in `public`.
 
+### Common gotchas with SECURITY DEFINER + private schema
+
+These three issues will silently break a SECURITY DEFINER function unless
+you account for them. They are not optional.
+
+1. **`extensions` must be in the search_path when calling pgcrypto, pg_net,
+   pg_trgm, or any extension function.** Supabase installs extensions into
+   the `extensions` schema, not `public`. Without it you get:
+
+   ```
+   ERROR:  function encrypt(bytea, bytea, unknown) does not exist
+   ```
+
+   Correct:
+
+   ```sql
+   CREATE OR REPLACE FUNCTION private.encrypt_pii(p text)
+   RETURNS bytea
+   LANGUAGE plpgsql
+   SECURITY DEFINER
+   SET search_path = private, public, extensions, pg_temp   -- ← include extensions
+   AS $$ … $$;
+   ```
+
+2. **`authenticated` role must have `USAGE` on the `private` schema** to
+   resolve fully-qualified function names. `GRANT EXECUTE ON FUNCTION` is
+   not enough. Without it you get:
+
+   ```
+   ERROR:  permission denied for schema private
+   ```
+
+   Add this once at the top of any migration that creates `private.*`
+   functions called by authenticated users:
+
+   ```sql
+   GRANT USAGE ON SCHEMA private TO authenticated;
+   ```
+
+   This does not expose `private` tables — those still need their own
+   grants and RLS. It just allows function name resolution.
+
+3. **Custom GUCs cannot be set via `ALTER DATABASE` without superuser** in
+   Supabase. If you write `current_setting('app.my_key', true)` in a function,
+   you cannot bootstrap `app.my_key` from the application — only at db init
+   by Supabase staff. For application-controlled secrets, use a
+   `private.config(key text PRIMARY KEY, value text NOT NULL)` table seeded
+   in the migration, fetched by the function. This pattern is also more
+   testable and supports rotation via a controlled migration.
+
 ---
 
 ## 3. Naming Conventions

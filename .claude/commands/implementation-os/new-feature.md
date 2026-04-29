@@ -95,6 +95,15 @@ export type {FeatureName}Input = z.infer<typeof {featureName}Schema>;
 
 ### actions.ts
 
+Read `.claude/project-config.json` to determine whether the project is
+multi-tenant. The `requireAuth()` return shape differs:
+
+- `multiTenant: true` → `{ user, tenantId, role }`
+- `multiTenant: false` → `{ user, role }`
+
+Destructure ONLY the fields the action actually uses; do not destructure
+`tenantId` on single-tenant projects (TypeScript will error).
+
 ```typescript
 'use server';
 // @spec: {feature-name}
@@ -108,7 +117,8 @@ import { {featureName}Schema, type {FeatureName}Input } from './schemas';
 export async function {featureName}Action(
   input: {FeatureName}Input
 ): Promise<ActionResult<{ReturnType}>> {
-  const { user } = await requireAuth();
+  const { user } = await requireAuth();         // single-tenant
+  // const { user, tenantId } = await requireAuth();  // multi-tenant — uncomment when needed
 
   const parsed = {featureName}Schema.safeParse(input);
   if (!parsed.success) {
