@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type ControllerRenderProps } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +26,11 @@ import {
 type Props = {
   selfieUrl: string;
 };
+
+type FieldOf<K extends keyof SubmitRegistrationInput> = ControllerRenderProps<
+  SubmitRegistrationInput,
+  K
+>;
 
 export function SubmitRegistrationForm({ selfieUrl }: Props) {
   const router = useRouter();
@@ -57,7 +62,7 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
         <FormField
           control={form.control}
           name="nik"
-          render={({ field }) => (
+          render={({ field }: { field: FieldOf<'nik'> }) => (
             <FormItem>
               <FormLabel>NIK (16 digits)</FormLabel>
               <FormControl>
@@ -76,7 +81,7 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
         <FormField
           control={form.control}
           name="kk"
-          render={({ field }) => (
+          render={({ field }: { field: FieldOf<'kk'> }) => (
             <FormItem>
               <FormLabel>KK (16 digits)</FormLabel>
               <FormControl>
@@ -95,7 +100,7 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
         <FormField
           control={form.control}
           name="phone"
-          render={({ field }) => (
+          render={({ field }: { field: FieldOf<'phone'> }) => (
             <FormItem>
               <FormLabel>Phone number</FormLabel>
               <FormControl>

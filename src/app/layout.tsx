@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { PublicEnvScript } from "next-runtime-env";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Software Factory",
-  description: "Full-lifecycle development framework for Next.js + Supabase",
+  title: "SIM Registration Portal",
+  description: "XLSmart prepaid SIM registration — Kominfo-compliant",
 };
 
 export default function RootLayout({
@@ -31,7 +32,9 @@ export default function RootLayout({
       <head>
         <PublicEnvScript />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Suspense>{children}</Suspense>
+      </body>
     </html>
   );
 }
