@@ -268,8 +268,48 @@ Done when: live feature plan exists, prompts ready, demo timed under 15 min.
 | 2. /foundation:urs:draft | ✅ done | 2bc1ce0 |
 | 3. /foundation:urs | ✅ done | bde797d |
 | 4. shape-spec --from-urs + @urs propagation | ✅ done | 43f08fd, a2027e0 |
-| 5. Pre-bake demo | 🟡 next | — |
-| 6. Live feature + dry-run | ⏳ pending | — |
+| 5. Pre-bake demo | ✅ done | up to traceability matrix commit |
+| 6. Live feature + dry-run | 🟡 next | — |
+
+**Phase 5 outcome:**
+
+FR-01 (submit-registration) is fully through the pipeline:
+- urs/brief.md → urs/main.md → urs/main.tex + urs/index.json
+- .claude/docs/specs/submit-registration.md (with @urs: FR-01 front-matter)
+- supabase/migrations/20260429220000_submit_registration.sql (with @urs: header,
+  pgcrypto encryption helpers, registrations table, 4 RLS policies, RPC
+  submit_registration)
+- .claude/docs/architecture-os/api-contracts.md (Project Contracts section)
+- src/features/registrations/{schemas.ts, actions.ts, _components/SubmitRegistrationForm.tsx}
+- src/features/registrations/{schemas.test.ts, actions.test.ts}
+- tests/e2e/submit-registration.spec.ts
+- urs/TRACEABILITY.md (matrix snapshot for the talk)
+
+Wow-moment grep verified: `grep -rln "FR-01" urs/ supabase/ src/ tests/ .claude/docs/specs/ .claude/docs/project-state.md .claude/docs/architecture-os/api-contracts.md` returns 13 files across every SDLC phase.
+
+Other 8 features (FR-02, FR-03, FR-04, FR-05, FR-06, FR-07, FR-08, FR-09)
+remain as 🔲 Pending in project-state.md — by design. The demo shows ONE
+feature fully, and the backlog table proves the same pipeline produces the
+rest. Doing all 9 would be theatre, not value.
+
+**Friction notes captured during Phase 5 (for factory hardening later):**
+
+1. project-config.json is gitignored — re-init on a branch that's already
+   mid-flow needs a documented "reset" path.
+2. The implementation command's example destructures `tenantId` even on
+   single-tenant projects. Should be conditional on `multiTenant`.
+3. api-contracts.md was a global standards doc with no per-project section.
+   The factory should ship it with a "Project Contracts" header pre-stubbed.
+4. The spec's "RPC triggers audit_log insert" was confused — VR-01 only
+   covers approve/reject. The shape-spec command could check VR rules
+   against the proposed RPC behavior and flag mismatches.
+5. NFR/UR/VR don't fit as standalone backlog rows; they're constraints
+   applied to FR rows. Documented this in project-state.md but the factory's
+   project-state schema should formalize "constraint" rows separately.
+6. The qa command's mock examples don't show sequential RPC failure cases
+   (mockResolvedValueOnce). Worth a worked example.
+
+**Next action:** Phase 6 — pick + prep live feature, dry-run timing.
 
 **Note discovered in Phase 3:** `project-config.json#riskZones` already exists
 but is **path-based** (file globs), not requirement-based. Different concept.
