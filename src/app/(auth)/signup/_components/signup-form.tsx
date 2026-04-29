@@ -24,7 +24,6 @@ export function SignupForm() {
 
     const supabase = createSupabaseBrowserClient();
 
-    // 1. Sign up — creates auth.users row; trigger creates the profile.
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -37,9 +36,6 @@ export function SignupForm() {
       return;
     }
 
-    // 2. Update the freshly-created profile with the region.
-    //    Done client-side because the customer just signed up so they
-    //    have a session and can update their own profile via RLS.
     if (data.user) {
       const { error: profileError } = await supabase
         .from("profiles")
@@ -60,7 +56,7 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <Label htmlFor="fullName">Full name</Label>
         <Input
@@ -69,6 +65,8 @@ export function SignupForm() {
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
+          autoComplete="name"
+          placeholder="As written on your KTP"
         />
       </div>
 
@@ -80,6 +78,7 @@ export function SignupForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoComplete="email"
           placeholder="you@example.com"
         />
       </div>
@@ -92,21 +91,23 @@ export function SignupForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete="new-password"
           minLength={8}
         />
+        <p className="text-xs text-muted-foreground">At least 8 characters.</p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="region">Region (provinsi)</Label>
+        <Label htmlFor="region">Home region</Label>
         <select
           id="region"
           required
           value={regionCode}
           onChange={(e) => setRegionCode(e.target.value)}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         >
           <option value="" disabled>
-            Select your home region
+            Select your provinsi
           </option>
           {REGIONS.map((r) => (
             <option key={r.code} value={r.code}>
@@ -115,8 +116,7 @@ export function SignupForm() {
           ))}
         </select>
         <p className="text-xs text-muted-foreground">
-          Your registration is reviewed by the dealer assigned to this
-          region.
+          Determines which dealer reviews your registration.
         </p>
       </div>
 
@@ -129,13 +129,16 @@ export function SignupForm() {
         </p>
       )}
 
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button type="submit" size="lg" className="w-full" disabled={loading}>
         {loading ? "Creating account…" : "Create account"}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <a href="/login" className="font-medium text-foreground underline">
+        <a
+          href="/login"
+          className="font-medium text-foreground underline underline-offset-4"
+        >
           Sign in
         </a>
       </p>

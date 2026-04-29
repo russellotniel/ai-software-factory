@@ -35,8 +35,8 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
@@ -44,10 +44,12 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoComplete="email"
           placeholder="you@example.com"
         />
       </div>
-      <div className="space-y-2">
+
+      <div className="flex flex-col gap-2">
         <Label htmlFor="password">Password</Label>
         <Input
           id="password"
@@ -55,16 +57,30 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete="current-password"
         />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Signing in..." : "Sign in"}
+
+      {error && (
+        <p
+          className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
+
+      <Button type="submit" size="lg" className="w-full" disabled={loading}>
+        {loading ? "Signing in…" : "Sign in"}
       </Button>
+
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <a href="/signup" className="font-medium text-foreground underline">
-          Sign up
+        <a
+          href="/signup"
+          className="font-medium text-foreground underline underline-offset-4"
+        >
+          Create one
         </a>
       </p>
     </form>

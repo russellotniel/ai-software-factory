@@ -63,6 +63,15 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-5"
       >
+        <div className="flex flex-col gap-1">
+          <p className="font-heading text-xl font-semibold tracking-tight">
+            Identity details
+          </p>
+          <p className="text-xs text-muted-foreground">
+            All fields are required by Kominfo PP No. 28/2017.
+          </p>
+        </div>
+
         <FormField
           control={form.control}
           name="nik"
@@ -75,12 +84,11 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
                   maxLength={16}
                   autoComplete="off"
                   placeholder="3201230101234567"
+                  className="font-mono tracking-wider"
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                16-digit national identity number from your KTP.
-              </FormDescription>
+              <FormDescription>16 digits, from your KTP.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -98,12 +106,11 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
                   maxLength={16}
                   autoComplete="off"
                   placeholder="3201230101234560"
+                  className="font-mono tracking-wider"
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                16-digit family card number.
-              </FormDescription>
+              <FormDescription>16 digits, from your family card.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -121,12 +128,11 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
                   inputMode="tel"
                   autoComplete="tel"
                   placeholder="+62 812 3456 7890"
+                  className="font-mono"
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                The number this SIM will activate under.
-              </FormDescription>
+              <FormDescription>The number this SIM activates.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -143,13 +149,14 @@ export function SubmitRegistrationForm({ selfieUrl }: Props) {
 
         <Button
           type="submit"
+          size="lg"
           className="w-full"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting ? 'Submitting…' : 'Submit registration'}
         </Button>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs leading-relaxed text-muted-foreground">
           By submitting you authorise XLSmart to encrypt and store your NIK
           and KK in compliance with Kominfo PP No. 28/2017. Your data is
           encrypted at rest and never displayed in plaintext.
