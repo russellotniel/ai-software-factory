@@ -178,8 +178,8 @@ For every requirement with class in {NFR, UR, VR}:
    Collect unique matches.
 2. If at least one FR id is found, set `applies_to` to that list.
 3. If no FR id is found, set `applies_to: ["*"]` and emit a warning in the
-   compile report: `NFR-/UR-/VR-XX has no explicit FR scope — applied to
-   all FRs by default.`
+   compile report using the actual requirement id (e.g. `NFR-03`):
+   `<ID> has no explicit FR scope — applied to all FRs by default.`
 
 Also build the inverse map keyed by FR id: for each FR, list every
 NFR/UR/VR id whose `applies_to` includes that FR (or `"*"`).
@@ -188,12 +188,17 @@ Write `urs/applies-to.json`:
 
 ```json
 {
-  "compiled_at": "<ISO 8601 timestamp matching index.json>",
+  "compiled_at": "<ISO 8601 timestamp — copy from urs/index.json, do not regenerate>",
   "constraints": [
     {
       "id": "NFR-01",
       "class": "NFR",
       "applies_to": ["FR-01", "FR-08"]
+    },
+    {
+      "id": "NFR-02",
+      "class": "NFR",
+      "applies_to": ["*"]
     },
     {
       "id": "VR-01",
@@ -202,16 +207,17 @@ Write `urs/applies-to.json`:
     }
   ],
   "by_fr": {
-    "FR-01": ["NFR-01", "UR-01"],
-    "FR-05": ["VR-01", "UR-02"],
-    "FR-06": ["VR-01", "UR-02"]
+    "FR-01": ["NFR-01", "NFR-02", "UR-01"],
+    "FR-05": ["NFR-02", "VR-01", "UR-02"],
+    "FR-06": ["NFR-02", "VR-01", "UR-02"],
+    "FR-08": ["NFR-01", "NFR-02"]
   }
 }
 ```
 
 **Consumers:**
 
-- `/foundation:sprint-plan` reads `applies_to_count` per FR for complexity scoring.
+- `/foundation:sprint-plan` reads `by_fr["FR-XX"].length` as the `applies_to_count` input to its complexity-points formula.
 - `/foundation:shape-spec --from-urs FR-XX` reads `by_fr["FR-XX"]` and injects the listed constraints into the spec front-matter.
 - `/foundation:validate` cross-checks that every constraint's `applies_to` references a real FR.
 
