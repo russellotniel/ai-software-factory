@@ -63,7 +63,20 @@ For each FR, compute:
 
 ```
 tables_touched   ≈ 1 + (count of FR-id co-references in this FR's text)
-applies_to_count = applies_to.by_fr[FR.id].length
+
+# applies_to_count counts ONLY constraints with explicit FR scope.
+# Wildcard constraints (applies_to == ["*"]) are EXCLUDED — they apply
+# uniformly to every FR and inflate the formula without reflecting
+# feature-specific complexity.
+applies_to_count = count of constraints in applies_to.by_fr[FR.id]
+                   whose own `applies_to` field is NOT ["*"]
+                   (i.e., scoped to specific FRs, not wildcards)
+
+# Sanity cap: even after wildcard exclusion, an FR with > 10 specific
+# constraints likely has overlapping concerns. Cap at 10 to prevent
+# any single FR from dominating the formula.
+applies_to_count = min(applies_to_count, 10)
+
 risk_weight      = 4 - risk_zone     (Z1=3, Z2=2, Z3=1)
 dep_count        = number of other FRs this FR depends on (see Step 3)
 
@@ -78,6 +91,12 @@ If a project-config.json override exists at
 instead of the defaults.
 
 Round to the nearest integer. Minimum points per FR = 1.
+
+**Why exclude wildcards?** Smoke-tested 2026-05-04 against a 308-FR URS with
+22 wildcard NFRs. Without exclusion, every FR scored applies_to_count ≥ 22,
+inflating points to ~26/FR — every FR exceeded a 13-point sprint budget.
+Wildcard constraints belong in cross-cutting governance (architecture,
+security review), not in per-FR effort estimation.
 
 ---
 
@@ -121,11 +140,40 @@ Sprint 0 is fixed and never sized by points. It contains:
 - Auth scaffolding (covered by `/foundation:init` baseline — no FR
   needed unless the URS specifies extra auth requirements).
 - Tenant onboarding if `multiTenant: true`.
-- The single highest-priority FR from the first cluster (by risk zone,
-  tiebreaker = lowest id), specced to walking-skeleton depth: happy-
-  path only, no edge cases. This proves the schema spine end-to-end.
+- The walking-skeleton FR — selected by the rules below, NOT by raw
+  cluster topo order (which is unreliable when dependencies are sparse
+  or all FRs share `section_anchor: "general"`).
+
+### 5.1 — Walking-skeleton FR selection
+
+Pick the walking-skeleton FR using this priority order:
+
+1. **Risk zone first.** Filter to Zone 1 (Critical) FRs only.
+2. **Domain priority list.** Within Zone 1, prefer FRs whose original
+   prefix or `section_anchor` is in this canonical priority list,
+   matched in order:
+   - `auth`, `AUTH`, `authentication` (highest — proves session/RLS spine)
+   - `reg`, `REG`, `registration` (proves write-path + RLS)
+   - `case`, `CASE`, `submission` (next-most-foundational data write)
+   - any other Zone 1 FR (fallback)
+3. **Tiebreaker: lowest URS ID.** If multiple candidates remain, pick
+   the smallest numeric suffix (FR-001 over FR-243).
+4. **Final fallback.** If no Zone 1 FR exists at all, pick lowest-ID
+   FR overall and emit a warning that the URS lacks a Critical-rank
+   FR — the walking skeleton may be too thin.
+
+The walking-skeleton FR is specced to happy-path depth only — no edge
+cases. This proves the schema spine end-to-end.
 
 Sprint 0 has no point budget. Estimated 1 sprint of work regardless.
+
+**Why this rule?** Smoke-tested 2026-05-04: when synthetic FRs lack
+cross-references, topo sort has no signal and cluster order falls back
+to alphabetical — which picked `Administration and Configuration` as
+Sprint 0. That's exactly backwards (admin tools depend on auth + data
+spine, not the other way around). The explicit domain priority list
+captures factory convention without requiring the URS author to encode
+it in dependencies.
 
 ---
 
@@ -152,19 +200,33 @@ The `--budget N` flag always wins over auto-shrink.
 
 ### 6.2 — Greedy bin-packing
 
-Greedy bin-packing across remaining clusters in topological order:
+Greedy bin-packing in topological order. Operates on **FRs**, not whole
+clusters — clusters are a grouping hint, not an indivisible unit.
 
-- Open Sprint 1 with budget = effective_budget (from 6.1, or
-  `config.budget` default 13 points).
-- Add the first available cluster whose dependencies are all in Sprint 0
-  or earlier sprints. If the cluster fits the remaining budget, place
-  it. Otherwise close the current sprint and open the next.
-- Repeat until all FRs are placed.
+1. Walk clusters in topological order (output of Step 4).
+2. Within each cluster, walk FRs in topological order from Step 3
+   (intra-cluster dep order; ties broken by lowest URS id).
+3. For each FR:
+   - If FR has any dependency not yet placed in an earlier or current
+     sprint, defer it (return to it after dependent FRs are placed).
+   - Else if `current_sprint.points + fr.points ≤ effective_budget`,
+     add the FR to the current sprint.
+   - Else close the current sprint and open the next, then add the FR.
+4. If a single FR's points exceed `effective_budget` on its own, place
+   it in its own sprint and emit a warning:
+   `WARN: FR-XXX has <N> points (> budget <B>) — consider splitting in
+   urs/main.md.` Continue placing the next FR in a fresh sprint.
 
-If a single cluster exceeds the budget, place it in its own sprint and
-note "oversized" in the sprint-plan.md output. The SA can then split
-the cluster manually in `urs/main.md` (rename FR ids if needed) and
-re-run.
+The legacy "place whole oversized cluster in one sprint" behavior is
+removed — it produced 14 oversized sprints in the smoke test on a
+308-FR URS. Splitting at the FR level produces sprints that meet the
+budget unless an individual FR is itself oversized (rare, and a clear
+signal the URS has an over-broad requirement).
+
+**Cluster boundaries are still reported** in `urs/clusters.json` so the
+SA can see which FRs grouped together — but a single cluster may now
+span multiple sprints, and a single sprint may pull from multiple
+clusters when capacity allows.
 
 ---
 

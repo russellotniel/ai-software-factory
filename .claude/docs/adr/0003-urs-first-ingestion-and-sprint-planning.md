@@ -33,7 +33,7 @@ Compute complexity points per FR from URS structure:
 
 ```
 points = w1 * tables_touched
-       + w2 * applies_to_count        (NFR/UR/VR refs from applies-to.json)
+       + w2 * applies_to_count        (scoped NFR/UR/VR only — NOT wildcards, capped at 10)
        + w3 * risk_zone               (Z1=3, Z2=2, Z3=1)
        + w4 * dep_count               (FR depends on other FRs)
 ```
@@ -45,6 +45,19 @@ budget (default 13). For small URS where total points fall below
 to keep the plan multi-sprint. For URS with fewer than 5 FRs, clustering
 and bin-packing are skipped entirely — one FR per sprint in topological
 order.
+
+**Bin-packing operates on FRs, not whole clusters.** Clusters group FRs
+by section/persona for reporting, but a single cluster may span multiple
+sprints when its total points exceed the budget. The legacy "place
+oversized cluster in one oversized sprint" rule was removed after the
+2026-05-04 smoke test produced 14 oversized sprints on a 308-FR URS.
+
+**Walking-skeleton selection is deterministic and not topo-driven.**
+Sprint 0 picks a Zone-1 FR matched against a canonical priority list
+(auth → registration → case/submission → fallback). Pure topo-order
+selection failed when synthetic FRs lack cross-references — alphabetical
+fallback put `Administration and Configuration` first, exactly inverting
+the dependency reality.
 
 ### 2. Task expansion — lazy, not eager
 
