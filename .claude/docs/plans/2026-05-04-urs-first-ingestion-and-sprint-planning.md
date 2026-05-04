@@ -40,8 +40,11 @@ Subagent fan-out for clustering is **deferred** — interface ready (single-clus
 - `.gitignore` — add `urs/*` LaTeX build artifacts + `supabase/snippets/`
 - `.claude/commands/foundation/urs.md` — add Step 4.5 emitting `urs/applies-to.json`
 - `.claude/commands/foundation/plan.md` — add Step 0 `--from-urs` mode (bypass discover, treat URS as canonical)
+- `.claude/commands/foundation/init.md` — add `ingestMode` Q&A (urs-first vs discover-derived)
+- `.claude/commands/foundation/status.md` — surface `ingestMode` and URS-first chain status
 - `.claude/commands/foundation/shape-spec.md` — extend Step 0 to write `urs/tasks/FR-XX.json` on `--from-urs`
 - `.claude/commands/foundation/validate.md` — add URS-first artifact checks
+- `.claude/project-config.schema.json` (if exists) — add `ingestMode` enum field
 - `.claude/CLAUDE.md` — add URS-first workflow, new commands in table, ADR 0003 reference
 - `.claude/docs/workflows.md` — add URS-first development workflow section
 - `README.md` — add URS-first phase sequence and link to sprint planning
@@ -222,7 +225,8 @@ commands consume this map directly — no LLM re-derivation per call.
 For every requirement with class in {NFR, UR, VR}:
 
 1. Scan its `text` field for substrings matching the regex
-   `\bFR-\d{2,3}\b` (case-sensitive). Collect unique matches.
+   `\bFR-\d+\b` (case-sensitive, supports `FR-1` through `FR-9999`).
+   Collect unique matches.
 2. If at least one FR id is found, set `applies_to` to that list.
 3. If no FR id is found, set `applies_to: ["*"]` and emit a warning in the
    compile report: `NFR-/UR-/VR-XX has no explicit FR scope — applied to
@@ -356,13 +360,24 @@ Insert before the existing `## Step 1 — Read Context`:
 ```markdown
 ## Step 0 — Mode Selection
 
-If invoked with `--from-urs`:
+Resolve the active ingest mode in this priority order:
 
-1. Verify `urs/index.json` exists. If not, abort: "URS index missing. Run `/foundation:urs` first to compile the URS source."
-2. Set mode = `urs-first`. Skip Step 2 (Derive Features). The feature list comes from `urs/index.json` FR rows directly. Step 3 (Identify Dependencies) and onward still apply.
-3. Skip the question "Are there any features not in the use cases?" — in `urs-first` mode the URS is canonical. Out-of-URS features must be added by editing `urs/main.md` and re-running `/foundation:urs` first.
+1. **Explicit flag wins.** If invoked with `--from-urs`, force
+   `mode = "urs-first"` regardless of project config.
+2. **Project config default.** Otherwise, read
+   `projectConfig.ingestMode` from `.claude/project-config.json`. If
+   set to `"urs-first"`, treat that as default. Set by
+   `/foundation:init` (see Task 7B).
+3. **Fallback.** If neither flag nor config indicates URS-first,
+   `mode = "discover-derived"`.
 
-If `--from-urs` not provided, set mode = `discover-derived` and proceed with Step 1 as written.
+When `mode == "urs-first"`:
+
+a. Verify `urs/index.json` exists. If not, abort: "URS index missing. Run `/foundation:urs` first to compile the URS source."
+b. Skip Step 2 (Derive Features). The feature list comes from `urs/index.json` FR rows directly. Step 3 (Identify Dependencies) and onward still apply.
+c. Skip the question "Are there any features not in the use cases?" — in `urs-first` mode the URS is canonical. Out-of-URS features must be added by editing `urs/main.md` and re-running `/foundation:urs` first.
+
+When `mode == "discover-derived"`, proceed with Step 1 as written.
 ```
 
 - [ ] **Step 5: Mark Step 2 conditional**
@@ -409,6 +424,116 @@ Expected: `≥ 6` mentions.
 ```bash
 git add .claude/commands/foundation/plan.md
 git commit -m "feat(foundation): add --from-urs mode to /foundation:plan"
+```
+
+### Task 7B: Add `ingestMode` to `/foundation:init` Q&A and project-config
+
+Capture the SA's choice between URS-first and discover-derived ingestion at
+project init time, store it in `project-config.json`, and surface it in
+`/foundation:status` output. Downstream commands branch on this flag instead
+of requiring `--from-urs` on every invocation.
+
+**Why ask at init, not discover:** the URS-first flow skips
+`/foundation:discover` entirely. Asking the question after init avoids
+making `discover` a precondition for URS-first projects.
+
+**Why not ask page count:** page count is a noisy proxy for FR count. FR
+count is exact post-compile. Downstream auto-tuning (fan-out threshold,
+budget auto-shrink) reads `urs/index.json` directly. No upfront estimate
+needed.
+
+**Files:**
+
+- Modify: `.claude/commands/foundation/init.md`
+- Modify: `.claude/project-config.schema.json` (if it exists — probe in
+  Step 1 below)
+- Modify: `.claude/commands/foundation/status.md`
+
+- [ ] **Step 1: Locate the init Q&A block and the schema**
+
+```bash
+grep -n 'multiTenant\|authModel\|regulated' .claude/commands/foundation/init.md | head -10
+ls .claude/project-config.schema.json 2>&1
+```
+
+If `project-config.schema.json` does not exist, skip Step 3 below — the
+schema is implicit in `init.md`. The new field still goes into init's
+Q&A and the generated `project-config.json`.
+
+- [ ] **Step 2: Add the question to `/foundation:init`**
+
+Open `.claude/commands/foundation/init.md`. Find the Q&A section that
+asks for `multiTenant`, `authModel`, `regulated`. Add a new question
+in the same style, immediately after `regulated`:
+
+```markdown
+### Question: Ingest mode
+
+> Will this project start from a published URS (User Requirement
+> Specification), or will requirements be discovered iteratively?
+>
+> 1. `urs-first` — drop a finished `urs/main.md` in and run
+>    `/foundation:urs` → `/foundation:plan --from-urs` →
+>    `/foundation:sprint-plan`. Use this when a URS already exists
+>    (regulated procurements, RFP responses, vendor-supplied specs).
+>
+> 2. `discover-derived` (default) — run `/foundation:discover` to
+>    capture product mission, then `/foundation:plan` to derive a
+>    backlog from use cases. Use this for greenfield products where
+>    requirements emerge through discovery.
+>
+> Type 1 or 2:
+
+Store the answer in `project-config.json` as
+`ingestMode: "urs-first" | "discover-derived"`. Default to
+`discover-derived` on empty input.
+```
+
+- [ ] **Step 3: Update the schema (only if `project-config.schema.json` exists)**
+
+Add `ingestMode` to the schema's `properties`:
+
+```json
+"ingestMode": {
+  "type": "string",
+  "enum": ["urs-first", "discover-derived"],
+  "default": "discover-derived",
+  "description": "Whether the project starts from a published URS or builds requirements through discovery."
+}
+```
+
+Add `ingestMode` to the `required` array if all other init fields are
+also required there.
+
+- [ ] **Step 4: Surface in `/foundation:status`**
+
+Open `.claude/commands/foundation/status.md`. In the section that prints
+project-config summary (multiTenant, authModel, regulated), add:
+
+```markdown
+- **Ingest mode:** {ingestMode}
+  - If `urs-first`: report URS compile status (urs/index.json exists?
+    sprint-plan.md exists?) and suggest the next URS-first command if
+    the chain is incomplete.
+  - If `discover-derived`: report whether `product-mission.md` is a
+    stub or completed, and suggest `/foundation:discover` if stub.
+```
+
+- [ ] **Step 5: Verify**
+
+```bash
+grep -c 'ingestMode' .claude/commands/foundation/init.md
+grep -c 'ingestMode' .claude/commands/foundation/status.md
+```
+
+Expected: each ≥ 2.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add .claude/commands/foundation/init.md .claude/commands/foundation/status.md
+git add .claude/project-config.schema.json 2>/dev/null || true
+git commit -m "feat(foundation): ingestMode at init — urs-first vs discover-derived"
 ```
 
 ---
@@ -635,7 +760,8 @@ Round to the nearest integer. Minimum points per FR = 1.
 
 Two FRs are dependent if **either**:
 
-1. FR-A's text mentions FR-B's id (`FR-04` named in FR-05's text).
+1. FR-A's text mentions FR-B's id (regex `\bFR-\d+\b`, supports
+   `FR-1` through `FR-9999`). Example: `FR-04` named in FR-05's text.
 2. FR-A's `section_anchor` is a strict superset path of FR-B's anchor
    (e.g. `approval/decide` depends on `approval/queue`). Use the URS
    author's section ordering as a soft hint — same section + earlier id
@@ -680,9 +806,31 @@ Sprint 0 has no point budget. Estimated 1 sprint of work regardless.
 
 ## Step 6 — Pack Sprints
 
+### 6.0 — Tiny-URS short-circuit (FR count < 5)
+
+If the URS has fewer than 5 FRs total, skip clustering and bin-packing.
+Place each FR in its own sprint in topological order (Sprint 0 still
+takes the walking-skeleton FR; remaining FRs are Sprint 1, Sprint 2,
+…). The complexity-points formula still runs and is reported, but does
+not drive packing. Skip to Step 7 with this trivial layout.
+
+### 6.1 — Auto-shrink budget for small URS
+
+Before bin-packing, compute total points across all non-Sprint-0 FRs.
+If `total_points < 2 * config.budget`, auto-shrink the effective
+budget to `max(5, ceil(total_points / 3))` so a small URS still
+produces a multi-sprint plan instead of dumping everything into Sprint
+1. Record both the original config budget and the effective budget in
+`urs/clusters.json` so the SA sees the override.
+
+The `--budget N` flag always wins over auto-shrink.
+
+### 6.2 — Greedy bin-packing
+
 Greedy bin-packing across remaining clusters in topological order:
 
-- Open Sprint 1 with budget = config.budget (default 13 points).
+- Open Sprint 1 with budget = effective_budget (from 6.1, or
+  `config.budget` default 13 points).
 - Add the first available cluster whose dependencies are all in Sprint 0
   or earlier sprints. If the cluster fits the remaining budget, place
   it. Otherwise close the current sprint and open the next.
@@ -701,7 +849,9 @@ re-run.
 {
   "compiled_at": "<ISO 8601>",
   "weights": { "w1": 2, "w2": 1, "w3": 1, "w4": 1 },
-  "budget_per_sprint": 13,
+  "budget_per_sprint_config": 13,
+  "budget_per_sprint_effective": 13,
+  "tiny_urs_short_circuit": false,
   "dependencies": { "FR-05": ["FR-04"], "FR-06": ["FR-05"] },
   "clusters": [
     {
@@ -714,6 +864,9 @@ re-run.
   ]
 }
 ```
+
+`budget_per_sprint_effective` reflects auto-shrink (Step 6.1).
+`tiny_urs_short_circuit` is `true` when Step 6.0 fired (< 5 FRs total).
 
 ---
 
