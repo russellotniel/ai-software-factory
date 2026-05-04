@@ -214,10 +214,25 @@ standards:
       - .claude/docs/design-os/product-vision.md
 
   - id: project-config
-    keywords: [config, project config, multi-tenant, auth model, regulated, init]
+    keywords: [config, project config, multi-tenant, auth model, regulated, init, ingestMode]
     files:
       - .claude/project-config.json
       - .claude/project-config.schema.json
+
+  - id: adr-urs-separation
+    keywords: [urs, project-state, traceability, regulated, adr, decision, separation]
+    files:
+      - .claude/docs/adr/0001-urs-project-state-separation.md
+
+  - id: adr-urs-source-format
+    keywords: [urs, source format, latex, markdown, compilation, index.json, adr]
+    files:
+      - .claude/docs/adr/0002-urs-source-format.md
+
+  - id: adr-urs-first-ingestion
+    keywords: [urs-first, sprint-plan, complexity points, lazy expansion, token budget, walking skeleton, fan-out, adr]
+    files:
+      - .claude/docs/adr/0003-urs-first-ingestion-and-sprint-planning.md
 
   - id: project-state
     keywords: [backlog, feature, status, progress, project state, plan]
