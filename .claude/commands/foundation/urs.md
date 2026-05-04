@@ -165,6 +165,58 @@ This file is the **downstream contract**. Every command after URS reads
 
 ---
 
+## Step 4.5 — Emit `urs/applies-to.json`
+
+Precompute the cross-cutting map from non-functional / user-role / validation
+requirements to the functional requirements they constrain. Downstream
+commands consume this map directly — no LLM re-derivation per call.
+
+For every requirement with class in {NFR, UR, VR}:
+
+1. Scan its `text` field for substrings matching the regex
+   `\bFR-\d+\b` (case-sensitive, supports `FR-1` through `FR-9999`).
+   Collect unique matches.
+2. If at least one FR id is found, set `applies_to` to that list.
+3. If no FR id is found, set `applies_to: ["*"]` and emit a warning in the
+   compile report: `NFR-/UR-/VR-XX has no explicit FR scope — applied to
+   all FRs by default.`
+
+Also build the inverse map keyed by FR id: for each FR, list every
+NFR/UR/VR id whose `applies_to` includes that FR (or `"*"`).
+
+Write `urs/applies-to.json`:
+
+```json
+{
+  "compiled_at": "<ISO 8601 timestamp matching index.json>",
+  "constraints": [
+    {
+      "id": "NFR-01",
+      "class": "NFR",
+      "applies_to": ["FR-01", "FR-08"]
+    },
+    {
+      "id": "VR-01",
+      "class": "VR",
+      "applies_to": ["FR-05", "FR-06"]
+    }
+  ],
+  "by_fr": {
+    "FR-01": ["NFR-01", "UR-01"],
+    "FR-05": ["VR-01", "UR-02"],
+    "FR-06": ["VR-01", "UR-02"]
+  }
+}
+```
+
+**Consumers:**
+
+- `/foundation:sprint-plan` reads `applies_to_count` per FR for complexity scoring.
+- `/foundation:shape-spec --from-urs FR-XX` reads `by_fr["FR-XX"]` and injects the listed constraints into the spec front-matter.
+- `/foundation:validate` cross-checks that every constraint's `applies_to` references a real FR.
+
+---
+
 ## Step 5 — Reconcile `project-state.md`
 
 Per ADR 0001, `project-state.md` is the engineering ledger — it stores
@@ -231,6 +283,7 @@ Reconciliation:
 Files written:
   urs/main.tex
   urs/index.json
+  urs/applies-to.json
   .claude/docs/project-state.md (modified)
 
 Warnings (if any):
@@ -271,7 +324,7 @@ Tell the user:
 ```
 COMMAND_COMPLETE: foundation:urs
 STATUS: success
-FILES_CREATED: urs/main.tex, urs/index.json
+FILES_CREATED: urs/main.tex, urs/index.json, urs/applies-to.json
 FILES_MODIFIED: .claude/docs/project-state.md
 NEXT_COMMAND: /foundation:shape-spec --from-urs <FR-XX>
 ```
