@@ -34,6 +34,12 @@ Ask these three questions — they determine everything downstream:
 3. **"Is this a regulated industry project? (healthcare, finance, pharma)"**
    — No / Yes → which regulation? (HIPAA, SOC2, PCI-DSS, GDPR)
 
+4. **"Will this project start from a published URS?"** (sets `ingestMode`)
+   Explain: "Choose URS-first if you already have a finished User Requirement Specification document (regulated procurements, RFP responses, vendor-supplied specs). Choose discover-derived for greenfield products where requirements emerge through `/foundation:discover`."
+   — `urs-first` (drop a finished `urs/main.md` in, then `/foundation:urs` → `/foundation:plan --from-urs` → `/foundation:sprint-plan`) / `discover-derived` (default — `/foundation:discover` then `/foundation:plan`)
+
+   Default `ingestMode` to `discover-derived` on empty input.
+
 ---
 
 ## Step 2.5 — Supabase Connectivity
@@ -89,6 +95,7 @@ Write `.claude/project-config.json`:
   "regulationType": "{hipaa/soc2/pci-dss/gdpr or null}",
   "auditTrail": true,
   "supabaseMode": "{local-cli | remote | deferred from step 2.5}",
+  "ingestMode": "{urs-first or discover-derived from step 2.4}",
   "status": "initializing"
 }
 ```
