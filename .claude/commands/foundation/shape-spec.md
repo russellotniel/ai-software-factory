@@ -44,12 +44,17 @@ If invoked with `--from-urs FR-XX`:
    - **Risk zone** — from `risk_zone` field (1 | 2 | 3)
    - **URS reference** — the ID itself (e.g. `FR-03`)
    - **Type and class** — for traceability
-4. Skip Step 1's first two questions (feature name, what problem) — they come
+4. Read `urs/applies-to.json` (if present) and look up
+   `by_fr["<FR-XX>"]`. For every constraint id (NFR/UR/VR), fetch its
+   full text from `urs/index.json` and add it to the spec's
+   front-matter under `constraints:` so `/architecture:new-feature` and
+   `/qa:new-tests` see them without re-deriving.
+5. Skip Step 1's first two questions (feature name, what problem) — they come
    from the URS. Confirm them with the user instead:
    - "From URS `FR-03`: **Approve registration** — Dealer can approve or reject
      pending registrations in their region. Risk Zone 1 (Critical). Use this
      as the spec basis? (y/N)"
-5. Continue with the remaining Step 1 questions and Steps 2–5.
+6. Continue with the remaining Step 1 questions and Steps 2–5.
 
 If `--from-urs` not provided, proceed directly to Step 1 with full Q&A.
 
@@ -161,6 +166,42 @@ Write the updated `project-state.md`.
 
 ---
 
+## Step 7 — Emit per-FR Task Breakdown (`--from-urs` only)
+
+After the spec markdown is written, also emit `urs/tasks/<FR-id>.json`
+to record the canonical task list for downstream commands. This is
+**lazy expansion** — only the FR currently being specced gets a task
+file; other FRs do not.
+
+```json
+{
+  "fr_id": "FR-03",
+  "spec_path": ".claude/docs/specs/<feature-slug>.md",
+  "constraints": ["UR-01", "VR-01"],
+  "tasks": [
+    { "stage": "spec",            "status": "completed", "owner": "/foundation:shape-spec" },
+    { "stage": "architecture",    "status": "pending",   "owner": "/architecture:new-feature" },
+    { "stage": "implementation",  "status": "pending",   "owner": "/implementation:new-feature" },
+    { "stage": "tests",           "status": "pending",   "owner": "/qa:new-tests" },
+    { "stage": "review",          "status": "pending",   "owner": "/architecture:review or /implementation:review" },
+    { "stage": "release",         "status": "pending",   "owner": "/deployment:release" }
+  ],
+  "created_at": "<ISO 8601>",
+  "updated_at": "<ISO 8601>"
+}
+```
+
+Create `urs/tasks/` directory if missing. The file is updated by each
+downstream command as the FR progresses through the maturity pipeline.
+
+If the file already exists (re-spec), preserve every task whose
+`status` is `completed`; reset only `pending` and `in_progress` rows
+to match the new spec.
+
+If `--from-urs` was not used, skip this step entirely.
+
+---
+
 ## ✅ What's Next
 
 Tell the user:
@@ -173,7 +214,7 @@ Tell the user:
 ```
 COMMAND_COMPLETE: foundation:shape-spec
 STATUS: success
-FILES_CREATED: .claude/docs/specs/{feature-name}.md
+FILES_CREATED: .claude/docs/specs/{feature-name}.md[, urs/tasks/{FR-id}.json when --from-urs]
 FILES_MODIFIED: .claude/docs/project-state.md
 URS_REF: {FR-XX or none}
 RISK_ZONE: {1 | 2 | 3 or none}
