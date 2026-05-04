@@ -97,6 +97,9 @@ Key documents:
 - `.claude/docs/deployment-os/release-process.md` — branching and release
 - `.claude/docs/design-os/design-system.md` — visual design tokens
 - `.claude/docs/design-os/screens/` — per-feature screen specs
+- `.claude/docs/adr/0001-urs-project-state-separation.md` — URS / project-state separation
+- `.claude/docs/adr/0002-urs-source-format.md` — Markdown→LaTeX URS source format
+- `.claude/docs/adr/0003-urs-first-ingestion-and-sprint-planning.md` — URS-first mode and sprint sizing rules
 
 ---
 
@@ -109,6 +112,12 @@ Key documents:
 /foundation:plan        → plan all features, create backlog in project-state.md
 /design:import          → import Figma or mockup (optional)
 /design:system          → document design tokens (optional)
+
+── URS-first ingestion (alternative to discover) ────────
+/foundation:urs:draft   → AI-assisted URS authoring → urs/main.md
+/foundation:urs         → compile URS → urs/index.json + applies-to.json
+/foundation:plan --from-urs   → backlog from URS FR rows
+/foundation:sprint-plan → cluster + sprint timeline → urs/sprint-plan.md
 
 ── Per feature (one session each) ──────────────────────
 /foundation:status      → see what's next in the backlog
@@ -142,7 +151,10 @@ Start every new project with:
 | ------------------------------ | --------------------------------------------------------------------- |
 | `/foundation:init`             | Configure project — generate auth, migration, dashboard based on choices |
 | `/foundation:discover`         | Document product — users, use cases, standards confirmation           |
-| `/foundation:plan`             | Plan all features, create backlog in project-state.md                 |
+| `/foundation:plan`             | Plan features → backlog (`--from-urs` to ingest a published URS)      |
+| `/foundation:urs:draft`        | Author URS Markdown from a product brief                              |
+| `/foundation:urs`              | Compile URS Markdown → LaTeX + index.json + applies-to.json           |
+| `/foundation:sprint-plan`      | Cluster URS FRs + emit sprint timeline (Sprint 0 walking skeleton)    |
 | `/foundation:status`           | Show project state, suggest next feature to build                     |
 | `/foundation:shape-spec`       | Spec a feature — acceptance criteria, data shape, UI ref              |
 | `/foundation:inject-standards` | Load relevant standards for current task                              |
