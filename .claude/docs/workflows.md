@@ -142,3 +142,98 @@ conversation history.
 | Import a design              | `/design:import`             |
 | Generate K8s manifests       | `/deployment:k8s-config`     |
 | Ship to production           | `/deployment:release`        |
+
+---
+
+## URS-First Development Workflow
+
+Use this lane when the project starts from a finished, published URS — for
+example, regulated procurements where the Software Architect receives a
+signed requirements document and must derive the build plan from it.
+
+### 1. Drop in the URS
+
+Place the URS Markdown at `urs/main.md`. It must follow the structure in
+ADR 0002 (front-matter + section headings + requirement tables). If you
+do not have a Markdown URS yet, run `/foundation:urs:draft` first to
+author one from a product brief.
+
+### 2. Compile
+
+```
+/foundation:urs
+```
+
+This emits:
+
+- `urs/main.tex` — formal LaTeX artifact (signable)
+- `urs/index.json` — machine-readable contract
+- `urs/applies-to.json` — NFR/UR/VR → FR cross-cutting map
+- updates `.claude/docs/project-state.md` with FR-derived backlog rows
+
+### 3. Plan from URS
+
+```
+/foundation:plan --from-urs
+```
+
+Skips the discover-derived feature derivation. Reads `urs/index.json` and
+writes the FR rows directly into the backlog with risk zones and
+dependencies.
+
+### 4. Sprint plan
+
+```
+/foundation:sprint-plan
+```
+
+Computes complexity points per FR, builds the dependency DAG, groups FRs
+into clusters, packs them into sprints with Sprint 0 as a walking
+skeleton. Emits `urs/clusters.json` + `urs/sprint-plan.md`.
+
+### 5. Per-FR build (lazy)
+
+For each FR in Sprint 0, then Sprint 1, etc.:
+
+```
+/foundation:shape-spec --from-urs FR-XX
+/architecture:new-feature
+/implementation:new-feature
+/qa:new-tests
+/qa:fix
+```
+
+Each `shape-spec --from-urs` writes `urs/tasks/FR-XX.json` so downstream
+commands have a deterministic task list.
+
+### 6. Validate
+
+```
+/foundation:validate
+```
+
+Verifies every URS FR has a backlog row, every constraint references a
+real FR, and `index.json`/`applies-to.json` timestamps match.
+
+### 7. Release
+
+```
+/deployment:release
+```
+
+For regulated projects, the release gate cross-checks every shipped FR
+against its URS row and flags any drift.
+
+---
+
+### Token-budget notes for very large URS
+
+- `urs/index.json` may exceed 1 MB on a 1500+ FR document. Never load
+  the whole file into LLM context — extract by ID via `jq` or
+  programmatic Read.
+- `/foundation:sprint-plan` operates on a compact projection (≤ 200 char
+  per FR), bounded at ~50 KB even for 1000 FRs.
+- Per-FR work uses only the relevant FR row + its constraints from
+  `applies-to.json` — typically < 2 KB context.
+
+See ADR 0003 for the full design rationale.

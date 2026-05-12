@@ -11,7 +11,8 @@
     "authModel",
     "regulated",
     "auditTrail",
-    "status"
+    "status",
+    "ingestMode"
   ],
   "properties": {
     "schemaVersion": {
@@ -91,6 +92,12 @@
       "type": "string",
       "enum": ["blocking", "advisory"],
       "description": "How governance gates behave in /deployment:release. 'blocking' prevents release with failing gates. 'advisory' shows warnings but allows proceeding. Defaults to 'blocking' when regulated is true, 'advisory' otherwise."
+    },
+    "ingestMode": {
+      "type": "string",
+      "enum": ["urs-first", "discover-derived"],
+      "default": "discover-derived",
+      "description": "Whether the project starts from a published URS or builds requirements through discovery. urs-first: drop urs/main.md in then /foundation:urs → /foundation:plan --from-urs → /foundation:sprint-plan. discover-derived: /foundation:discover → /foundation:plan."
     }
   },
   "additionalProperties": false

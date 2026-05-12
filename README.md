@@ -125,6 +125,38 @@ Every command ends with a clear `What's Next` telling you exactly what to run ne
 /deployment:release
 ```
 
+### Alternative: URS-first sequence
+
+If you start from a published URS instead of running `/foundation:discover`:
+
+```
+/foundation:init
+    ↓
+/foundation:urs:draft        (or drop urs/main.md in directly)
+    ↓
+/foundation:urs              (compile → index.json + applies-to.json)
+    ↓
+/foundation:plan --from-urs  (backlog from FR rows)
+    ↓
+/foundation:sprint-plan      (cluster + Sprint 0 walking skeleton + waves)
+    ↓
+── per FR (one session each) ────────────────────────────
+/foundation:shape-spec --from-urs FR-XX
+    ↓
+/architecture:new-feature
+    ↓
+/implementation:new-feature
+    ↓
+/qa:new-tests → /qa:fix
+─────────────────────────────────────────────────────────
+    ↓
+/deployment:release
+```
+
+See `.claude/docs/workflows.md` for the full URS-first walkthrough and
+`.claude/docs/adr/0003-urs-first-ingestion-and-sprint-planning.md` for
+the design decisions.
+
 ## Phase Sequence
 
 Follow this order. Each phase builds on the previous.

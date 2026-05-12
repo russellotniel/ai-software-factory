@@ -87,6 +87,38 @@ not ❌ errors. This is expected and not a blocking issue.
 
 ---
 
+## Step 4.5 — URS-First Artifacts (when `urs/main.md` exists)
+
+If `urs/main.md` is present, the project is using URS-first ingestion.
+Verify the compile artifacts and downstream consumers are present and
+consistent.
+
+| File | Required When | Created By |
+|------|---------------|------------|
+| `urs/main.md` | URS authored | `/foundation:urs:draft` (or hand-authored) |
+| `urs/main.tex` | URS compiled | `/foundation:urs` |
+| `urs/index.json` | URS compiled | `/foundation:urs` |
+| `urs/applies-to.json` | URS compiled | `/foundation:urs` (Step 4.5) |
+| `urs/clusters.json` | Sprint planned | `/foundation:sprint-plan` |
+| `urs/sprint-plan.md` | Sprint planned | `/foundation:sprint-plan` |
+| `urs/tasks/FR-XX.json` | FR specced | `/foundation:shape-spec --from-urs` |
+
+Cross-checks:
+
+1. Every constraint in `urs/applies-to.json` references an existing FR
+   id from `urs/index.json`. Report any orphans.
+2. Every FR id in `urs/index.json` appears as a row in
+   `project-state.md` with `urs_ref = <FR-id>`. Report missing rows.
+3. Every `urs/tasks/FR-XX.json` corresponds to an FR id present in
+   `urs/index.json`. Report orphan task files.
+4. `compiled_at` timestamps in `index.json` and `applies-to.json` match
+   (they were written together). Mismatch → re-run `/foundation:urs`.
+
+If `urs/main.md` is absent, skip this step entirely (project is using
+the discover-derived flow — that is fine).
+
+---
+
 ## Step 5 — Check Standards Consistency
 
 - [ ] `CLAUDE.md` references `project-config.json` in the Project Config section

@@ -25,6 +25,7 @@ Show a concise summary:
 ```
 Project: {projectName}
 Type: {multi-tenant / single-tenant} | Auth: {Supabase Auth / Keycloak}
+Ingest mode: {urs-first | discover-derived}
 Status: {project-config status}
 
 Feature Pipeline:
@@ -41,6 +42,11 @@ Schema: {list of current tables}
 For each feature in the backlog, render a pipeline showing completed stages
 and the current stage marked with `←`. Features with stage `shipped` show `✓`.
 Features with no stage yet (stage `—`) show an empty pipeline.
+
+**Ingest mode handling:**
+
+- If `ingestMode == "urs-first"`: also report URS chain status — does `urs/index.json` exist? `urs/applies-to.json`? `urs/sprint-plan.md`? Suggest the next URS-first command if the chain is incomplete (e.g. "URS compiled but no sprint plan yet — run `/foundation:sprint-plan`").
+- If `ingestMode == "discover-derived"`: report whether `product-mission.md` is a stub or completed. Suggest `/foundation:discover` if stub.
 
 ---
 
